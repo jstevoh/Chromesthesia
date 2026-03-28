@@ -3601,12 +3601,42 @@ export default function App() {
     }
   }, [formulaX, formulaY]);
 
-  // Sound Synthesis Loop
-  const updateSound = useCallback(() => {
+  // Ref-based prop syncing for the audio loop — avoids 35-dependency useCallback
+  const synthParamsRef = useRef({
+    isPlaying, isSynthMatrixEnabled, isMuted, scanSpeed, baseFreq, freqRange,
+    freqMod, ampMod, cutoffMod, qMod, voiceMappings, voiceWaveShapes,
+    scanCenterX, scanCenterY, scanScale, scanPointSize, triggerThreshold, adsr,
+    isWebcamActive, mediaType, isSequencerEnabled, bpm, adjustedScale,
+    quantizeAmount, mutationAmount, isEvolving, mouseInfluence, enabledVoices,
+    isScanSpeedSynced, isPerformanceMode, visualColorMode
+  });
+  synthParamsRef.current = {
+    isPlaying, isSynthMatrixEnabled, isMuted, scanSpeed, baseFreq, freqRange,
+    freqMod, ampMod, cutoffMod, qMod, voiceMappings, voiceWaveShapes,
+    scanCenterX, scanCenterY, scanScale, scanPointSize, triggerThreshold, adsr,
+    isWebcamActive, mediaType, isSequencerEnabled, bpm, adjustedScale,
+    quantizeAmount, mutationAmount, isEvolving, mouseInfluence, enabledVoices,
+    isScanSpeedSynced, isPerformanceMode, visualColorMode
+  };
+
+  // Sound Synthesis Loop — mount-only effect, reads all params from refs
+  useEffect(() => {
+    let alive = true;
+
+    const updateSound = () => {
+    if (!alive) return;
+
+    const {
+      isPlaying, isSynthMatrixEnabled, isMuted, scanSpeed, baseFreq, freqRange,
+      freqMod, ampMod, cutoffMod, qMod, voiceMappings, voiceWaveShapes,
+      scanCenterX, scanCenterY, scanScale, scanPointSize, triggerThreshold, adsr,
+      isWebcamActive, mediaType, isSequencerEnabled, bpm, adjustedScale,
+      quantizeAmount, mutationAmount, isEvolving, mouseInfluence, enabledVoices,
+      isScanSpeedSynced, isPerformanceMode, visualColorMode
+    } = synthParamsRef.current;
+
     if (!isPlaying || !isSynthMatrixEnabled || !samplingCanvasRef.current || !audioContextRef.current || oscillatorsRef.current.length === 0) {
-      if (isPlaying && isSynthMatrixEnabled) {
-        requestRef.current = requestAnimationFrame(updateSound);
-      }
+      requestRef.current = requestAnimationFrame(updateSound);
       return;
     }
 
@@ -3615,7 +3645,7 @@ export default function App() {
       requestRef.current = requestAnimationFrame(updateSound);
       return;
     }
-    
+
     const canvas = samplingCanvasRef.current;
 
     // Cache the 2D context — getContext is non-trivial; no need to call every frame
@@ -3623,7 +3653,10 @@ export default function App() {
       samplingCtxRef.current = canvas.getContext('2d', { willReadFrequently: true });
     }
     const ctx = samplingCtxRef.current;
-    if (!ctx) return;
+    if (!ctx) {
+      requestRef.current = requestAnimationFrame(updateSound);
+      return;
+    }
 
     // Optimization: Limit sampling resolution for performance
     const sampleW = isPerformanceMode ? 160 : 320;
@@ -3702,7 +3735,7 @@ export default function App() {
     }
 
     if (phaseRef.current) {
-      phaseRef.current.textContent = t.toFixed(2);
+      phaseRef.current.textContent = String(Math.floor(t));
     }
 
     const newPoints: {x: number, y: number}[] = [];
@@ -3728,8 +3761,8 @@ export default function App() {
       rawY[i] = evalY(t, i, n, currentW, currentH, Math);
     }
 
-    // Extract colors for auto palette (uses precomputed positions)
-    if (visualColorMode === 'auto' && isPlaying) {
+    // Extract colors for auto palette — only do work on update frames
+    if (visualColorMode === 'auto' && isPlaying && autoPaletteFrameCountRef.current++ % 6 === 0) {
       const newAutoPalette: string[] = [];
       for (let i = 0; i < SAMPLE_POINTS; i++) {
         const x = Math.floor(Math.max(0, Math.min(currentW - 1, rawX[i])));
@@ -3740,15 +3773,17 @@ export default function App() {
         const compB = 255 - imageData[idx + 2];
         newAutoPalette.push(`rgb(${compR}, ${compG}, ${compB})`);
       }
-      if (autoPaletteFrameCountRef.current++ % 6 === 0) {
-        setAutoPalette(newAutoPalette);
-      }
+      setAutoPalette(newAutoPalette);
     }
 
-    // Precompute mouse influence constants outside the voice loop
+    // Precompute constants outside the voice loop
     const mousePos = mousePosRef.current;
     const mouseRadius = currentW * 0.3;
     const mouseRadiusSq = mouseRadius * mouseRadius;
+    const vizW = isPerformanceMode ? 320 : 640;
+    const vizH = isPerformanceMode ? 180 : 360;
+    const vizScaleX = vizW / currentW;
+    const vizScaleY = vizH / currentH;
 
     // Evaluate formulas and sample
     const audioNow = audioContextRef.current.currentTime;
@@ -3787,9 +3822,7 @@ export default function App() {
         y = Math.max(0, Math.min(currentH - 1, y));
 
         // Map to visual canvas coordinates (matching ScanningVisuals dimensions)
-        const vizW = isPerformanceMode ? 320 : 640;
-        const vizH = isPerformanceMode ? 180 : 360;
-        newPoints.push({ x: (x / currentW) * vizW, y: (y / currentH) * vizH });
+        newPoints.push({ x: x * vizScaleX, y: y * vizScaleY });
 
         if (!enabledVoices[i]) {
           gain.gain.setTargetAtTime(0, audioNow, 0.05);
@@ -3810,16 +3843,19 @@ export default function App() {
             g = imageData[index + 1];
             b = imageData[index + 2];
           } else {
-            // Spatial averaging over scanPointSize radius
+            // Spatial averaging with stride — cap samples to ~25 max for performance
             const radius = Math.floor(scanPointSize / 2);
-            let totalR = 0, totalG = 0, totalB = 0, count = 0;
             const x0 = Math.max(0, sampleX - radius);
             const x1 = Math.min(currentW - 1, sampleX + radius);
             const y0 = Math.max(0, sampleY - radius);
             const y1 = Math.min(currentH - 1, sampleY + radius);
-            for (let py = y0; py <= y1; py++) {
-              for (let px = x0; px <= x1; px++) {
-                const idx = (py * currentW + px) * 4;
+            const span = Math.max(x1 - x0, y1 - y0, 1);
+            const stride = span > 5 ? Math.ceil(span / 5) : 1;
+            let totalR = 0, totalG = 0, totalB = 0, count = 0;
+            for (let py = y0; py <= y1; py += stride) {
+              const rowBase = py * currentW;
+              for (let px = x0; px <= x1; px += stride) {
+                const idx = (rowBase + px) * 4;
                 totalR += imageData[idx];
                 totalG += imageData[idx + 1];
                 totalB += imageData[idx + 2];
@@ -3926,16 +3962,24 @@ export default function App() {
     scanPointsRef.current = newPoints;
 
     requestRef.current = requestAnimationFrame(updateSound);
-  }, [isPlaying, isSynthMatrixEnabled, isMuted, scanSpeed, baseFreq, freqRange, freqMod, ampMod, cutoffMod, qMod, voiceMappings, formulaX, formulaY, voiceWaveShapes, scanCenterX, scanCenterY, scanScale, scanPointSize, triggerThreshold, adsr, isWebcamActive, mediaType, isSequencerEnabled, bpm, scaleName, rootNoteIndex, adjustedScale, quantizeAmount, sequenceLength, mutationAmount, isEvolving, mouseInfluence, enabledVoices, isScanSpeedSynced, isPerformanceMode]);
+    };
 
+    // Start the loop
+    requestRef.current = requestAnimationFrame(updateSound);
+    return () => {
+      alive = false;
+      if (requestRef.current) cancelAnimationFrame(requestRef.current);
+    };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Mount-only: all params read from synthParamsRef
+
+  // Play/pause side effects (video play/pause, oscillator fade-out)
   useEffect(() => {
     if (isPlaying) {
-      requestRef.current = requestAnimationFrame(updateSound);
       if (videoRef.current) {
         videoRef.current.play().catch(e => console.error("Video play error:", e));
       }
     } else {
-      if (requestRef.current) cancelAnimationFrame(requestRef.current);
       if (videoRef.current) {
         videoRef.current.pause();
       }
@@ -3949,10 +3993,7 @@ export default function App() {
         });
       }
     }
-    return () => {
-      if (requestRef.current) cancelAnimationFrame(requestRef.current);
-    };
-  }, [isPlaying, updateSound]);
+  }, [isPlaying]);
 
   // Keep volumeRef in sync so initAudio can read it without a stale closure
   useEffect(() => { volumeRef.current = volume; }, [volume]);
@@ -4688,7 +4729,7 @@ export default function App() {
             <div className="flex flex-col items-end px-2 min-w-[44px] justify-center h-7">
               <span className="text-[5px] font-mono text-white/20 uppercase tracking-widest font-bold leading-none mb-0.5">Phase</span>
               <span ref={phaseRef} className="text-[10px] font-mono font-medium tabular-nums text-white leading-none">
-                {scanTime.toFixed(2)}
+                {Math.floor(scanTime)}
               </span>
             </div>
           </div>
@@ -4896,7 +4937,7 @@ export default function App() {
                       </div>
                       <div className="flex items-center gap-4">
                         <span className="font-mono">
-                          {((videoRange[0] / 100) * videoDuration).toFixed(1)}s - {((videoRange[1] / 100) * videoDuration).toFixed(1)}s
+                          {Math.round((videoRange[0] / 100) * videoDuration * 10) / 10}s - {Math.round((videoRange[1] / 100) * videoDuration * 10) / 10}s
                         </span>
                       </div>
                     </div>
@@ -5411,7 +5452,7 @@ export default function App() {
                   <div className="space-y-3">
                     <div className="flex justify-between text-[9px] uppercase tracking-widest font-black text-white/60">
                       <span>Res</span>
-                      <span className="text-emerald-400">{droneFilterResonance.toFixed(1).replace(/\.0$/, '')}</span>
+                      <span className="text-emerald-400">{Math.round(droneFilterResonance * 10) / 10}</span>
                     </div>
                     <input 
                       type="range" min="0.1" max="20" step="0.1" value={droneFilterResonance}
@@ -5436,7 +5477,7 @@ export default function App() {
                   <div className="space-y-3">
                     <div className="flex justify-between text-[9px] uppercase tracking-widest font-black text-white/60">
                       <span>LFO Freq</span>
-                      <span className="text-emerald-400">{droneLfoFreq.toFixed(1)}Hz</span>
+                      <span className="text-emerald-400">{Math.round(droneLfoFreq * 10) / 10}Hz</span>
                     </div>
                     <input 
                       type="range" min="0.1" max="20" step="0.1" value={droneLfoFreq}
@@ -5633,7 +5674,7 @@ export default function App() {
                             <div key={param} className="space-y-1">
                               <div className="flex justify-between text-[7px] uppercase tracking-widest font-black text-white/20">
                                 <span>{param.slice(0, 1)}</span>
-                                <span>{voice.adsr[param as keyof typeof voice.adsr].toFixed(1)}</span>
+                                <span>{Math.round(voice.adsr[param as keyof typeof voice.adsr] * 10) / 10}</span>
                               </div>
                               <input 
                                 type="range" 
@@ -7031,7 +7072,7 @@ export default function App() {
                     <div className="space-y-4">
                       <div className="flex justify-between items-baseline">
                         <span className="text-[10px] text-white/80 uppercase font-black tracking-widest">Amp Mod</span>
-                        <span className="font-mono text-[11px] font-black text-emerald-400">{ampMod.toFixed(1)}x</span>
+                        <span className="font-mono text-[11px] font-black text-emerald-400">{Math.round(ampMod * 10) / 10}x</span>
                       </div>
                       <input 
                         type="range" 
@@ -7087,7 +7128,7 @@ export default function App() {
                             {isScanSpeedSynced ? 'Synced' : 'Free'}
                           </button>
                         </div>
-                        <span className="font-mono text-[11px] font-black text-white">{isScanSpeedSynced ? `${Number.isInteger(scanSpeed) ? scanSpeed : scanSpeed.toFixed(1)} Bar` : `${scanSpeed.toFixed(1)}x`}</span>
+                        <span className="font-mono text-[11px] font-black text-white">{isScanSpeedSynced ? `${Math.round(scanSpeed * 4) / 4} Bar` : `${Math.round(scanSpeed * 10) / 10}x`}</span>
                       </div>
                       <input 
                         type="range" 
@@ -7102,7 +7143,7 @@ export default function App() {
                     <div className="space-y-4">
                       <div className="flex justify-between items-baseline">
                         <span className="text-[10px] text-white/60 uppercase font-black tracking-widest">Scanner Scale</span>
-                        <span className="font-mono text-[11px] font-black text-white">{scanScale.toFixed(1)}x</span>
+                        <span className="font-mono text-[11px] font-black text-white">{Math.round(scanScale * 10) / 10}x</span>
                       </div>
                       <input
                         type="range"
@@ -7528,7 +7569,7 @@ export default function App() {
                           <div key={param}>
                             <div className="flex justify-between items-baseline mb-1.5">
                               <span className="text-[8px] sm:text-[10px] text-white/40 uppercase font-mono font-black tracking-[0.2em]">{param}</span>
-                              <span className="text-[8px] sm:text-[10px] font-mono font-black text-white bg-white/5 px-2 py-0.5 rounded">{Math.round(adsr[selectedVoice][param] * 100) / 100}</span>
+                              <span className="text-[8px] sm:text-[10px] font-mono font-black text-white bg-white/5 px-2 py-0.5 rounded">{Math.round(adsr[selectedVoice][param] * 10) / 10}</span>
                             </div>
                             <input 
                               type="range" 
