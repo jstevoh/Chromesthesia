@@ -3185,13 +3185,29 @@ export default function App() {
     return c.toDataURL('image/png');
   }, []);
 
-  // Generate hallucinogenic starting image on first load
+  // Fetch a random image on first load
   useEffect(() => {
-    if (!image) {
-      setImage(generateProceduralArt(512));
-      setMediaType('image');
-      setIsLoaded(true);
-    }
+    if (image) return;
+    const seed = Math.floor(Math.random() * 1000);
+    fetch(`https://picsum.photos/seed/${seed}/512/512`)
+      .then(res => { if (!res.ok) throw new Error('fetch failed'); return res.blob(); })
+      .then(blob => new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result as string);
+        reader.onerror = reject;
+        reader.readAsDataURL(blob);
+      }))
+      .then(dataUrl => {
+        setImage(dataUrl);
+        setMediaType('image');
+        setIsLoaded(true);
+      })
+      .catch(() => {
+        // Offline fallback: procedural art
+        setImage(generateProceduralArt(512));
+        setMediaType('image');
+        setIsLoaded(true);
+      });
   }, [generateProceduralArt]);
 
   const handleFeelingLucky = useCallback(async () => {
