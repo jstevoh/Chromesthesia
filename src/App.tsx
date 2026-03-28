@@ -1377,8 +1377,18 @@ export default function App() {
   const [showSequencerModule, setShowSequencerModule] = useState(false);
   const [showMixer, setShowMixer] = useState(false);
   const [showVisualsModule, setShowVisualsModule] = useState(false);
-  const [isPerformanceMode, setIsPerformanceMode] = useState(false);
+  const [isPerformanceMode, setIsPerformanceMode] = useState(() => {
+    // Auto-detect weak devices on mount
+    if (typeof navigator !== 'undefined') {
+      const cores = navigator.hardwareConcurrency || 2;
+      const memory = (navigator as any).deviceMemory || 4;
+      const isMobile = /Android|iPhone|iPad|iPod|Opera Mini|IEMobile/i.test(navigator.userAgent);
+      if (cores <= 2 || memory <= 2 || isMobile) return true;
+    }
+    return false;
+  });
   const [isVisualsEnabled, setIsVisualsEnabled] = useState(true);
+  const perfFrameCountRef = useRef(0);
   
   const closeAllPanels = () => {
     setShowMixer(false);
@@ -2352,9 +2362,9 @@ export default function App() {
           } else if (effect === 'crush') {
             const shaper = ctx.createWaveShaper();
             const n = Math.floor(2 + (1 - amount) * 4);
-            const curve = new Float32Array(44100);
-            for (let i = 0; i < 44100; i++) {
-              const x = (i * 2) / 44100 - 1;
+            const curve = new Float32Array(1024);
+            for (let i = 0; i < 1024; i++) {
+              const x = (i * 2) / 1024 - 1;
               curve[i] = Math.round(x * n) / n;
             }
             shaper.curve = curve;
@@ -2590,9 +2600,9 @@ export default function App() {
           } else if (effect === 'broken') {
             const shaper = ctx.createWaveShaper();
             const n = Math.floor(2 + (1 - amount) * 10);
-            const curve = new Float32Array(44100);
-            for (let i = 0; i < 44100; i++) {
-              const x = (i * 2) / 44100 - 1;
+            const curve = new Float32Array(1024);
+            for (let i = 0; i < 1024; i++) {
+              const x = (i * 2) / 1024 - 1;
               curve[i] = Math.round(x * n) / n;
             }
             shaper.curve = curve;
@@ -2629,9 +2639,9 @@ export default function App() {
             noise.start();
             const shaper = ctx.createWaveShaper();
             const n = Math.floor(2 + (1 - amount) * 10);
-            const curve = new Float32Array(44100);
-            for (let i = 0; i < 44100; i++) {
-              const x = (i * 2) / 44100 - 1;
+            const curve = new Float32Array(1024);
+            for (let i = 0; i < 1024; i++) {
+              const x = (i * 2) / 1024 - 1;
               curve[i] = Math.round(x * n) / n;
             }
             shaper.curve = curve;
@@ -3307,14 +3317,20 @@ export default function App() {
       }
       return;
     }
+
+    // Performance mode: throttle to ~30fps by skipping every other frame
+    if (isPerformanceMode && perfFrameCountRef.current++ % 2 !== 0) {
+      requestRef.current = requestAnimationFrame(updateSound);
+      return;
+    }
     
     const canvas = samplingCanvasRef.current;
     const ctx = canvas.getContext('2d', { willReadFrequently: true });
     if (!ctx) return;
 
     // Optimization: Limit sampling resolution for performance
-    const sampleW = 320;
-    const sampleH = 180;
+    const sampleW = isPerformanceMode ? 160 : 320;
+    const sampleH = isPerformanceMode ? 90 : 180;
 
     // If video or webcam, draw current frame to canvas
     if (isWebcamActive && webcamVideoRef.current) {
@@ -3419,7 +3435,8 @@ export default function App() {
 
     // Evaluate formulas and sample
     const audioNow = audioContextRef.current.currentTime;
-    for (let i = 0; i < SAMPLE_POINTS; i++) {
+    const voiceStep = isPerformanceMode ? 2 : 1; // Skip alternate voices in perf mode
+    for (let i = 0; i < SAMPLE_POINTS; i += voiceStep) {
       try {
         const { osc, noiseSource, gain, filter, panner } = oscillatorsRef.current[i];
 
@@ -3559,7 +3576,7 @@ export default function App() {
   scanPointsRef.current = newPoints;
 
     requestRef.current = requestAnimationFrame(updateSound);
-  }, [isPlaying, isSynthMatrixEnabled, isMuted, scanSpeed, baseFreq, freqRange, freqMod, ampMod, cutoffMod, qMod, voiceMappings, formulaX, formulaY, voiceWaveShapes, scanCenterX, scanCenterY, scanScale, triggerThreshold, adsr, isWebcamActive, mediaType, isSequencerEnabled, bpm, scaleName, rootNoteIndex, adjustedScale, quantizeAmount, sequenceLength, mutationAmount, isEvolving, mouseInfluence, enabledVoices, isScanSpeedSynced]);
+  }, [isPlaying, isSynthMatrixEnabled, isMuted, scanSpeed, baseFreq, freqRange, freqMod, ampMod, cutoffMod, qMod, voiceMappings, formulaX, formulaY, voiceWaveShapes, scanCenterX, scanCenterY, scanScale, triggerThreshold, adsr, isWebcamActive, mediaType, isSequencerEnabled, bpm, scaleName, rootNoteIndex, adjustedScale, quantizeAmount, sequenceLength, mutationAmount, isEvolving, mouseInfluence, enabledVoices, isScanSpeedSynced, isPerformanceMode]);
 
   useEffect(() => {
     if (isPlaying) {
@@ -4187,11 +4204,11 @@ export default function App() {
             <canvas ref={samplingCanvasRef} width={640} height={360} className="hidden" />
             
             {/* Scan Points Visualization - Optimized Canvas Component */}
-            <ScanningVisuals 
-              pointsRef={scanPointsRef} 
+            <ScanningVisuals
+              pointsRef={scanPointsRef}
               canvasRef={visualsCanvasRef}
-              width={640} 
-              height={360} 
+              width={isPerformanceMode ? 320 : 640}
+              height={isPerformanceMode ? 180 : 360}
               isPlaying={isPlaying}
               transparency={0.6}
               colorMode={visualColorMode}
@@ -4199,6 +4216,7 @@ export default function App() {
               palette={visualColorMode === 'auto' ? autoPalette : (visualColorMode === 'preset' ? visualPalette : [])}
               trippy={0}
               subtle={0}
+              performanceMode={isPerformanceMode}
             />
           </motion.div>
         )}
