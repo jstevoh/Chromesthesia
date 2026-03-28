@@ -13,8 +13,11 @@ jobs:
           node-version: 20
       - run: npm ci && npm run build
       - name: Write service account key
-        run: echo '${{ secrets.FIREBASE_SERVICE_ACCOUNT_CHROMESTHESIA }}' > sa_key.json
+        run: |
+          cat <<'SAKEOF' > $RUNNER_TEMP/sa_key.json
+          ${{ secrets.FIREBASE_SERVICE_ACCOUNT_CHROMESTHESIA }}
+          SAKEOF
       - name: Deploy to Firebase
         run: npx firebase-tools deploy --only hosting --project chromethesia
         env:
-          GOOGLE_APPLICATION_CREDENTIALS: sa_key.json
+          GOOGLE_APPLICATION_CREDENTIALS: ${{ runner.temp }}/sa_key.json
