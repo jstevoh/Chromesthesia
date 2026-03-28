@@ -1657,6 +1657,10 @@ export default function App() {
   const noiseBufferRef = useRef<AudioBuffer | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const samplingCanvasRef = useRef<HTMLCanvasElement | null>(null);
+  const samplingCtxRef = useRef<CanvasRenderingContext2D | null>(null);
+  const cachedImageDataRef = useRef<Uint8ClampedArray | null>(null);
+  const cachedImageKeyRef = useRef<string | null>(null);
+  const voiceWaveStateRef = useRef<string[]>(new Array(SAMPLE_POINTS).fill(''));
   const visualsCanvasRef = useRef<HTMLCanvasElement | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
   const requestRef = useRef<number | null>(null);
@@ -3294,20 +3298,27 @@ export default function App() {
     }
     
     const canvas = samplingCanvasRef.current;
-    const ctx = canvas.getContext('2d', { willReadFrequently: true });
+
+    // Cache the 2D context — getContext is non-trivial; no need to call every frame
+    if (!samplingCtxRef.current) {
+      samplingCtxRef.current = canvas.getContext('2d', { willReadFrequently: true });
+    }
+    const ctx = samplingCtxRef.current;
     if (!ctx) return;
 
     // Optimization: Limit sampling resolution for performance
     const sampleW = isPerformanceMode ? 160 : 320;
     const sampleH = isPerformanceMode ? 90 : 180;
 
-    // If video or webcam, draw current frame to canvas
+    // If video or webcam, draw current frame to canvas every frame (content changes)
     if (isWebcamActive && webcamVideoRef.current) {
       const video = webcamVideoRef.current;
       if (video.readyState >= 2) {
         if (canvas.width !== sampleW || canvas.height !== sampleH) {
           canvas.width = sampleW;
           canvas.height = sampleH;
+          samplingCtxRef.current = null; // canvas resize invalidates context
+          return;
         }
         ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
       }
@@ -3317,24 +3328,34 @@ export default function App() {
         if (canvas.width !== sampleW || canvas.height !== sampleH) {
           canvas.width = sampleW;
           canvas.height = sampleH;
+          samplingCtxRef.current = null;
+          return;
         }
         ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
       }
     } else if (mediaType === 'image' && imageRef.current) {
+      // For static images, only redraw when image or resolution changes; cache pixel data
       const img = imageRef.current;
       if (img.naturalWidth > 0) {
-        if (canvas.width !== sampleW || canvas.height !== sampleH) {
-          canvas.width = sampleW;
-          canvas.height = sampleH;
+        const cacheKey = `${img.src}|${sampleW}x${sampleH}`;
+        if (cacheKey !== cachedImageKeyRef.current || !cachedImageDataRef.current) {
+          if (canvas.width !== sampleW || canvas.height !== sampleH) {
+            canvas.width = sampleW;
+            canvas.height = sampleH;
+            samplingCtxRef.current = null;
+            return;
+          }
+          ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+          cachedImageDataRef.current = ctx.getImageData(0, 0, sampleW, sampleH).data.slice();
+          cachedImageKeyRef.current = cacheKey;
         }
-        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
       }
     }
 
     const currentW = canvas.width;
     const currentH = canvas.height;
     const n = SAMPLE_POINTS;
-    
+
     // Increment scan time
     const now = performance.now();
     const deltaTime = (now - lastFrameTimeRef.current) / 1000;
@@ -3352,15 +3373,15 @@ export default function App() {
 
     scanTimeRef.current += (deltaTime * effectiveScanSpeed);
     let t = scanTimeRef.current;
-    
+
     if (isSequencerEnabled) {
       const stepDuration = 60 / (bpm * 4); // 16th notes
       const currentStep = Math.floor(t / stepDuration);
-      
+
       // Quantize time to steps
       t = currentStep * stepDuration;
     }
-    
+
     if (phaseRef.current) {
       phaseRef.current.textContent = t.toFixed(2);
     }
@@ -3375,32 +3396,40 @@ export default function App() {
       return;
     }
 
-    // Optimization: Get image data once per frame
-    const imageData = ctx.getImageData(0, 0, currentW, currentH).data;
+    // Use cached pixel data for static images; otherwise read from canvas
+    const imageData = (mediaType === 'image' && cachedImageDataRef.current)
+      ? cachedImageDataRef.current
+      : ctx.getImageData(0, 0, currentW, currentH).data;
 
-    // Extract colors for auto palette
+    // Precompute raw scan positions once — reused by both palette extraction and voice loop
+    const rawX = new Float32Array(n);
+    const rawY = new Float32Array(n);
+    for (let i = 0; i < n; i++) {
+      rawX[i] = evalX(t, i, n, currentW, currentH, Math);
+      rawY[i] = evalY(t, i, n, currentW, currentH, Math);
+    }
+
+    // Extract colors for auto palette (uses precomputed positions)
     if (visualColorMode === 'auto' && isPlaying) {
       const newAutoPalette: string[] = [];
       for (let i = 0; i < SAMPLE_POINTS; i++) {
-        // Sample points from the scan path
-        const x = Math.floor(Math.max(0, Math.min(currentW - 1, evalX(t, i, n, currentW, currentH, Math))));
-        const y = Math.floor(Math.max(0, Math.min(currentH - 1, evalY(t, i, n, currentW, currentH, Math))));
+        const x = Math.floor(Math.max(0, Math.min(currentW - 1, rawX[i])));
+        const y = Math.floor(Math.max(0, Math.min(currentH - 1, rawY[i])));
         const idx = (y * currentW + x) * 4;
-        const r = imageData[idx];
-        const g = imageData[idx + 1];
-        const b = imageData[idx + 2];
-        
-        // Calculate complementary color
-        const compR = 255 - r;
-        const compG = 255 - g;
-        const compB = 255 - b;
-        
+        const compR = 255 - imageData[idx];
+        const compG = 255 - imageData[idx + 1];
+        const compB = 255 - imageData[idx + 2];
         newAutoPalette.push(`rgb(${compR}, ${compG}, ${compB})`);
       }
       if (autoPaletteFrameCountRef.current++ % 6 === 0) {
         setAutoPalette(newAutoPalette);
       }
     }
+
+    // Precompute mouse influence constants outside the voice loop
+    const mousePos = mousePosRef.current;
+    const mouseRadius = currentW * 0.3;
+    const mouseRadiusSq = mouseRadius * mouseRadius;
 
     // Evaluate formulas and sample
     const audioNow = audioContextRef.current.currentTime;
@@ -3409,8 +3438,8 @@ export default function App() {
       try {
         const { osc, noiseSource, gain, filter, panner } = oscillatorsRef.current[i];
 
-        let x = evalX(t, i, n, currentW, currentH, Math);
-        let y = evalY(t, i, n, currentW, currentH, Math);
+        let x = rawX[i];
+        let y = rawY[i];
 
         // Apply Mutation Offsets
         if (isEvolving) {
@@ -3422,14 +3451,16 @@ export default function App() {
         x = (x - currentW/2) * scanScale + currentW * scanCenterX;
         y = (y - currentH/2) * scanScale + currentH * scanCenterY;
 
-        // Apply Mouse Influence
-        if (mousePosRef.current) {
-          const dx = mousePosRef.current.x * currentW - x;
-          const dy = mousePosRef.current.y * currentH - y;
-          const dist = Math.sqrt(dx * dx + dy * dy);
-          const force = Math.max(0, (1 - dist / (currentW * 0.3))) * mouseInfluence;
-          x += dx * force;
-          y += dy * force;
+        // Apply Mouse Influence — use squared-distance check to avoid sqrt when out of range
+        if (mousePos) {
+          const dx = mousePos.x * currentW - x;
+          const dy = mousePos.y * currentH - y;
+          const distSq = dx * dx + dy * dy;
+          if (distSq < mouseRadiusSq) {
+            const force = (1 - Math.sqrt(distSq) / mouseRadius) * mouseInfluence;
+            x += dx * force;
+            y += dy * force;
+          }
         }
 
         // Clamp to canvas bounds
@@ -3447,13 +3478,13 @@ export default function App() {
         // Ensure we don't sample outside the canvas
         const sampleX = Math.floor(x);
         const sampleY = Math.floor(y);
-        
+
         if (sampleX >= 0 && sampleX < currentW && sampleY >= 0 && sampleY < currentH) {
           const index = (sampleY * currentW + sampleX) * 4;
           const r = imageData[index];
           const g = imageData[index + 1];
           const b = imageData[index + 2];
-          
+
           const hsl = rgbToHsl(r, g, b);
           const traits: Record<ImageTrait, number> = {
             brightness: (r + g + b) / (3 * 255),
@@ -3464,85 +3495,89 @@ export default function App() {
             y: y / currentH
           };
 
-    const voiceMapping = voiceMappings[i];
-    const voiceAdsr = adsr[i];
+          const voiceMapping = voiceMappings[i];
+          const voiceAdsr = adsr[i];
 
-    // Apply Mappings
-    const freqTrait = traits[voiceMapping.frequency];
-    let freq = baseFreq + (SAMPLE_POINTS - i) * (freqRange / SAMPLE_POINTS) + (freqTrait * freqMod);
-    
-    if (isSequencerEnabled) {
-      const quantizedFreq = quantizeFrequency(freq, adjustedScale);
-      freq = freq + (quantizedFreq - freq) * quantizeAmount;
-    }
-    
-    const ampTrait = traits[voiceMapping.amplitude];
-    const isTriggered = ampTrait > triggerThreshold;
+          // Apply Mappings
+          const freqTrait = traits[voiceMapping.frequency];
+          let freq = baseFreq + (SAMPLE_POINTS - i) * (freqRange / SAMPLE_POINTS) + (freqTrait * freqMod);
 
-    // Standard scanning synthesis for all voices
-    osc.frequency.setTargetAtTime(freq, audioNow, 0.05);
-    if (noiseSource) (noiseSource as any).playbackRate.setTargetAtTime(0, audioNow, 0.01);
-
-    if (isTriggered && !voiceStatesRef.current[i]) {
-          // GATE ON: Attack -> Decay -> Sustain
-          voiceStatesRef.current[i] = true;
-          const attackTime = Math.max(0.005, voiceAdsr.attack * traits[voiceMapping.attack] * 2);
-          const decayTime = Math.max(0.005, voiceAdsr.decay * traits[voiceMapping.decay] * 2);
-          const sustainLevel = voiceAdsr.sustain * traits[voiceMapping.sustain];
-          const peakLevel = ampTrait * (1 / SAMPLE_POINTS) * ampMod * (isMuted ? 0 : 1);
-
-          gain.gain.cancelScheduledValues(audioNow);
-          gain.gain.setValueAtTime(gain.gain.value, audioNow);
-          gain.gain.linearRampToValueAtTime(peakLevel, audioNow + attackTime);
-          gain.gain.linearRampToValueAtTime(peakLevel * sustainLevel, audioNow + attackTime + decayTime);
-        } else if (!isTriggered && voiceStatesRef.current[i]) {
-          // GATE OFF: Release
-          voiceStatesRef.current[i] = false;
-          const releaseTime = Math.max(0.005, voiceAdsr.release * traits[voiceMapping.release] * 3);
-          gain.gain.cancelScheduledValues(audioNow);
-          gain.gain.setValueAtTime(gain.gain.value, audioNow);
-          gain.gain.linearRampToValueAtTime(0, audioNow + releaseTime);
-        }
-
-        const cutoffTrait = traits[voiceMapping.cutoff];
-        filter.frequency.setTargetAtTime(500 + cutoffTrait * cutoffMod, audioNow, 0.05);
-
-        const qTrait = traits[voiceMapping.q];
-        filter.Q.setTargetAtTime(qTrait * qMod, audioNow, 0.05);
-
-        filter.type = 'lowpass';
-
-        const panTrait = traits[voiceMapping.pan];
-        const targetPan = (panTrait * 2) - 1; // Map 0..1 to -1..1
-        panner.pan.setTargetAtTime(targetPan, audioNow, 0.05);
-
-        // Update Mutation Offsets based on current traits
-        if (isEvolving && isTriggered) {
-          mutationOffsetsRef.current[i] = {
-            x: (mutationOffsetsRef.current[i].x * 0.95) + (traits.hue - 0.5) * 0.1,
-            y: (mutationOffsetsRef.current[i].y * 0.95) + (traits.brightness - 0.5) * 0.1
-          };
-        }
-        
-        const voiceWave = voiceWaveShapes[i];
-        if (voiceWave === 'auto') {
-          if (hsl.h < 0.33) osc.type = 'sine';
-          else if (hsl.h < 0.66) osc.type = 'triangle';
-          else osc.type = 'sine';
-        } else if (voiceWave in WAVE_TABLES) {
-          const periodicWave = periodicWavesRef.current[voiceWave];
-          if (periodicWave) {
-            osc.setPeriodicWave(periodicWave);
+          if (isSequencerEnabled) {
+            const quantizedFreq = quantizeFrequency(freq, adjustedScale);
+            freq = freq + (quantizedFreq - freq) * quantizeAmount;
           }
-        } else {
-          osc.type = voiceWave as OscillatorType;
+
+          const ampTrait = traits[voiceMapping.amplitude];
+          const isTriggered = ampTrait > triggerThreshold;
+
+          // Standard scanning synthesis for all voices
+          osc.frequency.setTargetAtTime(freq, audioNow, 0.05);
+          if (noiseSource) (noiseSource as any).playbackRate.setTargetAtTime(0, audioNow, 0.01);
+
+          if (isTriggered && !voiceStatesRef.current[i]) {
+            // GATE ON: Attack -> Decay -> Sustain
+            voiceStatesRef.current[i] = true;
+            const attackTime = Math.max(0.005, voiceAdsr.attack * traits[voiceMapping.attack] * 2);
+            const decayTime = Math.max(0.005, voiceAdsr.decay * traits[voiceMapping.decay] * 2);
+            const sustainLevel = voiceAdsr.sustain * traits[voiceMapping.sustain];
+            const peakLevel = ampTrait * (1 / SAMPLE_POINTS) * ampMod * (isMuted ? 0 : 1);
+
+            gain.gain.cancelScheduledValues(audioNow);
+            gain.gain.setValueAtTime(gain.gain.value, audioNow);
+            gain.gain.linearRampToValueAtTime(peakLevel, audioNow + attackTime);
+            gain.gain.linearRampToValueAtTime(peakLevel * sustainLevel, audioNow + attackTime + decayTime);
+          } else if (!isTriggered && voiceStatesRef.current[i]) {
+            // GATE OFF: Release
+            voiceStatesRef.current[i] = false;
+            const releaseTime = Math.max(0.005, voiceAdsr.release * traits[voiceMapping.release] * 3);
+            gain.gain.cancelScheduledValues(audioNow);
+            gain.gain.setValueAtTime(gain.gain.value, audioNow);
+            gain.gain.linearRampToValueAtTime(0, audioNow + releaseTime);
+          }
+
+          const cutoffTrait = traits[voiceMapping.cutoff];
+          filter.frequency.setTargetAtTime(500 + cutoffTrait * cutoffMod, audioNow, 0.05);
+
+          const qTrait = traits[voiceMapping.q];
+          filter.Q.setTargetAtTime(qTrait * qMod, audioNow, 0.05);
+
+          // filter.type is 'lowpass' by default and never changes — no need to set it each frame
+
+          const panTrait = traits[voiceMapping.pan];
+          const targetPan = (panTrait * 2) - 1; // Map 0..1 to -1..1
+          panner.pan.setTargetAtTime(targetPan, audioNow, 0.05);
+
+          // Update Mutation Offsets based on current traits
+          if (isEvolving && isTriggered) {
+            mutationOffsetsRef.current[i] = {
+              x: (mutationOffsetsRef.current[i].x * 0.95) + (traits.hue - 0.5) * 0.1,
+              y: (mutationOffsetsRef.current[i].y * 0.95) + (traits.brightness - 0.5) * 0.1
+            };
+          }
+
+          // Only update oscillator wave type when it has actually changed
+          const voiceWave = voiceWaveShapes[i];
+          if (voiceWave === 'auto') {
+            const newType: OscillatorType = hsl.h < 0.66 ? (hsl.h < 0.33 ? 'sine' : 'triangle') : 'sine';
+            if (osc.type !== newType) osc.type = newType;
+          } else if (voiceWave in WAVE_TABLES) {
+            if (voiceWaveStateRef.current[i] !== voiceWave) {
+              const periodicWave = periodicWavesRef.current[voiceWave];
+              if (periodicWave) {
+                osc.setPeriodicWave(periodicWave);
+                voiceWaveStateRef.current[i] = voiceWave;
+              }
+            }
+          } else {
+            const wt = voiceWave as OscillatorType;
+            if (osc.type !== wt) osc.type = wt;
+          }
         }
+      } catch (e) {
+        console.error("Scanning error at point", i, e);
       }
-    } catch (e) {
-      console.error("Scanning error at point", i, e);
     }
-  }
-  scanPointsRef.current = newPoints;
+    scanPointsRef.current = newPoints;
 
     requestRef.current = requestAnimationFrame(updateSound);
   }, [isPlaying, isSynthMatrixEnabled, isMuted, scanSpeed, baseFreq, freqRange, freqMod, ampMod, cutoffMod, qMod, voiceMappings, formulaX, formulaY, voiceWaveShapes, scanCenterX, scanCenterY, scanScale, triggerThreshold, adsr, isWebcamActive, mediaType, isSequencerEnabled, bpm, scaleName, rootNoteIndex, adjustedScale, quantizeAmount, sequenceLength, mutationAmount, isEvolving, mouseInfluence, enabledVoices, isScanSpeedSynced, isPerformanceMode]);
