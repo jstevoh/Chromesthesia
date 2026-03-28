@@ -3457,12 +3457,39 @@ export default function App() {
     return c.toDataURL('image/png');
   }, []);
 
-  // Generate hallucinogenic starting image on first load
+  // Pre-select random image, patches, and presets on first load
   useEffect(() => {
     if (!image) {
+      // Random optical synth patch
+      const randomPatchIdx = Math.floor(Math.random() * PATCHES.length);
+      applyPatch(randomPatchIdx);
+
+      // Random drone patch
+      const randomDronePatchIdx = Math.floor(Math.random() * DRONE_PATCHES.length);
+      applyDronePatch(randomDronePatchIdx);
+
+      // Random sequencer preset
+      const randomSeqPresetIdx = Math.floor(Math.random() * SEQUENCER_PRESETS.length);
+      applySequencerPreset(randomSeqPresetIdx);
+
+      // Enable drone and sequencer
+      setIsDroneEnabled(true);
+      setIsDroneSequencerEnabled(true);
+
+      // Random visual palette
+      const randomPaletteIdx = Math.floor(Math.random() * VISUAL_PALETTES.length);
+      setVisualPalette(VISUAL_PALETTES[randomPaletteIdx].colors);
+      setVisualPaletteName(VISUAL_PALETTES[randomPaletteIdx].name);
+
+      // Reset scan center
+      setScanCenterX(0.5);
+      setScanCenterY(0.5);
+
+      // Generate procedural art
       setImage(generateProceduralArt(512));
       setMediaType('image');
       setIsLoaded(true);
+      setIsSynthMatrixEnabled(true);
     }
   }, [generateProceduralArt]);
 
