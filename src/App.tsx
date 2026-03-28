@@ -39,7 +39,8 @@ import {
   Palette,
   Link2,
   Target,
-  Clock
+  Clock,
+  RefreshCw
 } from 'lucide-react';
 // --- Constants & Types ---
 
@@ -7758,11 +7759,30 @@ export default function App() {
               </section>
               <section className="pt-10 border-t border-white/10 space-y-6">
 
-                <button 
+                <button
                   onClick={resetToDefaults}
                   className="w-full py-5 bg-white/5 hover:bg-white/10 text-white/20 hover:text-red-500 text-[10px] uppercase tracking-[0.4em] font-black rounded-2xl transition-all border border-white/10 hover:border-red-500/20"
                 >
                   Reset Optical Synth to Defaults
+                </button>
+
+                <button
+                  onClick={async () => {
+                    // Clear all caches and service workers, then hard reload
+                    if ('caches' in window) {
+                      const names = await caches.keys();
+                      await Promise.all(names.map(name => caches.delete(name)));
+                    }
+                    if ('serviceWorker' in navigator) {
+                      const registrations = await navigator.serviceWorker.getRegistrations();
+                      await Promise.all(registrations.map(r => r.unregister()));
+                    }
+                    window.location.reload();
+                  }}
+                  className="w-full py-5 bg-white/5 hover:bg-white/10 text-white/20 hover:text-emerald-400 text-[10px] uppercase tracking-[0.4em] font-black rounded-2xl transition-all border border-white/10 hover:border-emerald-500/20 flex items-center justify-center gap-3"
+                >
+                  <RefreshCw className="w-3.5 h-3.5" />
+                  Check for Updates
                 </button>
               </section>
             </div>
