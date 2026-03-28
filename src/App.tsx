@@ -3201,9 +3201,6 @@ export default function App() {
     // Start audio first (must be triggered directly from user gesture)
     await initAudio();
 
-    // Yield to browser so spinner renders before heavy canvas work
-    await new Promise(resolve => setTimeout(resolve, 30));
-
     try {
       // Pick a random patch
       const randomPatchIdx = Math.floor(Math.random() * PATCHES.length);
@@ -3211,20 +3208,35 @@ export default function App() {
       setScanTime(0);
       scanTimeRef.current = 0;
 
-      // Generate procedural art
-      const imageUrl = generateProceduralArt(512);
-      if (!imageUrl || imageUrl === 'data:,') throw new Error('canvas empty');
-      setImage(imageUrl);
+      // Fetch a random photo from Picsum (free, no API key, CORS-enabled)
+      // Convert to data URL so canvas pixel-sampling works without CORS errors
+      const seed = Math.floor(Math.random() * 1000);
+      const res = await fetch(`https://picsum.photos/seed/${seed}/512/512`);
+      if (!res.ok) throw new Error('fetch failed');
+      const blob = await res.blob();
+      const dataUrl = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result as string);
+        reader.onerror = reject;
+        reader.readAsDataURL(blob);
+      });
+
+      setImage(dataUrl);
       setVideoUrl(null);
       setMediaType('image');
       setIsLoaded(true);
       setIsPlaying(true);
       setIsSynthMatrixEnabled(true);
     } catch (e) {
-      // Fallback: solid gradient image via SVG data URL
-      const hue = Math.floor(Math.random() * 360);
-      const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="hsl(${hue},80%,30%)"/><stop offset="100%" stop-color="hsl(${(hue+120)%360},80%,60%)"/></linearGradient></defs><rect width="512" height="512" fill="url(#g)"/></svg>`;
-      setImage('data:image/svg+xml;base64,' + btoa(svg));
+      // Offline fallback: procedural art
+      try {
+        const imageUrl = generateProceduralArt(512);
+        setImage(imageUrl);
+      } catch {
+        const hue = Math.floor(Math.random() * 360);
+        const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="hsl(${hue},80%,30%)"/><stop offset="100%" stop-color="hsl(${(hue + 120) % 360},80%,60%)"/></linearGradient></defs><rect width="512" height="512" fill="url(#g)"/></svg>`;
+        setImage('data:image/svg+xml;base64,' + btoa(svg));
+      }
       setMediaType('image');
       setIsLoaded(true);
     } finally {
