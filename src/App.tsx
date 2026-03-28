@@ -3418,7 +3418,7 @@ export default function App() {
     }
 
     // Evaluate formulas and sample
-    const now = audioContextRef.current.currentTime;
+    const audioNow = audioContextRef.current.currentTime;
     for (let i = 0; i < SAMPLE_POINTS; i++) {
       try {
         const { osc, noiseSource, gain, filter, panner } = oscillatorsRef.current[i];
@@ -3453,7 +3453,7 @@ export default function App() {
         newPoints.push({ x: (x / currentW) * 1280, y: (y / currentH) * 720 });
 
         if (!enabledVoices[i]) {
-          gain.gain.setTargetAtTime(0, now, 0.05);
+          gain.gain.setTargetAtTime(0, audioNow, 0.05);
           voiceStatesRef.current[i] = false;
           continue;
         }
@@ -3494,8 +3494,8 @@ export default function App() {
     const isTriggered = ampTrait > triggerThreshold;
 
     // Standard scanning synthesis for all voices
-    osc.frequency.setTargetAtTime(freq, now, 0.05);
-    if (noiseSource) (noiseSource as any).playbackRate.setTargetAtTime(0, now, 0.01);
+    osc.frequency.setTargetAtTime(freq, audioNow, 0.05);
+    if (noiseSource) (noiseSource as any).playbackRate.setTargetAtTime(0, audioNow, 0.01);
 
     if (isTriggered && !voiceStatesRef.current[i]) {
           // GATE ON: Attack -> Decay -> Sustain
@@ -3505,30 +3505,30 @@ export default function App() {
           const sustainLevel = voiceAdsr.sustain * traits[voiceMapping.sustain];
           const peakLevel = ampTrait * (1 / SAMPLE_POINTS) * ampMod * (isMuted ? 0 : 1);
 
-          gain.gain.cancelScheduledValues(now);
-          gain.gain.setValueAtTime(gain.gain.value, now);
-          gain.gain.linearRampToValueAtTime(peakLevel, now + attackTime);
-          gain.gain.linearRampToValueAtTime(peakLevel * sustainLevel, now + attackTime + decayTime);
+          gain.gain.cancelScheduledValues(audioNow);
+          gain.gain.setValueAtTime(gain.gain.value, audioNow);
+          gain.gain.linearRampToValueAtTime(peakLevel, audioNow + attackTime);
+          gain.gain.linearRampToValueAtTime(peakLevel * sustainLevel, audioNow + attackTime + decayTime);
         } else if (!isTriggered && voiceStatesRef.current[i]) {
           // GATE OFF: Release
           voiceStatesRef.current[i] = false;
           const releaseTime = Math.max(0.005, voiceAdsr.release * traits[voiceMapping.release] * 3);
-          gain.gain.cancelScheduledValues(now);
-          gain.gain.setValueAtTime(gain.gain.value, now);
-          gain.gain.linearRampToValueAtTime(0, now + releaseTime);
+          gain.gain.cancelScheduledValues(audioNow);
+          gain.gain.setValueAtTime(gain.gain.value, audioNow);
+          gain.gain.linearRampToValueAtTime(0, audioNow + releaseTime);
         }
 
         const cutoffTrait = traits[voiceMapping.cutoff];
-        filter.frequency.setTargetAtTime(500 + cutoffTrait * cutoffMod, now, 0.05);
+        filter.frequency.setTargetAtTime(500 + cutoffTrait * cutoffMod, audioNow, 0.05);
 
         const qTrait = traits[voiceMapping.q];
-        filter.Q.setTargetAtTime(qTrait * qMod, now, 0.05);
+        filter.Q.setTargetAtTime(qTrait * qMod, audioNow, 0.05);
 
         filter.type = 'lowpass';
 
         const panTrait = traits[voiceMapping.pan];
         const targetPan = (panTrait * 2) - 1; // Map 0..1 to -1..1
-        panner.pan.setTargetAtTime(targetPan, now, 0.05);
+        panner.pan.setTargetAtTime(targetPan, audioNow, 0.05);
 
         // Update Mutation Offsets based on current traits
         if (isEvolving && isTriggered) {
