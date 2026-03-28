@@ -1399,6 +1399,7 @@ export default function App() {
   const [isSynthMatrixEnabled, setIsSynthMatrixEnabled] = useState(true);
   const [showManual, setShowManual] = useState(false);
   const [isLoaded, setIsLoaded] = useState(false);
+  const [isGeneratingArt, setIsGeneratingArt] = useState(false);
   
   // Visual Settings State
   const [visualColorMode, setVisualColorMode] = useState<'preset' | 'auto'>('preset');
@@ -3194,33 +3195,42 @@ export default function App() {
   }, [generateProceduralArt]);
 
   const handleFeelingLucky = useCallback(async () => {
+    if (isGeneratingArt) return;
+    setIsGeneratingArt(true);
+
     // Start audio first (must be triggered directly from user gesture)
     await initAudio();
 
-    // Pick a random patch
-    const randomPatchIdx = Math.floor(Math.random() * PATCHES.length);
-    applyPatch(randomPatchIdx);
-    setScanTime(0);
-    scanTimeRef.current = 0;
+    // Yield to browser so spinner renders before heavy canvas work
+    await new Promise(resolve => setTimeout(resolve, 30));
 
-    // Generate procedural art (no API key needed)
     try {
+      // Pick a random patch
+      const randomPatchIdx = Math.floor(Math.random() * PATCHES.length);
+      applyPatch(randomPatchIdx);
+      setScanTime(0);
+      scanTimeRef.current = 0;
+
+      // Generate procedural art
       const imageUrl = generateProceduralArt(512);
       if (!imageUrl || imageUrl === 'data:,') throw new Error('canvas empty');
       setImage(imageUrl);
+      setVideoUrl(null);
+      setMediaType('image');
+      setIsLoaded(true);
+      setIsPlaying(true);
+      setIsSynthMatrixEnabled(true);
     } catch (e) {
       // Fallback: solid gradient image via SVG data URL
       const hue = Math.floor(Math.random() * 360);
       const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="hsl(${hue},80%,30%)"/><stop offset="100%" stop-color="hsl(${(hue+120)%360},80%,60%)"/></linearGradient></defs><rect width="512" height="512" fill="url(#g)"/></svg>`;
       setImage('data:image/svg+xml;base64,' + btoa(svg));
+      setMediaType('image');
+      setIsLoaded(true);
+    } finally {
+      setIsGeneratingArt(false);
     }
-
-    setVideoUrl(null);
-    setMediaType('image');
-    setIsLoaded(true);
-    setIsPlaying(true);
-    setIsSynthMatrixEnabled(true);
-  }, [generateProceduralArt, applyPatch, initAudio]);
+  }, [generateProceduralArt, applyPatch, initAudio, isGeneratingArt]);
 
   const playStep = useCallback((vIdx: number, sIdx: number) => {
     if (!audioContextRef.current || !droneSequencerVoicesRef.current[vIdx]) return;
@@ -4644,7 +4654,7 @@ export default function App() {
                       </li>
                       <li className="flex flex-col gap-1">
                         <span className="text-[10px] text-synth-accent font-black uppercase tracking-widest">AI Synergy</span>
-                        <p className="text-[10px] text-white/50 leading-tight">Use "I'm Feeling Lucky" to generate AI art tuned for spectral responses.</p>
+                        <p className="text-[10px] text-white/50 leading-tight">Use "I'm Feeling Lucky" to generate a random hallucinogenic image and patch — no AI needed.</p>
                       </li>
                       <li className="flex flex-col gap-1">
                         <span className="text-[10px] text-synth-accent font-black uppercase tracking-widest">Spectral Sculpting</span>
@@ -4679,19 +4689,23 @@ export default function App() {
             <div className="flex items-center gap-2">
               <button
                 onClick={handleFeelingLucky}
-                className="flex items-center gap-2 px-4 py-2 rounded-full transition-all group shadow-sm active:scale-95 border bg-white/5 text-white border-white/10 hover:bg-white/10 hover:shadow-md"
+                disabled={isGeneratingArt}
+                className="flex items-center gap-2 px-4 py-2 rounded-full transition-all group shadow-sm active:scale-95 border border-white/10 hover:shadow-md disabled:opacity-60 disabled:cursor-not-allowed bg-white/5 text-white hover:bg-white/10"
               >
-                <Sparkles className="w-4 h-4 group-hover:rotate-12 transition-transform" />
-                <span className="font-black uppercase tracking-widest text-[10px]">I'm Feeling Lucky</span>
+                <Sparkles className={`w-4 h-4 transition-transform ${isGeneratingArt ? 'animate-spin' : 'group-hover:rotate-12'}`} />
+                <span className="font-black uppercase tracking-widest text-[10px]">
+                  {isGeneratingArt ? 'Generating…' : "I'm Feeling Lucky"}
+                </span>
               </button>
             </div>
           </div>
           <div className="flex items-center gap-8">
             <button
               onClick={handleFeelingLucky}
-              className="text-white/20 font-bold hover:text-synth-accent transition-colors"
+              disabled={isGeneratingArt}
+              className="text-white/20 font-bold hover:text-synth-accent transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
             >
-              Powered by Math and Rainbows
+              {isGeneratingArt ? 'Generating…' : 'Powered by Math and Rainbows'}
             </button>
             <span>Chromesthesia v2.5</span>
             <span>Optical Scanning Synthesizer</span>
