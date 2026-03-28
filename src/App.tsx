@@ -5272,7 +5272,7 @@ export default function App() {
                       />
                       <div className="flex justify-between text-[8px] uppercase tracking-tighter text-white/20">
                         <span>{voice.type}</span>
-                        <span>{voice.freq.toFixed(1)}Hz</span>
+                        <span>{Math.round(voice.freq)}Hz</span>
                       </div>
                     </div>
                   ))}
@@ -5380,7 +5380,7 @@ export default function App() {
                   <div className="space-y-3">
                     <div className="flex justify-between text-[9px] uppercase tracking-widest font-black text-white/60">
                       <span>Res</span>
-                      <span className="text-emerald-400">{droneFilterResonance.toFixed(1)}</span>
+                      <span className="text-emerald-400">{droneFilterResonance.toFixed(1).replace(/\.0$/, '')}</span>
                     </div>
                     <input 
                       type="range" min="0.1" max="20" step="0.1" value={droneFilterResonance}
@@ -5405,10 +5405,10 @@ export default function App() {
                   <div className="space-y-3">
                     <div className="flex justify-between text-[9px] uppercase tracking-widest font-black text-white/60">
                       <span>LFO Freq</span>
-                      <span className="text-emerald-400">{droneLfoFreq.toFixed(2)}Hz</span>
+                      <span className="text-emerald-400">{droneLfoFreq.toFixed(1)}Hz</span>
                     </div>
                     <input 
-                      type="range" min="0.01" max="20" step="0.01" value={droneLfoFreq}
+                      type="range" min="0.1" max="20" step="0.1" value={droneLfoFreq}
                       onChange={(e) => setDroneLfoFreq(parseFloat(e.target.value))}
                       className="w-full accent-emerald-500 h-1.5 bg-white/20 rounded-lg appearance-none cursor-pointer"
                     />
@@ -5910,7 +5910,7 @@ export default function App() {
                       <span className="text-emerald-400">{(sequencerMutationRate * 100).toFixed(0)}%</span>
                     </div>
                     <input 
-                      type="range" min="0" max="0.2" step="0.001" value={sequencerMutationRate}
+                      type="range" min="0" max="0.2" step="0.01" value={sequencerMutationRate}
                       onChange={(e) => setSequencerMutationRate(parseFloat(e.target.value))}
                       className="w-full h-1 bg-white/5 rounded-full appearance-none cursor-pointer accent-emerald-500"
                     />
@@ -6201,10 +6201,10 @@ export default function App() {
                         <div className="space-y-4">
                           <div className="flex justify-between items-center text-[10px] uppercase tracking-widest font-black text-white/60">
                             <span>Attack</span>
-                            <span className="text-emerald-400 bg-emerald-500/10 px-3 py-1 rounded text-xs">{droneSequencerVoices[selectedDroneSequencerVoice].adsr.attack.toFixed(2)}s</span>
+                            <span className="text-emerald-400 bg-emerald-500/10 px-3 py-1 rounded text-xs">{Math.round(droneSequencerVoices[selectedDroneSequencerVoice].adsr.attack * 100) / 100}s</span>
                           </div>
                           <input 
-                            type="range" min="0.001" max="1" step="0.001" 
+                            type="range" min="0.01" max="1" step="0.01"
                             value={droneSequencerVoices[selectedDroneSequencerVoice].adsr.attack}
                             onChange={(e) => {
                               const val = parseFloat(e.target.value);
@@ -6219,10 +6219,10 @@ export default function App() {
                         <div className="space-y-4">
                           <div className="flex justify-between items-center text-[10px] uppercase tracking-widest font-black text-white/60">
                             <span>Decay</span>
-                            <span className="text-emerald-400 bg-emerald-500/10 px-3 py-1 rounded text-xs">{droneSequencerVoices[selectedDroneSequencerVoice].adsr.decay.toFixed(2)}s</span>
+                            <span className="text-emerald-400 bg-emerald-500/10 px-3 py-1 rounded text-xs">{Math.round(droneSequencerVoices[selectedDroneSequencerVoice].adsr.decay * 100) / 100}s</span>
                           </div>
                           <input 
-                            type="range" min="0.001" max="1" step="0.001" 
+                            type="range" min="0.01" max="1" step="0.01"
                             value={droneSequencerVoices[selectedDroneSequencerVoice].adsr.decay}
                             onChange={(e) => {
                               const val = parseFloat(e.target.value);
@@ -6255,10 +6255,10 @@ export default function App() {
                         <div className="space-y-4">
                           <div className="flex justify-between items-center text-[10px] uppercase tracking-widest font-black text-white/60">
                             <span>Release</span>
-                            <span className="text-emerald-400 bg-emerald-500/10 px-3 py-1 rounded text-xs">{droneSequencerVoices[selectedDroneSequencerVoice].adsr.release.toFixed(2)}s</span>
+                            <span className="text-emerald-400 bg-emerald-500/10 px-3 py-1 rounded text-xs">{Math.round(droneSequencerVoices[selectedDroneSequencerVoice].adsr.release * 100) / 100}s</span>
                           </div>
                           <input 
-                            type="range" min="0.001" max="2" step="0.001" 
+                            type="range" min="0.01" max="2" step="0.01"
                             value={droneSequencerVoices[selectedDroneSequencerVoice].adsr.release}
                             onChange={(e) => {
                               const val = parseFloat(e.target.value);
@@ -7000,7 +7000,7 @@ export default function App() {
                     <div className="space-y-4">
                       <div className="flex justify-between items-baseline">
                         <span className="text-[10px] text-white/80 uppercase font-black tracking-widest">Amp Mod</span>
-                        <span className="font-mono text-[11px] font-black text-emerald-400">{ampMod.toFixed(2)}x</span>
+                        <span className="font-mono text-[11px] font-black text-emerald-400">{ampMod.toFixed(1)}x</span>
                       </div>
                       <input 
                         type="range" 
@@ -7030,13 +7030,13 @@ export default function App() {
                     <div className="space-y-4">
                       <div className="flex justify-between items-baseline">
                         <span className="text-[10px] text-white/60 uppercase font-black tracking-widest">Q Mod</span>
-                        <span className="font-mono text-[11px] font-black text-white">{qMod.toFixed(1)}</span>
+                        <span className="font-mono text-[11px] font-black text-white">{Math.round(qMod)}</span>
                       </div>
                       <input 
                         type="range" 
                         min="0" 
-                        max="50" 
-                        step="0.5"
+                        max="50"
+                        step="1"
                         value={qMod} 
                         onChange={(e) => setQMod(parseFloat(e.target.value))}
                         className="w-full accent-emerald-500 h-1.5 bg-white/20 rounded-lg appearance-none cursor-pointer" 
@@ -7056,7 +7056,7 @@ export default function App() {
                             {isScanSpeedSynced ? 'Synced' : 'Free'}
                           </button>
                         </div>
-                        <span className="font-mono text-[11px] font-black text-white">{isScanSpeedSynced ? `${scanSpeed.toFixed(1)} Bar` : `${scanSpeed}x`}</span>
+                        <span className="font-mono text-[11px] font-black text-white">{isScanSpeedSynced ? `${Number.isInteger(scanSpeed) ? scanSpeed : scanSpeed.toFixed(1)} Bar` : `${scanSpeed.toFixed(1)}x`}</span>
                       </div>
                       <input 
                         type="range" 
@@ -7071,13 +7071,13 @@ export default function App() {
                     <div className="space-y-4">
                       <div className="flex justify-between items-baseline">
                         <span className="text-[10px] text-white/60 uppercase font-black tracking-widest">Scanner Scale</span>
-                        <span className="font-mono text-[11px] font-black text-white">{scanScale.toFixed(2)}x</span>
+                        <span className="font-mono text-[11px] font-black text-white">{scanScale.toFixed(1)}x</span>
                       </div>
                       <input 
                         type="range" 
-                        min="0.1" 
-                        max="3" 
-                        step="0.01"
+                        min="0.1"
+                        max="3"
+                        step="0.1"
                         value={scanScale} 
                         onChange={(e) => setScanScale(parseFloat(e.target.value))}
                         className="w-full accent-emerald-500 h-1.5 bg-white/20 rounded-lg appearance-none cursor-pointer" 
@@ -7478,7 +7478,7 @@ export default function App() {
                           <div key={param}>
                             <div className="flex justify-between items-baseline mb-1.5">
                               <span className="text-[8px] sm:text-[10px] text-white/40 uppercase font-mono font-black tracking-[0.2em]">{param}</span>
-                              <span className="text-[8px] sm:text-[10px] font-mono font-black text-white bg-white/5 px-2 py-0.5 rounded">{adsr[selectedVoice][param].toFixed(2)}</span>
+                              <span className="text-[8px] sm:text-[10px] font-mono font-black text-white bg-white/5 px-2 py-0.5 rounded">{Math.round(adsr[selectedVoice][param] * 100) / 100}</span>
                             </div>
                             <input 
                               type="range" 
