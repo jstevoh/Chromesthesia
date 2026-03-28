@@ -1,0 +1,5 @@
+{
+  "name": "Chromesthesia",
+  "description": "A sound generator that transforms images into immersive soundscapes by mapping colors, frequencies, and patterns to audio parameters.",
+  "requestFramePermissions": ["camera"]
+}
