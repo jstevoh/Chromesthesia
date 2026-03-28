@@ -93,11 +93,17 @@ const ScanningVisuals: React.FC<ScanningVisualsProps> = ({
 
     const frameNow = Date.now();
 
+    // Cache canvas dimensions to avoid repeated property lookups
+    const cw = canvas.width;
+    const ch = canvas.height;
+    const cwHalf = cw / 2;
+    const chHalf = ch / 2;
+
     // Trippy feedback loop: draw the canvas back onto itself with slight scale and rotation
     // In performance mode, use a simple fade instead of the expensive drawImage feedback
     if (isPerfMode) {
       ctx.fillStyle = 'rgba(0, 0, 0, 0.15)';
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.fillRect(0, 0, cw, ch);
     } else {
       ctx.save();
       ctx.globalCompositeOperation = 'source-over';
@@ -105,7 +111,7 @@ const ScanningVisuals: React.FC<ScanningVisualsProps> = ({
       const trailAlpha = 0.92 - (currentTrippy * 0.1) + (currentSubtle * 0.05);
       ctx.globalAlpha = Math.max(0.7, Math.min(0.98, trailAlpha));
 
-      ctx.translate(canvas.width / 2, canvas.height / 2);
+      ctx.translate(cwHalf, chHalf);
 
       const rotation = 0.002 + (currentTrippy * 0.02);
       ctx.rotate(rotation);
@@ -113,12 +119,12 @@ const ScanningVisuals: React.FC<ScanningVisualsProps> = ({
       const scale = 1.005 + (currentTrippy * 0.01);
       ctx.scale(scale, scale);
 
-      ctx.drawImage(canvas, -canvas.width / 2, -canvas.height / 2);
+      ctx.drawImage(canvas, -cwHalf, -chHalf);
       ctx.restore();
 
-      // Occasional glitch strip
-      if (Math.random() > (0.98 - currentTrippy * 0.05)) {
-        ctx.clearRect(0, Math.random() * canvas.height, canvas.width, 20 * (1 + currentTrippy));
+      // Occasional glitch strip — only when trippy is high enough to matter
+      if (currentTrippy > 0.01 && Math.random() > (0.98 - currentTrippy * 0.05)) {
+        ctx.clearRect(0, Math.random() * ch, cw, 20 * (1 + currentTrippy));
       }
     }
 
@@ -132,6 +138,7 @@ const ScanningVisuals: React.FC<ScanningVisualsProps> = ({
     if (points.length >= 2) {
       ctx.lineWidth = 1 + (currentTrippy * 2);
       ctx.globalAlpha = currentTransparency;
+
 
       let baseColor = 'rgba(255, 255, 255, 0.4)';
       if (currentColorMode === 'manual') {
