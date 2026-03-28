@@ -3086,21 +3086,30 @@ export default function App() {
   }, []);
 
   const handleFeelingLucky = useCallback(async () => {
-    // Pick a random patch to start with
+    // Start audio first (must be triggered directly from user gesture)
+    await initAudio();
+
+    // Pick a random patch
     const randomPatchIdx = Math.floor(Math.random() * PATCHES.length);
     applyPatch(randomPatchIdx);
     setScanTime(0);
     scanTimeRef.current = 0;
 
     // Generate procedural art (no API key needed)
-    const imageUrl = generateProceduralArt(1024);
-    setImage(imageUrl);
+    try {
+      const imageUrl = generateProceduralArt(512);
+      if (!imageUrl || imageUrl === 'data:,') throw new Error('canvas empty');
+      setImage(imageUrl);
+    } catch (e) {
+      // Fallback: solid gradient image via SVG data URL
+      const hue = Math.floor(Math.random() * 360);
+      const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="hsl(${hue},80%,30%)"/><stop offset="100%" stop-color="hsl(${(hue+120)%360},80%,60%)"/></linearGradient></defs><rect width="512" height="512" fill="url(#g)"/></svg>`;
+      setImage('data:image/svg+xml;base64,' + btoa(svg));
+    }
+
     setVideoUrl(null);
     setMediaType('image');
     setIsLoaded(true);
-
-    // Start playback
-    await initAudio();
     setIsPlaying(true);
     setIsSynthMatrixEnabled(true);
   }, [generateProceduralArt, applyPatch, initAudio]);
