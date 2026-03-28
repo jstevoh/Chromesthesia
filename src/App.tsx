@@ -4205,30 +4205,30 @@ export default function App() {
     if (!isEvolving || !isPlaying) return;
 
     const interval = setInterval(() => {
-      // Modulate optical synth parameters
+      // Modulate optical synth parameters — round to keep values clean
       setScanSpeed(prev => {
         const delta = (Math.random() - 0.5) * 0.05 * mutationAmount;
-        return Math.max(0.01, Math.min(2, prev + delta));
+        return Math.round(Math.max(0.01, Math.min(2, prev + delta)) * 10) / 10;
       });
-      
+
       setBaseFreq(prev => {
         const delta = (Math.random() - 0.5) * 10 * mutationAmount;
-        return Math.max(20, Math.min(440, prev + delta));
+        return Math.round(Math.max(20, Math.min(440, prev + delta)));
       });
 
       setFreqRange(prev => {
         const delta = (Math.random() - 0.5) * 0.1 * mutationAmount;
-        return Math.max(0.1, Math.min(4, prev + delta));
+        return Math.round(Math.max(0.1, Math.min(4, prev + delta)));
       });
 
       setCutoffMod(prev => {
         const delta = (Math.random() - 0.5) * 500 * mutationAmount;
-        return Math.max(0, Math.min(10000, prev + delta));
+        return Math.round(Math.max(0, Math.min(10000, prev + delta)));
       });
 
       setScanScale(prev => {
         const delta = (Math.random() - 0.5) * 0.1 * mutationAmount;
-        return Math.max(0.1, Math.min(5, prev + delta));
+        return Math.round(Math.max(0.1, Math.min(5, prev + delta)) * 10) / 10;
       });
     }, 2500);
 
@@ -4240,26 +4240,26 @@ export default function App() {
     if (!isDroneEvolving || !isPlaying) return;
 
     const interval = setInterval(() => {
-      // Modulate drone parameters slightly
+      // Modulate drone parameters slightly — round to keep values clean
       setDroneFilterCutoff(prev => {
         const delta = (Math.random() - 0.5) * 100 * droneEvolutionAmount;
-        return Math.max(100, Math.min(8000, prev + delta));
+        return Math.round(Math.max(100, Math.min(8000, prev + delta)));
       });
-      
+
       setDroneSpread(prev => {
         const delta = (Math.random() - 0.5) * 0.1 * droneEvolutionAmount;
-        return Math.max(0, Math.min(1, prev + delta));
+        return Math.round(Math.max(0, Math.min(1, prev + delta)) * 100) / 100;
       });
-      
+
       setDroneLfoFreq(prev => {
         const delta = (Math.random() - 0.5) * 0.2 * droneEvolutionAmount;
-        return Math.max(0.01, Math.min(10, prev + delta));
+        return Math.round(Math.max(0.01, Math.min(10, prev + delta)) * 10) / 10;
       });
-      
+
       setDroneVoices(prev => prev.map(v => ({
         ...v,
-        detune: v.detune + (Math.random() - 0.5) * 4 * droneEvolutionAmount,
-        pan: Math.max(-1, Math.min(1, v.pan + (Math.random() - 0.5) * 0.1 * droneEvolutionAmount))
+        detune: Math.round(v.detune + (Math.random() - 0.5) * 4 * droneEvolutionAmount),
+        pan: Math.round(Math.max(-1, Math.min(1, v.pan + (Math.random() - 0.5) * 0.1 * droneEvolutionAmount)) * 100) / 100
       })));
     }, 2000);
 
@@ -4292,7 +4292,7 @@ export default function App() {
 
       setQuantizeAmount(prev => {
         const delta = (Math.random() - 0.5) * 0.05 * visualsEvolutionAmount;
-        return Math.max(0, Math.min(1, prev + delta));
+        return Math.round(Math.max(0, Math.min(1, prev + delta)) * 100) / 100;
       });
 
       // Occasionally cycle background filter
@@ -5441,7 +5441,7 @@ export default function App() {
                   <div className="space-y-3">
                     <div className="flex justify-between text-[9px] uppercase tracking-widest font-black text-white/60">
                       <span>Cutoff</span>
-                      <span className="text-emerald-400">{droneFilterCutoff}Hz</span>
+                      <span className="text-emerald-400">{Math.round(droneFilterCutoff)}Hz</span>
                     </div>
                     <input 
                       type="range" min="20" max="10000" step="10" value={droneFilterCutoff}
@@ -7029,7 +7029,7 @@ export default function App() {
                     <div className="space-y-3">
                       <div className="flex justify-between items-baseline">
                         <span className="text-[9px] text-white/80 uppercase font-black tracking-widest">Base Freq</span>
-                        <span className="font-mono text-[10px] font-black text-emerald-400">{baseFreq}Hz</span>
+                        <span className="font-mono text-[10px] font-black text-emerald-400">{Math.round(baseFreq)}Hz</span>
                       </div>
                       <input 
                         type="range" 
@@ -7043,7 +7043,7 @@ export default function App() {
                     <div className="space-y-3">
                       <div className="flex justify-between items-baseline">
                         <span className="text-[9px] text-white/80 uppercase font-black tracking-widest">Freq Spread</span>
-                        <span className="font-mono text-[10px] font-black text-emerald-400">{freqRange}Hz</span>
+                        <span className="font-mono text-[10px] font-black text-emerald-400">{Math.round(freqRange)}Hz</span>
                       </div>
                       <input 
                         type="range" 
@@ -7057,7 +7057,7 @@ export default function App() {
                     <div className="space-y-3">
                       <div className="flex justify-between items-baseline">
                         <span className="text-[9px] text-white/80 uppercase font-black tracking-widest">Freq Mod</span>
-                        <span className="font-mono text-[10px] font-black text-emerald-400">{freqMod}Hz</span>
+                        <span className="font-mono text-[10px] font-black text-emerald-400">{Math.round(freqMod)}Hz</span>
                       </div>
                       <input 
                         type="range" 
@@ -7087,7 +7087,7 @@ export default function App() {
                     <div className="space-y-4">
                       <div className="flex justify-between items-baseline">
                         <span className="text-[10px] text-white/60 uppercase font-black tracking-widest">Cutoff Mod</span>
-                        <span className="font-mono text-[11px] font-black text-white">{cutoffMod}Hz</span>
+                        <span className="font-mono text-[11px] font-black text-white">{Math.round(cutoffMod)}Hz</span>
                       </div>
                       <input 
                         type="range" 
