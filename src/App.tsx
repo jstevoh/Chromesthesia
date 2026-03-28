@@ -1292,15 +1292,19 @@ interface PixelData {
 
 // --- Helper Functions ---
 
+const _distortionCurveCache = new Map<string, Float32Array>();
 function makeDistortionCurve(amount: number) {
   const k = typeof amount === 'number' ? amount : 50;
-  const n_samples = 44100;
+  const key = k.toFixed(2);
+  if (_distortionCurveCache.has(key)) return _distortionCurveCache.get(key)!;
+  const n_samples = 1024;
   const curve = new Float32Array(n_samples);
   const deg = Math.PI / 180;
   for (let i = 0; i < n_samples; ++i) {
     const x = (i * 2) / n_samples - 1;
     curve[i] = ((3 + k) * x * 20 * deg) / (Math.PI + k * Math.abs(x));
   }
+  _distortionCurveCache.set(key, curve);
   return curve;
 }
 
@@ -1322,17 +1326,14 @@ function rgbToHsl(r: number, g: number, b: number) {
   return { h, s, l };
 }
 
-function quantizeFrequency(freq: number, scale: number[], rootNote: number) {
+function quantizeFrequency(freq: number, adjustedScale: number[]) {
   // Convert frequency to MIDI note number (float)
   const midiNote = 69 + 12 * Math.log2(freq / 440);
-  
+
   // Find the nearest note in the scale
   const octave = Math.floor(midiNote / 12);
   const noteInOctave = ((midiNote % 12) + 12) % 12;
-  
-  // Adjust scale for root note
-  const adjustedScale = scale.map(n => (n + rootNote) % 12).sort((a, b) => a - b);
-  
+
   // Find closest note in adjusted scale
   let closestNote = adjustedScale[0];
   let minDiff = Math.abs(noteInOctave - adjustedScale[0]);
@@ -1369,14 +1370,25 @@ export default function App() {
   const scanTimeRef = useRef(0);
   const phaseRef = useRef<HTMLSpanElement>(null);
   const [volume, setVolume] = useState(0.5);
+  const volumeRef = useRef(0.5);
   const [synthMatrixVolume, setSynthMatrixVolume] = useState(0.8);
   const [showSettings, setShowSettings] = useState(false);
   const [showDroneModule, setShowDroneModule] = useState(false);
   const [showSequencerModule, setShowSequencerModule] = useState(false);
   const [showMixer, setShowMixer] = useState(false);
   const [showVisualsModule, setShowVisualsModule] = useState(false);
-  const [isPerformanceMode, setIsPerformanceMode] = useState(false);
+  const [isPerformanceMode, setIsPerformanceMode] = useState(() => {
+    // Auto-detect weak devices on mount
+    if (typeof navigator !== 'undefined') {
+      const cores = navigator.hardwareConcurrency || 2;
+      const memory = (navigator as any).deviceMemory || 4;
+      const isMobile = /Android|iPhone|iPad|iPod|Opera Mini|IEMobile/i.test(navigator.userAgent);
+      if (cores <= 2 || memory <= 2 || isMobile) return true;
+    }
+    return false;
+  });
   const [isVisualsEnabled, setIsVisualsEnabled] = useState(true);
+  const perfFrameCountRef = useRef(0);
   
   const closeAllPanels = () => {
     setShowMixer(false);
@@ -1405,8 +1417,10 @@ export default function App() {
   // Visual Settings State
   const [visualColorMode, setVisualColorMode] = useState<'preset' | 'auto'>('preset');
   const [visualPalette, setVisualPalette] = useState<string[]>(['#ff3b30', '#ffffff', '#007aff']);
+  const [visualPaletteName, setVisualPaletteName] = useState<string>('');
   const [visualBackgroundFilter, setVisualBackgroundFilter] = useState<'none' | 'lens-flare' | 'trippy' | 'subtle'>('none');
   const [autoPalette, setAutoPalette] = useState<string[]>([]);
+  const autoPaletteFrameCountRef = useRef(0);
 
   // Helper for background filters
   const getBackgroundFilter = () => {
@@ -1564,6 +1578,10 @@ export default function App() {
   const [bpm, setBpm] = useState(120);
   const [scaleName, setScaleName] = useState<keyof typeof SCALES>('Pentatonic Major');
   const [rootNoteIndex, setRootNoteIndex] = useState(0); // 0 = C
+  const adjustedScale = useMemo(
+    () => SCALES[scaleName].map(n => (n + rootNoteIndex) % 12).sort((a, b) => a - b),
+    [scaleName, rootNoteIndex]
+  );
   const [quantizeAmount, setQuantizeAmount] = useState(1.0);
   const [sequenceLength, setSequenceLength] = useState(32);
   const [mutationAmount, setMutationAmount] = useState(0.2);
@@ -1678,6 +1696,7 @@ export default function App() {
   const globalClockRef = useRef<number>(0);
   const droneEvolutionTimeRef = useRef<number>(0);
   const abortControllerRef = useRef<AbortController | null>(null);
+  const visualizerCanvasRef = useRef<HTMLCanvasElement | null>(null);
 
   const applyPatch = useCallback((patchIdx: number) => {
     const patch = PATCHES[patchIdx];
@@ -1864,7 +1883,7 @@ export default function App() {
     analyser.connect(ctx.destination);
     
     analyser.fftSize = 256;
-    masterGain.gain.value = volume;
+    masterGain.gain.value = volumeRef.current;
     finalGain.gain.value = isPlaying ? 1 : 0;
 
     // Drone Effects Chain
@@ -2078,7 +2097,7 @@ export default function App() {
     if (ctx.state === 'suspended') {
       await ctx.resume();
     }
-  }, [volume]);
+  }, []);
 
   const stopAllAudio = useCallback(() => {
     if (audioContextRef.current) {
@@ -2207,9 +2226,9 @@ export default function App() {
               if (effect === 'squash') node.curve = makeDistortionCurve(amount * 50);
               if (effect === 'broken' || effect === 'crush' || effect === 'radio') {
                 const n = effect === 'crush' ? Math.floor(2 + (1 - amount) * 4) : Math.floor(2 + (1 - amount) * 10);
-                const curve = new Float32Array(44100);
-                for (let i = 0; i < 44100; i++) {
-                  const x = (i * 2) / 44100 - 1;
+                const curve = new Float32Array(1024);
+                for (let i = 0; i < 1024; i++) {
+                  const x = (i * 2) / 1024 - 1;
                   curve[i] = Math.round(x * n) / n;
                 }
                 node.curve = curve;
@@ -2343,9 +2362,9 @@ export default function App() {
           } else if (effect === 'crush') {
             const shaper = ctx.createWaveShaper();
             const n = Math.floor(2 + (1 - amount) * 4);
-            const curve = new Float32Array(44100);
-            for (let i = 0; i < 44100; i++) {
-              const x = (i * 2) / 44100 - 1;
+            const curve = new Float32Array(1024);
+            for (let i = 0; i < 1024; i++) {
+              const x = (i * 2) / 1024 - 1;
               curve[i] = Math.round(x * n) / n;
             }
             shaper.curve = curve;
@@ -2581,9 +2600,9 @@ export default function App() {
           } else if (effect === 'broken') {
             const shaper = ctx.createWaveShaper();
             const n = Math.floor(2 + (1 - amount) * 10);
-            const curve = new Float32Array(44100);
-            for (let i = 0; i < 44100; i++) {
-              const x = (i * 2) / 44100 - 1;
+            const curve = new Float32Array(1024);
+            for (let i = 0; i < 1024; i++) {
+              const x = (i * 2) / 1024 - 1;
               curve[i] = Math.round(x * n) / n;
             }
             shaper.curve = curve;
@@ -2620,9 +2639,9 @@ export default function App() {
             noise.start();
             const shaper = ctx.createWaveShaper();
             const n = Math.floor(2 + (1 - amount) * 10);
-            const curve = new Float32Array(44100);
-            for (let i = 0; i < 44100; i++) {
-              const x = (i * 2) / 44100 - 1;
+            const curve = new Float32Array(1024);
+            for (let i = 0; i < 1024; i++) {
+              const x = (i * 2) / 1024 - 1;
               curve[i] = Math.round(x * n) / n;
             }
             shaper.curve = curve;
@@ -3255,7 +3274,7 @@ export default function App() {
     // Quantization Link
     if (droneSequencerLinkToMatrix) {
       const freq = 440 * Math.pow(2, (midiNote - 69) / 12);
-      const quantizedFreq = quantizeFrequency(freq, SCALES[scaleName], rootNoteIndex);
+      const quantizedFreq = quantizeFrequency(freq, adjustedScale);
       midiNote = 69 + 12 * Math.log2(quantizedFreq / 440);
     }
 
@@ -3276,7 +3295,7 @@ export default function App() {
     voice.gain.gain.linearRampToValueAtTime(stepVol * adsr.sustain, audioNow + adsr.attack + adsr.decay);
     voice.gain.gain.setValueAtTime(stepVol * adsr.sustain, audioNow + noteDuration - adsr.release);
     voice.gain.gain.linearRampToValueAtTime(0, audioNow + noteDuration);
-  }, [droneSequencerVoices, droneSequencerMasterVolumes, droneSequencerLinkToMatrix, scaleName, rootNoteIndex, bpm]);
+  }, [droneSequencerVoices, droneSequencerMasterVolumes, droneSequencerLinkToMatrix, scaleName, rootNoteIndex, adjustedScale, bpm]);
 
   const formulaXRef = useRef<Function | null>(null);
   const formulaYRef = useRef<Function | null>(null);
@@ -3298,14 +3317,20 @@ export default function App() {
       }
       return;
     }
+
+    // Performance mode: throttle to ~30fps by skipping every other frame
+    if (isPerformanceMode && perfFrameCountRef.current++ % 2 !== 0) {
+      requestRef.current = requestAnimationFrame(updateSound);
+      return;
+    }
     
     const canvas = samplingCanvasRef.current;
     const ctx = canvas.getContext('2d', { willReadFrequently: true });
     if (!ctx) return;
 
     // Optimization: Limit sampling resolution for performance
-    const sampleW = 320;
-    const sampleH = 180;
+    const sampleW = isPerformanceMode ? 160 : 320;
+    const sampleH = isPerformanceMode ? 90 : 180;
 
     // If video or webcam, draw current frame to canvas
     if (isWebcamActive && webcamVideoRef.current) {
@@ -3403,14 +3428,17 @@ export default function App() {
         
         newAutoPalette.push(`rgb(${compR}, ${compG}, ${compB})`);
       }
-      setAutoPalette(newAutoPalette);
+      if (autoPaletteFrameCountRef.current++ % 6 === 0) {
+        setAutoPalette(newAutoPalette);
+      }
     }
 
     // Evaluate formulas and sample
-    for (let i = 0; i < SAMPLE_POINTS; i++) {
+    const audioNow = audioContextRef.current.currentTime;
+    const voiceStep = isPerformanceMode ? 2 : 1; // Skip alternate voices in perf mode
+    for (let i = 0; i < SAMPLE_POINTS; i += voiceStep) {
       try {
         const { osc, noiseSource, gain, filter, panner } = oscillatorsRef.current[i];
-        const now = audioContextRef.current!.currentTime;
 
         let x = evalX(t, i, n, currentW, currentH, Math);
         let y = evalY(t, i, n, currentW, currentH, Math);
@@ -3442,7 +3470,7 @@ export default function App() {
         newPoints.push({ x: (x / currentW) * 1280, y: (y / currentH) * 720 });
 
         if (!enabledVoices[i]) {
-          gain.gain.setTargetAtTime(0, now, 0.05);
+          gain.gain.setTargetAtTime(0, audioNow, 0.05);
           voiceStatesRef.current[i] = false;
           continue;
         }
@@ -3475,7 +3503,7 @@ export default function App() {
     let freq = baseFreq + (SAMPLE_POINTS - i) * (freqRange / SAMPLE_POINTS) + (freqTrait * freqMod);
     
     if (isSequencerEnabled) {
-      const quantizedFreq = quantizeFrequency(freq, SCALES[scaleName], rootNoteIndex);
+      const quantizedFreq = quantizeFrequency(freq, adjustedScale);
       freq = freq + (quantizedFreq - freq) * quantizeAmount;
     }
     
@@ -3483,8 +3511,8 @@ export default function App() {
     const isTriggered = ampTrait > triggerThreshold;
 
     // Standard scanning synthesis for all voices
-    osc.frequency.setTargetAtTime(freq, now, 0.05);
-    if (noiseSource) (noiseSource as any).playbackRate.setTargetAtTime(0, now, 0.01);
+    osc.frequency.setTargetAtTime(freq, audioNow, 0.05);
+    if (noiseSource) (noiseSource as any).playbackRate.setTargetAtTime(0, audioNow, 0.01);
 
     if (isTriggered && !voiceStatesRef.current[i]) {
           // GATE ON: Attack -> Decay -> Sustain
@@ -3494,31 +3522,30 @@ export default function App() {
           const sustainLevel = voiceAdsr.sustain * traits[voiceMapping.sustain];
           const peakLevel = ampTrait * (1 / SAMPLE_POINTS) * ampMod * (isMuted ? 0 : 1);
 
-          gain.gain.cancelScheduledValues(now);
-          gain.gain.setValueAtTime(gain.gain.value, now);
-          gain.gain.linearRampToValueAtTime(peakLevel, now + attackTime);
-          gain.gain.linearRampToValueAtTime(peakLevel * sustainLevel, now + attackTime + decayTime);
+          gain.gain.cancelScheduledValues(audioNow);
+          gain.gain.setValueAtTime(gain.gain.value, audioNow);
+          gain.gain.linearRampToValueAtTime(peakLevel, audioNow + attackTime);
+          gain.gain.linearRampToValueAtTime(peakLevel * sustainLevel, audioNow + attackTime + decayTime);
         } else if (!isTriggered && voiceStatesRef.current[i]) {
           // GATE OFF: Release
           voiceStatesRef.current[i] = false;
           const releaseTime = Math.max(0.005, voiceAdsr.release * traits[voiceMapping.release] * 3);
-          gain.gain.cancelScheduledValues(now);
-          gain.gain.setValueAtTime(gain.gain.value, now);
-          gain.gain.linearRampToValueAtTime(0, now + releaseTime);
+          gain.gain.cancelScheduledValues(audioNow);
+          gain.gain.setValueAtTime(gain.gain.value, audioNow);
+          gain.gain.linearRampToValueAtTime(0, audioNow + releaseTime);
         }
 
         const cutoffTrait = traits[voiceMapping.cutoff];
-        filter.frequency.setTargetAtTime(500 + cutoffTrait * cutoffMod, now, 0.05);
+        filter.frequency.setTargetAtTime(500 + cutoffTrait * cutoffMod, audioNow, 0.05);
 
         const qTrait = traits[voiceMapping.q];
-        filter.Q.setTargetAtTime(qTrait * qMod, now, 0.05);
+        filter.Q.setTargetAtTime(qTrait * qMod, audioNow, 0.05);
 
         filter.type = 'lowpass';
-        filter.frequency.setTargetAtTime(500 + cutoffTrait * cutoffMod, now, 0.05);
 
         const panTrait = traits[voiceMapping.pan];
         const targetPan = (panTrait * 2) - 1; // Map 0..1 to -1..1
-        panner.pan.setTargetAtTime(targetPan, now, 0.05);
+        panner.pan.setTargetAtTime(targetPan, audioNow, 0.05);
 
         // Update Mutation Offsets based on current traits
         if (isEvolving && isTriggered) {
@@ -3549,7 +3576,7 @@ export default function App() {
   scanPointsRef.current = newPoints;
 
     requestRef.current = requestAnimationFrame(updateSound);
-  }, [isPlaying, isSynthMatrixEnabled, isMuted, scanSpeed, baseFreq, freqRange, freqMod, ampMod, cutoffMod, qMod, voiceMappings, formulaX, formulaY, voiceWaveShapes, scanCenterX, scanCenterY, scanScale, triggerThreshold, adsr, isWebcamActive, mediaType, isSequencerEnabled, bpm, scaleName, rootNoteIndex, quantizeAmount, sequenceLength, mutationAmount, isEvolving, mouseInfluence, enabledVoices, isScanSpeedSynced]);
+  }, [isPlaying, isSynthMatrixEnabled, isMuted, scanSpeed, baseFreq, freqRange, freqMod, ampMod, cutoffMod, qMod, voiceMappings, formulaX, formulaY, voiceWaveShapes, scanCenterX, scanCenterY, scanScale, triggerThreshold, adsr, isWebcamActive, mediaType, isSequencerEnabled, bpm, scaleName, rootNoteIndex, adjustedScale, quantizeAmount, sequenceLength, mutationAmount, isEvolving, mouseInfluence, enabledVoices, isScanSpeedSynced, isPerformanceMode]);
 
   useEffect(() => {
     if (isPlaying) {
@@ -3576,6 +3603,9 @@ export default function App() {
       if (requestRef.current) cancelAnimationFrame(requestRef.current);
     };
   }, [isPlaying, updateSound]);
+
+  // Keep volumeRef in sync so initAudio can read it without a stale closure
+  useEffect(() => { volumeRef.current = volume; }, [volume]);
 
   // Handle Master Volume
   useEffect(() => {
@@ -3748,7 +3778,7 @@ export default function App() {
             // Quantization Link
             if (droneSequencerLinkToMatrix) {
               const freq = 440 * Math.pow(2, (midiNote - 69) / 12);
-              const quantizedFreq = quantizeFrequency(freq, SCALES[scaleName], rootNoteIndex);
+              const quantizedFreq = quantizeFrequency(freq, adjustedScale);
               midiNote = 69 + 12 * Math.log2(quantizedFreq / 440);
             }
 
@@ -3777,7 +3807,7 @@ export default function App() {
 
     animationFrameId = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(animationFrameId);
-  }, [isPlaying, isDroneSequencerEnabled, droneSequencerBpm, droneSequencerLinkToMatrix, scaleName, rootNoteIndex, droneSequencerSwing, isSequencerGenerative, sequencerMutationRate, droneSequencerSyncToGlobal, bpm]);
+  }, [isPlaying, isDroneSequencerEnabled, droneSequencerBpm, droneSequencerLinkToMatrix, scaleName, rootNoteIndex, adjustedScale, droneSequencerSwing, isSequencerGenerative, sequencerMutationRate, droneSequencerSyncToGlobal, bpm]);
 
   // Optical Synth Evolution Effect
   useEffect(() => {
@@ -3926,7 +3956,7 @@ export default function App() {
 
   // Draw Visualizer
   useEffect(() => {
-    const visualizerCanvas = document.getElementById('visualizer') as HTMLCanvasElement;
+    const visualizerCanvas = visualizerCanvasRef.current;
     if (!visualizerCanvas || !analyserRef.current) return;
 
     const ctx = visualizerCanvas.getContext('2d');
@@ -3937,12 +3967,11 @@ export default function App() {
 
     let animationFrameId: number;
     const draw = () => {
+      animationFrameId = requestAnimationFrame(draw);
       if (!isPlaying) {
         ctx.clearRect(0, 0, visualizerCanvas.width, visualizerCanvas.height);
         return;
       }
-      
-      animationFrameId = requestAnimationFrame(draw);
       analyserRef.current!.getByteFrequencyData(dataArray);
 
       ctx.clearRect(0, 0, visualizerCanvas.width, visualizerCanvas.height);
@@ -4175,11 +4204,11 @@ export default function App() {
             <canvas ref={samplingCanvasRef} width={640} height={360} className="hidden" />
             
             {/* Scan Points Visualization - Optimized Canvas Component */}
-            <ScanningVisuals 
-              pointsRef={scanPointsRef} 
+            <ScanningVisuals
+              pointsRef={scanPointsRef}
               canvasRef={visualsCanvasRef}
-              width={640} 
-              height={360} 
+              width={isPerformanceMode ? 320 : 640}
+              height={isPerformanceMode ? 180 : 360}
               isPlaying={isPlaying}
               transparency={0.6}
               colorMode={visualColorMode}
@@ -4187,6 +4216,7 @@ export default function App() {
               palette={visualColorMode === 'auto' ? autoPalette : (visualColorMode === 'preset' ? visualPalette : [])}
               trippy={0}
               subtle={0}
+              performanceMode={isPerformanceMode}
             />
           </motion.div>
         )}
@@ -4296,7 +4326,7 @@ export default function App() {
 
             <div className="hidden xl:flex items-center px-1.5">
               <div className="w-20 h-5 relative bg-white/5 rounded-md overflow-hidden border border-white/10">
-                <canvas id="visualizer" width="80" height="20" className="w-full h-full opacity-50" />
+                <canvas ref={visualizerCanvasRef} id="visualizer" width="80" height="20" className="w-full h-full opacity-50" />
               </div>
             </div>
 
@@ -6215,16 +6245,17 @@ export default function App() {
                         key={p.name}
                         onClick={() => {
                           setVisualPalette(p.colors);
+                          setVisualPaletteName(p.name);
                           setVisualColorMode('preset');
                         }}
                         className={`rounded-2xl border flex flex-col gap-3 transition-all group relative overflow-hidden ${isPerformanceMode ? 'p-3' : 'p-4'} ${
-                          JSON.stringify(visualPalette) === JSON.stringify(p.colors)
-                            ? 'bg-white/10 border-white/30 shadow-lg' 
+                          visualPaletteName === p.name
+                            ? 'bg-white/10 border-white/30 shadow-lg'
                             : 'bg-white/5 border-white/5 hover:border-white/10'
                         }`}
                       >
                         <span className={`text-[9px] font-black uppercase tracking-widest transition-colors ${
-                          JSON.stringify(visualPalette) === JSON.stringify(p.colors) ? 'text-white' : 'text-white/40 group-hover:text-white/60'
+                          visualPaletteName === p.name ? 'text-white' : 'text-white/40 group-hover:text-white/60'
                         }`}>{p.name}</span>
                         <div className="flex h-2 w-full rounded-full overflow-hidden shadow-inner">
                           {p.colors.map((c, i) => (
