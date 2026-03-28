@@ -18,6 +18,7 @@ interface ScanningVisualsProps {
   trippy: number;
   subtle: number;
   performanceMode?: boolean;
+  pointSize?: number;
 }
 
 const ScanningVisuals: React.FC<ScanningVisualsProps> = ({
@@ -32,7 +33,8 @@ const ScanningVisuals: React.FC<ScanningVisualsProps> = ({
   palette,
   trippy,
   subtle,
-  performanceMode = false
+  performanceMode = false,
+  pointSize = 1
 }) => {
   const requestRef = useRef<number>(0);
   const ctxRef = useRef<CanvasRenderingContext2D | null>(null);
@@ -48,7 +50,8 @@ const ScanningVisuals: React.FC<ScanningVisualsProps> = ({
     subtle,
     width,
     height,
-    performanceMode
+    performanceMode,
+    pointSize
   });
 
   // Update the ref whenever props change
@@ -62,9 +65,10 @@ const ScanningVisuals: React.FC<ScanningVisualsProps> = ({
       subtle,
       width,
       height,
-      performanceMode
+      performanceMode,
+      pointSize
     };
-  }, [transparency, colorMode, manualColor, palette, trippy, subtle, width, height, performanceMode]);
+  }, [transparency, colorMode, manualColor, palette, trippy, subtle, width, height, performanceMode, pointSize]);
 
   const draw = () => {
     const canvas = canvasRef.current;
@@ -82,7 +86,8 @@ const ScanningVisuals: React.FC<ScanningVisualsProps> = ({
       palette: currentPalette,
       trippy: currentTrippy,
       subtle: currentSubtle,
-      performanceMode: isPerfMode
+      performanceMode: isPerfMode,
+      pointSize: currentPointSize
     } = propsRef.current;
 
     // Performance mode: throttle visuals to ~30fps
@@ -196,21 +201,26 @@ const ScanningVisuals: React.FC<ScanningVisualsProps> = ({
         pointColor = `hsla(${hue}, 100%, 70%, 0.8)`;
       }
 
+      // Scale point radius: scanPointSize is in sampling-canvas pixels, visual canvas is 2x
+      const baseRadius = Math.max(2, currentPointSize);
+
       if (!isPerfMode) {
         // Glow (skip in perf mode)
         const size = (10 + Math.sin(frameNow / 200 + i) * 5) * (1 - currentSubtle * 0.5 + currentTrippy);
+        const glowSize = Math.max(size, baseRadius * 1.5);
         ctx.fillStyle = pointColor;
         ctx.globalAlpha = currentTransparency * 0.4;
         ctx.beginPath();
-        ctx.arc(p.x, p.y, size * 1.5, 0, Math.PI * 2);
+        ctx.arc(p.x, p.y, glowSize * 1.5, 0, Math.PI * 2);
         ctx.fill();
       }
 
-      // Core point
+      // Core point — scales with scanPointSize
       ctx.fillStyle = 'white';
       ctx.globalAlpha = 1;
       ctx.beginPath();
-      ctx.arc(p.x, p.y, isPerfMode ? 2 : 2 * (1 + currentTrippy), 0, Math.PI * 2);
+      const coreRadius = isPerfMode ? baseRadius : baseRadius * (1 + currentTrippy);
+      ctx.arc(p.x, p.y, coreRadius, 0, Math.PI * 2);
       ctx.fill();
 
       // Energy lines (skip in perf mode)

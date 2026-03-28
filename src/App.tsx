@@ -1713,6 +1713,7 @@ export default function App() {
   const [scanCenterX, setScanCenterX] = useState(0.5);
   const [scanCenterY, setScanCenterY] = useState(0.5);
   const [scanScale, setScanScale] = useState(1.0);
+  const [scanPointSize, setScanPointSize] = useState(1);
   const [triggerThreshold, setTriggerThreshold] = useState(0.1);
   const [adsr, setAdsr] = useState<{attack: number, decay: number, sustain: number, release: number}[]>(
     new Array(SAMPLE_POINTS).fill(null).map(() => ({
@@ -3783,7 +3784,10 @@ export default function App() {
         x = Math.max(0, Math.min(currentW - 1, x));
         y = Math.max(0, Math.min(currentH - 1, y));
 
-        newPoints.push({ x: (x / currentW) * 1280, y: (y / currentH) * 720 });
+        // Map to visual canvas coordinates (matching ScanningVisuals dimensions)
+        const vizW = isPerformanceMode ? 320 : 640;
+        const vizH = isPerformanceMode ? 180 : 360;
+        newPoints.push({ x: (x / currentW) * vizW, y: (y / currentH) * vizH });
 
         if (!enabledVoices[i]) {
           gain.gain.setTargetAtTime(0, audioNow, 0.05);
@@ -3791,15 +3795,39 @@ export default function App() {
           continue;
         }
 
-        // Ensure we don't sample outside the canvas
+        // Spatial averaging: sample area around scan point based on scanPointSize
         const sampleX = Math.floor(x);
         const sampleY = Math.floor(y);
 
         if (sampleX >= 0 && sampleX < currentW && sampleY >= 0 && sampleY < currentH) {
-          const index = (sampleY * currentW + sampleX) * 4;
-          const r = imageData[index];
-          const g = imageData[index + 1];
-          const b = imageData[index + 2];
+          let r: number, g: number, b: number;
+          if (scanPointSize <= 1) {
+            // Single pixel sampling (original behavior)
+            const index = (sampleY * currentW + sampleX) * 4;
+            r = imageData[index];
+            g = imageData[index + 1];
+            b = imageData[index + 2];
+          } else {
+            // Spatial averaging over scanPointSize radius
+            const radius = Math.floor(scanPointSize / 2);
+            let totalR = 0, totalG = 0, totalB = 0, count = 0;
+            const x0 = Math.max(0, sampleX - radius);
+            const x1 = Math.min(currentW - 1, sampleX + radius);
+            const y0 = Math.max(0, sampleY - radius);
+            const y1 = Math.min(currentH - 1, sampleY + radius);
+            for (let py = y0; py <= y1; py++) {
+              for (let px = x0; px <= x1; px++) {
+                const idx = (py * currentW + px) * 4;
+                totalR += imageData[idx];
+                totalG += imageData[idx + 1];
+                totalB += imageData[idx + 2];
+                count++;
+              }
+            }
+            r = totalR / count;
+            g = totalG / count;
+            b = totalB / count;
+          }
 
           const hsl = rgbToHsl(r, g, b);
           const traits: Record<ImageTrait, number> = {
@@ -3896,7 +3924,7 @@ export default function App() {
     scanPointsRef.current = newPoints;
 
     requestRef.current = requestAnimationFrame(updateSound);
-  }, [isPlaying, isSynthMatrixEnabled, isMuted, scanSpeed, baseFreq, freqRange, freqMod, ampMod, cutoffMod, qMod, voiceMappings, formulaX, formulaY, voiceWaveShapes, scanCenterX, scanCenterY, scanScale, triggerThreshold, adsr, isWebcamActive, mediaType, isSequencerEnabled, bpm, scaleName, rootNoteIndex, adjustedScale, quantizeAmount, sequenceLength, mutationAmount, isEvolving, mouseInfluence, enabledVoices, isScanSpeedSynced, isPerformanceMode]);
+  }, [isPlaying, isSynthMatrixEnabled, isMuted, scanSpeed, baseFreq, freqRange, freqMod, ampMod, cutoffMod, qMod, voiceMappings, formulaX, formulaY, voiceWaveShapes, scanCenterX, scanCenterY, scanScale, scanPointSize, triggerThreshold, adsr, isWebcamActive, mediaType, isSequencerEnabled, bpm, scaleName, rootNoteIndex, adjustedScale, quantizeAmount, sequenceLength, mutationAmount, isEvolving, mouseInfluence, enabledVoices, isScanSpeedSynced, isPerformanceMode]);
 
   useEffect(() => {
     if (isPlaying) {
@@ -4538,6 +4566,7 @@ export default function App() {
                 trippy={0}
                 subtle={0}
                 performanceMode={isPerformanceMode}
+                pointSize={scanPointSize}
               />
             )}
           </motion.div>
@@ -7073,15 +7102,34 @@ export default function App() {
                         <span className="text-[10px] text-white/60 uppercase font-black tracking-widest">Scanner Scale</span>
                         <span className="font-mono text-[11px] font-black text-white">{scanScale.toFixed(1)}x</span>
                       </div>
-                      <input 
-                        type="range" 
+                      <input
+                        type="range"
                         min="0.1"
                         max="3"
                         step="0.1"
-                        value={scanScale} 
+                        value={scanScale}
                         onChange={(e) => setScanScale(parseFloat(e.target.value))}
-                        className="w-full accent-emerald-500 h-1.5 bg-white/20 rounded-lg appearance-none cursor-pointer" 
+                        className="w-full accent-emerald-500 h-1.5 bg-white/20 rounded-lg appearance-none cursor-pointer"
                       />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-8 pt-8 border-t border-white/10">
+                    <div className="space-y-4">
+                      <div className="flex justify-between items-baseline">
+                        <span className="text-[10px] text-white/60 uppercase font-black tracking-widest">Point Size</span>
+                        <span className="font-mono text-[11px] font-black text-white">{scanPointSize}px</span>
+                      </div>
+                      <input
+                        type="range"
+                        min="1"
+                        max="30"
+                        step="1"
+                        value={scanPointSize}
+                        onChange={(e) => setScanPointSize(parseInt(e.target.value))}
+                        className="w-full accent-emerald-500 h-1.5 bg-white/20 rounded-lg appearance-none cursor-pointer"
+                      />
+                      <p className="text-[9px] text-white/30 mt-1">Larger sizes average more pixels for spatial smoothing</p>
                     </div>
                   </div>
 
