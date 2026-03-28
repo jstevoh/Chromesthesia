@@ -4208,20 +4208,22 @@ export default function App() {
             <canvas ref={samplingCanvasRef} width={640} height={360} className="hidden" />
             
             {/* Scan Points Visualization - Optimized Canvas Component */}
-            <ScanningVisuals
-              pointsRef={scanPointsRef}
-              canvasRef={visualsCanvasRef}
-              width={isPerformanceMode ? 320 : 640}
-              height={isPerformanceMode ? 180 : 360}
-              isPlaying={isPlaying}
-              transparency={0.6}
-              colorMode={visualColorMode}
-              manualColor="#ffffff"
-              palette={visualColorMode === 'auto' ? autoPalette : (visualColorMode === 'preset' ? visualPalette : [])}
-              trippy={0}
-              subtle={0}
-              performanceMode={isPerformanceMode}
-            />
+            {isVisualsEnabled && (
+              <ScanningVisuals
+                pointsRef={scanPointsRef}
+                canvasRef={visualsCanvasRef}
+                width={isPerformanceMode ? 320 : 640}
+                height={isPerformanceMode ? 180 : 360}
+                isPlaying={isPlaying}
+                transparency={0.6}
+                colorMode={visualColorMode}
+                manualColor="#ffffff"
+                palette={visualColorMode === 'auto' ? autoPalette : (visualColorMode === 'preset' ? visualPalette : [])}
+                trippy={0}
+                subtle={0}
+                performanceMode={isPerformanceMode}
+              />
+            )}
           </motion.div>
         )}
       </AnimatePresence>
@@ -4438,18 +4440,18 @@ export default function App() {
 
             {/* Visuals Settings */}
             <div className={`flex items-center rounded-lg transition-all duration-300 overflow-hidden ${
-              showVisualsModule 
-                ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-500/20' 
+              showVisualsModule
+                ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-500/20'
                 : 'bg-transparent text-white/40'
             }`}>
-              <button 
+              <button
                 onClick={() => setIsVisualsEnabled(!isVisualsEnabled)}
                 className={`px-2 py-2 hover:bg-white/10 transition-colors border-r ${showVisualsModule ? 'border-white/10' : 'border-white/5'}`}
-                title="Toggle Visuals"
+                title={isVisualsEnabled ? 'Hide Scan Overlay' : 'Show Scan Overlay'}
               >
-                <div className={`w-1.5 h-1.5 rounded-full transition-all duration-500 ${isVisualsEnabled ? 'bg-white animate-pulse' : 'bg-white/20'}`} />
+                <Eye className={`w-3 h-3 transition-all duration-300 ${isVisualsEnabled ? 'opacity-100' : 'opacity-30'}`} />
               </button>
-              <button 
+              <button
                 onClick={() => setShowVisualsModule(!showVisualsModule)}
                 className="px-2.5 py-2 flex items-center gap-1.5 hover:bg-white/10 transition-colors"
                 title="Visual Settings"
@@ -5026,40 +5028,6 @@ export default function App() {
             </div>
             
             <div className={`flex-1 overflow-y-auto pr-2 sm:pr-4 custom-scrollbar ${isPerformanceMode ? 'space-y-6' : 'space-y-8 sm:space-y-12'}`}>
-              {/* Drone Presets */}
-              <section className="space-y-4">
-                <label className="text-[11px] text-white/40 uppercase tracking-[0.3em] block font-black">Presets</label>
-                <div className="grid grid-cols-2 gap-2">
-                  {DRONE_PRESETS.map((preset, idx) => (
-                    <button
-                      key={idx}
-                      onClick={() => applyDronePreset(idx)}
-                      className={`group relative p-3 rounded-2xl border transition-all text-left flex flex-col justify-center ${
-                        activeDronePreset === idx 
-                          ? 'bg-emerald-500/20 border-white ring-2 ring-white/50 shadow-[0_0_15px_rgba(255,255,255,0.2)] scale-[1.02] z-10' 
-                          : 'bg-white/5 border-white/10 hover:bg-white/10 hover:border-white/20'
-                      }`}
-                    >
-                      <div className="flex items-center justify-between mb-1">
-                        <span className={`text-[11px] font-black uppercase tracking-widest ${activeDronePreset === idx ? 'text-white' : 'text-white/60 group-hover:text-emerald-400'}`}>
-                          {preset.name}
-                        </span>
-                        {activeDronePreset === idx && (
-                          <motion.div 
-                            layoutId="drone-preset-selection-dot"
-                            className="absolute -top-1 -right-1 w-2 h-2 bg-white rounded-full shadow-[0_0_8px_white] z-20"
-                          />
-                        )}
-                        {activeDronePreset === idx && <Zap className="w-3 h-3 text-white animate-pulse" />}
-                      </div>
-                      <p className={`text-[8px] line-clamp-1 transition-colors ${activeDronePreset === idx ? 'text-white/60' : 'text-white/30 group-hover:text-white/50'}`}>
-                        {preset.description}
-                      </p>
-                    </button>
-                  ))}
-                </div>
-              </section>
-
               {/* Master Controls */}
               <section className={`bg-white/5 rounded-3xl border border-white/10 ${isPerformanceMode ? 'p-4' : 'p-6'}`}>
                 <div className={`flex items-center justify-between ${isPerformanceMode ? 'mb-4' : 'mb-6'}`}>
@@ -5222,6 +5190,40 @@ export default function App() {
                       className="w-full accent-emerald-500 h-1.5 bg-white/20 rounded-lg appearance-none cursor-pointer"
                     />
                   </div>
+                </div>
+              </section>
+
+              {/* Drone Presets */}
+              <section className="space-y-4">
+                <label className="text-[11px] text-white/40 uppercase tracking-[0.3em] block font-black">Presets</label>
+                <div className="grid grid-cols-2 gap-2">
+                  {DRONE_PRESETS.map((preset, idx) => (
+                    <button
+                      key={idx}
+                      onClick={() => applyDronePreset(idx)}
+                      className={`group relative p-3 rounded-2xl border transition-all text-left flex flex-col justify-center ${
+                        activeDronePreset === idx
+                          ? 'bg-emerald-500/20 border-white ring-2 ring-white/50 shadow-[0_0_15px_rgba(255,255,255,0.2)] scale-[1.02] z-10'
+                          : 'bg-white/5 border-white/10 hover:bg-white/10 hover:border-white/20'
+                      }`}
+                    >
+                      <div className="flex items-center justify-between mb-1">
+                        <span className={`text-[11px] font-black uppercase tracking-widest ${activeDronePreset === idx ? 'text-white' : 'text-white/60 group-hover:text-emerald-400'}`}>
+                          {preset.name}
+                        </span>
+                        {activeDronePreset === idx && (
+                          <motion.div
+                            layoutId="drone-preset-selection-dot"
+                            className="absolute -top-1 -right-1 w-2 h-2 bg-white rounded-full shadow-[0_0_8px_white] z-20"
+                          />
+                        )}
+                        {activeDronePreset === idx && <Zap className="w-3 h-3 text-white animate-pulse" />}
+                      </div>
+                      <p className={`text-[8px] line-clamp-1 transition-colors ${activeDronePreset === idx ? 'text-white/60' : 'text-white/30 group-hover:text-white/50'}`}>
+                        {preset.description}
+                      </p>
+                    </button>
+                  ))}
                 </div>
               </section>
 
@@ -6529,48 +6531,7 @@ export default function App() {
             </div>
             
             <div className={`flex-1 overflow-y-auto pr-2 sm:pr-4 custom-scrollbar ${isPerformanceMode ? 'space-y-4' : 'space-y-8 sm:space-y-12'}`}>
-              <section className={isPerformanceMode ? 'space-y-3' : 'space-y-6'}>
-                <div className="flex items-center justify-between">
-                  <label className="text-[10px] text-white/40 uppercase tracking-[0.3em] font-black">Signal Sources</label>
-                  <span className="text-[8px] text-white/20 uppercase tracking-widest font-black">Inputs</span>
-                </div>
-                <div className="grid grid-cols-1 gap-3">
-                  {/* File Upload */}
-                  <motion.div 
-                    whileHover={{ scale: 1.01 }}
-                    whileTap={{ scale: 0.99 }}
-                    onClick={() => document.getElementById('image-input-settings')?.click()}
-                    className={`bg-white/5 border border-white/10 rounded-2xl flex items-center gap-4 cursor-pointer hover:bg-emerald-500/5 hover:border-emerald-500/30 transition-all group ${isPerformanceMode ? 'p-3' : 'p-4'}`}
-                  >
-                    <div className={`${isPerformanceMode ? 'w-8 h-8' : 'w-10 h-10'} rounded-xl bg-white/10 flex items-center justify-center group-hover:bg-emerald-500 group-hover:text-white transition-all`}>
-                      <Upload className={isPerformanceMode ? 'w-4 h-4' : 'w-5 h-5'} />
-                    </div>
-                    <div>
-                      <p className="text-[10px] font-black uppercase tracking-widest text-white">Upload Local File</p>
-                      <p className="text-[8px] text-white/40 font-bold uppercase tracking-widest">Image or Video</p>
-                    </div>
-                    <input id="image-input-settings" type="file" accept="image/*,video/*" className="hidden" onChange={handleMediaUpload} />
-                  </motion.div>
-
-                  {/* Camera */}
-                  <motion.div 
-                    whileHover={{ scale: 1.01 }}
-                    whileTap={{ scale: 0.99 }}
-                    onClick={toggleWebcam}
-                    className={`bg-white/5 border border-white/10 rounded-2xl p-4 flex items-center gap-4 cursor-pointer hover:bg-emerald-500/5 hover:border-emerald-500/30 transition-all group ${isWebcamActive ? 'border-emerald-500/50 bg-emerald-500/5' : ''}`}
-                  >
-                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all ${isWebcamActive ? 'bg-emerald-500 text-white' : 'bg-white/10 group-hover:bg-emerald-500 group-hover:text-white'}`}>
-                      <Camera className="w-5 h-5" />
-                    </div>
-                    <div>
-                      <p className="text-[11px] font-black uppercase tracking-widest text-white">Live Camera</p>
-                      <p className="text-[9px] text-white/40 font-bold uppercase tracking-widest">{isWebcamActive ? 'Active' : 'Stream'}</p>
-                    </div>
-                  </motion.div>
-
-                </div>
-              </section>
-
+              {/* Patches — fastest way to change everything */}
               <section>
                 <div className={`flex items-center justify-between ${isPerformanceMode ? 'mb-4' : 'mb-6'}`}>
                   <label className="text-[10px] text-white/40 uppercase tracking-[0.3em] font-black">Patches</label>
@@ -6595,6 +6556,83 @@ export default function App() {
                 </div>
               </section>
 
+              {/* Signal Sources */}
+              <section className={isPerformanceMode ? 'space-y-3' : 'space-y-6'}>
+                <div className="flex items-center justify-between">
+                  <label className="text-[10px] text-white/40 uppercase tracking-[0.3em] font-black">Signal Sources</label>
+                  <span className="text-[8px] text-white/20 uppercase tracking-widest font-black">Inputs</span>
+                </div>
+                <div className="grid grid-cols-1 gap-3">
+                  {/* File Upload */}
+                  <motion.div
+                    whileHover={{ scale: 1.01 }}
+                    whileTap={{ scale: 0.99 }}
+                    onClick={() => document.getElementById('image-input-settings')?.click()}
+                    className={`bg-white/5 border border-white/10 rounded-2xl flex items-center gap-4 cursor-pointer hover:bg-emerald-500/5 hover:border-emerald-500/30 transition-all group ${isPerformanceMode ? 'p-3' : 'p-4'}`}
+                  >
+                    <div className={`${isPerformanceMode ? 'w-8 h-8' : 'w-10 h-10'} rounded-xl bg-white/10 flex items-center justify-center group-hover:bg-emerald-500 group-hover:text-white transition-all`}>
+                      <Upload className={isPerformanceMode ? 'w-4 h-4' : 'w-5 h-5'} />
+                    </div>
+                    <div>
+                      <p className="text-[10px] font-black uppercase tracking-widest text-white">Upload Local File</p>
+                      <p className="text-[8px] text-white/40 font-bold uppercase tracking-widest">Image or Video</p>
+                    </div>
+                    <input id="image-input-settings" type="file" accept="image/*,video/*" className="hidden" onChange={handleMediaUpload} />
+                  </motion.div>
+
+                  {/* Camera */}
+                  <motion.div
+                    whileHover={{ scale: 1.01 }}
+                    whileTap={{ scale: 0.99 }}
+                    onClick={toggleWebcam}
+                    className={`bg-white/5 border border-white/10 rounded-2xl p-4 flex items-center gap-4 cursor-pointer hover:bg-emerald-500/5 hover:border-emerald-500/30 transition-all group ${isWebcamActive ? 'border-emerald-500/50 bg-emerald-500/5' : ''}`}
+                  >
+                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all ${isWebcamActive ? 'bg-emerald-500 text-white' : 'bg-white/10 group-hover:bg-emerald-500 group-hover:text-white'}`}>
+                      <Camera className="w-5 h-5" />
+                    </div>
+                    <div>
+                      <p className="text-[11px] font-black uppercase tracking-widest text-white">Live Camera</p>
+                      <p className="text-[9px] text-white/40 font-bold uppercase tracking-widest">{isWebcamActive ? 'Active' : 'Stream'}</p>
+                    </div>
+                  </motion.div>
+
+                </div>
+              </section>
+
+              {/* Scanning Presets — choose scan pattern */}
+              <section>
+                <label className={`text-[11px] text-white/40 uppercase tracking-[0.3em] block font-black ${isPerformanceMode ? 'mb-4' : 'mb-6'}`}>Scanning Presets</label>
+                <div className="space-y-4">
+                  <select
+                    value={activePreset}
+                    onChange={(e) => {
+                      const idx = parseInt(e.target.value);
+                      const preset = SCAN_PRESETS[idx];
+                      setActivePreset(idx);
+                      setFormulaX(preset.formulaX);
+                      setFormulaY(preset.formulaY);
+                      setScanTime(0);
+                      scanTimeRef.current = 0;
+                    }}
+                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-4 text-[11px] text-white outline-none focus:border-emerald-500/50 font-black uppercase tracking-widest"
+                  >
+                    {SCAN_PRESETS.map((preset, idx) => (
+                      <option key={preset.name} value={idx} className="bg-[#0f172a]">
+                        {preset.name}
+                      </option>
+                    ))}
+                  </select>
+                  {activePreset !== undefined && SCAN_PRESETS[activePreset] && (
+                    <div className="p-4 bg-white/5 rounded-xl border border-white/10">
+                      <p className="text-[10px] text-white/60 font-black uppercase tracking-widest leading-relaxed">
+                        {SCAN_PRESETS[activePreset].description}
+                      </p>
+                    </div>
+                  )}
+                </div>
+              </section>
+
+              {/* Engine Parameters */}
               <section>
                 <label className={`text-[10px] text-white/40 uppercase tracking-[0.3em] block font-black ${isPerformanceMode ? 'mb-4' : 'mb-6'}`}>Engine Parameters</label>
                 <div className={`bg-white/5 rounded-3xl border border-white/10 shadow-inner ${isPerformanceMode ? 'p-4 space-y-4' : 'p-8 space-y-8'}`}>
@@ -6951,38 +6989,6 @@ export default function App() {
                     </div>
                   </motion.div>
                 )}
-              </section>
-
-              <section className="border-t border-white/10 pt-10">
-                <label className="text-[11px] text-white/40 uppercase tracking-[0.3em] block mb-6 font-black">Scanning Presets</label>
-                <div className="space-y-4">
-                  <select 
-                    value={activePreset}
-                    onChange={(e) => {
-                      const idx = parseInt(e.target.value);
-                      const preset = SCAN_PRESETS[idx];
-                      setActivePreset(idx);
-                      setFormulaX(preset.formulaX);
-                      setFormulaY(preset.formulaY);
-                      setScanTime(0);
-                      scanTimeRef.current = 0;
-                    }}
-                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-4 text-[11px] text-white outline-none focus:border-emerald-500/50 font-black uppercase tracking-widest"
-                  >
-                    {SCAN_PRESETS.map((preset, idx) => (
-                      <option key={preset.name} value={idx} className="bg-[#0f172a]">
-                        {preset.name}
-                      </option>
-                    ))}
-                  </select>
-                  {activePreset !== undefined && SCAN_PRESETS[activePreset] && (
-                    <div className="p-4 bg-white/5 rounded-xl border border-white/10">
-                      <p className="text-[10px] text-white/60 font-black uppercase tracking-widest leading-relaxed">
-                        {SCAN_PRESETS[activePreset].description}
-                      </p>
-                    </div>
-                  )}
-                </div>
               </section>
 
               <section className="border-t border-white/10 pt-10">
