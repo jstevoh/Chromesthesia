@@ -32,7 +32,6 @@ import {
   Cpu,
   Circle,
   Sliders,
-  Power,
   Square,
   X,
   XCircle,
@@ -4552,13 +4551,13 @@ export default function App() {
                   setIsPlaying(!isPlaying);
                 }}
                 className={`w-8 h-8 rounded-full flex items-center justify-center transition-all duration-300 ${
-                  isPlaying 
-                    ? 'bg-pedal-accent text-white shadow-[0_0_12px_rgba(255,59,48,0.4)]' 
+                  isPlaying
+                    ? 'bg-pedal-accent text-white shadow-[0_0_12px_rgba(255,59,48,0.4)]'
                     : 'bg-white/10 text-white/20 hover:bg-white/20'
                 }`}
-                title="Global Power"
+                title={isPlaying ? "Stop" : "Play"}
               >
-                <Power className="w-4 h-4" />
+                {isPlaying ? <Square className="w-3.5 h-3.5" /> : <Play className="w-4 h-4" />}
               </button>
 
               <button 
@@ -5047,10 +5046,10 @@ export default function App() {
             initial={isPerformanceMode ? { opacity: 0, x: 100 } : { opacity: 0, y: 100 }}
             animate={isPerformanceMode ? { opacity: 1, x: 0 } : { opacity: 1, y: 0 }}
             exit={isPerformanceMode ? { opacity: 0, x: 100 } : { opacity: 0, y: 100 }}
-            className={`fixed top-0 right-0 bottom-0 sm:top-4 sm:right-4 sm:bottom-4 w-full sm:w-[480px] lg:w-[500px] max-w-full bg-[#0f172a] sm:squircle p-6 sm:p-8 z-50 shadow-2xl flex flex-col border-l sm:border border-white/10 text-white ${isPerformanceMode ? 'sm:w-[260px] lg:w-[260px] !p-4' : ''}`}
+            className={`fixed top-0 right-0 bottom-0 sm:top-4 sm:right-4 sm:bottom-4 w-full sm:w-[480px] lg:w-[500px] max-w-full bg-[#0f172a] sm:squircle p-4 sm:p-5 z-50 shadow-2xl flex flex-col border-l sm:border border-white/10 text-white ${isPerformanceMode ? 'sm:w-[260px] lg:w-[260px] !p-4' : ''}`}
             style={getPerfOffset(0)}
           >
-            <div className={`flex justify-between items-center ${isPerformanceMode ? 'mb-4' : 'mb-8 sm:mb-10'}`}>
+            <div className={`flex justify-between items-center ${isPerformanceMode ? 'mb-3' : 'mb-4 sm:mb-5'}`}>
               <div className="flex items-center gap-4">
                 <div className={`${isPerformanceMode ? 'w-8 h-8' : 'w-10 h-10'} bg-emerald-500 rounded-xl flex items-center justify-center shadow-lg shadow-emerald-500/20`}>
                   <Sliders className={`text-white ${isPerformanceMode ? 'w-4 h-4' : 'w-6 h-6'}`} />
@@ -5080,7 +5079,7 @@ export default function App() {
               </div>
             </div>
 
-            <div className={`flex-1 overflow-y-auto pr-2 sm:pr-4 custom-scrollbar ${isPerformanceMode ? 'space-y-8' : 'space-y-12'}`}>
+            <div className={`flex-1 overflow-y-auto pr-2 sm:pr-4 custom-scrollbar ${isPerformanceMode ? 'space-y-4' : 'space-y-6'}`}>
               {/* Master Section */}
               <section className="grid grid-cols-1 gap-6">
                 <div className={`bg-white/5 border border-white/10 space-y-6 ${isPerformanceMode ? 'p-6 rounded-2xl' : 'p-8 rounded-[32px]'}`}>
@@ -5293,10 +5292,10 @@ export default function App() {
             initial={{ opacity: 0, x: 400 }}
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: 400 }}
-            className={`fixed top-0 right-0 bottom-0 sm:top-4 sm:right-4 sm:bottom-4 w-full sm:w-[480px] lg:w-[500px] max-w-full bg-[#0f172a] sm:squircle p-6 sm:p-8 z-50 shadow-2xl flex flex-col border-l sm:border border-white/10 text-white ${isPerformanceMode ? 'sm:w-[260px] lg:w-[260px] !p-4' : ''}`}
+            className={`fixed top-0 right-0 bottom-0 sm:top-4 sm:right-4 sm:bottom-4 w-full sm:w-[480px] lg:w-[500px] max-w-full bg-[#0f172a] sm:squircle p-4 sm:p-5 z-50 shadow-2xl flex flex-col border-l sm:border border-white/10 text-white ${isPerformanceMode ? 'sm:w-[260px] lg:w-[260px] !p-4' : ''}`}
             style={getPerfOffset(2)}
           >
-            <div className={`flex justify-between items-center ${isPerformanceMode ? 'mb-4' : 'mb-8 sm:mb-10'}`}>
+            <div className={`flex justify-between items-center ${isPerformanceMode ? 'mb-3' : 'mb-4 sm:mb-5'}`}>
               <div className="flex items-center gap-4">
                 <div className={`${isPerformanceMode ? 'w-8 h-8' : 'w-10 h-10'} bg-emerald-500 rounded-xl flex items-center justify-center shadow-lg shadow-emerald-500/20`}>
                   <Layers className={`text-white ${isPerformanceMode ? 'w-4 h-4' : 'w-6 h-6'}`} />
@@ -5317,7 +5316,7 @@ export default function App() {
               </div>
             </div>
             
-            <div className={`flex-1 overflow-y-auto pr-2 sm:pr-4 custom-scrollbar ${isPerformanceMode ? 'space-y-6' : 'space-y-8 sm:space-y-12'}`}>
+            <div className={`flex-1 overflow-y-auto pr-2 sm:pr-4 custom-scrollbar ${isPerformanceMode ? 'space-y-4' : 'space-y-5 sm:space-y-6'}`}>
               {/* Master Controls */}
               <section className={`bg-white/5 rounded-3xl border border-white/10 ${isPerformanceMode ? 'p-4' : 'p-6'}`}>
                 <div className={`flex items-center justify-between ${isPerformanceMode ? 'mb-4' : 'mb-6'}`}>
@@ -5602,7 +5601,7 @@ export default function App() {
 
               {/* Drone Effects Chain */}
               <section className="border-t border-white/10 pt-10">
-                <label className="text-[11px] text-white/40 uppercase tracking-[0.3em] block mb-8 font-black">Drone Effects Chain</label>
+                <label className="text-[11px] text-white/40 uppercase tracking-[0.3em] block mb-4 font-black">Drone Effects Chain</label>
                 
                 <div className="grid grid-cols-1 gap-8">
                   {/* Character Module */}
@@ -5785,10 +5784,10 @@ export default function App() {
             initial={{ opacity: 0, x: 400 }}
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: 400 }}
-            className={`fixed top-0 right-0 bottom-0 sm:top-4 sm:right-4 sm:bottom-4 w-full sm:w-[480px] lg:w-[500px] max-w-full bg-[#0f172a] sm:squircle p-6 sm:p-8 z-50 shadow-2xl flex flex-col border-l sm:border border-white/10 text-white ${isPerformanceMode ? 'sm:w-[260px] lg:w-[260px] !p-4' : ''}`}
+            className={`fixed top-0 right-0 bottom-0 sm:top-4 sm:right-4 sm:bottom-4 w-full sm:w-[480px] lg:w-[500px] max-w-full bg-[#0f172a] sm:squircle p-4 sm:p-5 z-50 shadow-2xl flex flex-col border-l sm:border border-white/10 text-white ${isPerformanceMode ? 'sm:w-[260px] lg:w-[260px] !p-4' : ''}`}
             style={getPerfOffset(3)}
           >
-            <div className={`flex justify-between items-center ${isPerformanceMode ? 'mb-4' : 'mb-8 sm:mb-10'}`}>
+            <div className={`flex justify-between items-center ${isPerformanceMode ? 'mb-3' : 'mb-4 sm:mb-5'}`}>
               <div className="flex items-center gap-4">
                 <div className={`${isPerformanceMode ? 'w-8 h-8' : 'w-10 h-10'} bg-emerald-500 rounded-xl flex items-center justify-center shadow-lg shadow-emerald-500/20`}>
                   <Zap className={`text-white ${isPerformanceMode ? 'w-4 h-4' : 'w-6 h-6'}`} />
@@ -5809,7 +5808,7 @@ export default function App() {
               </div>
             </div>
             
-            <div className={`flex-1 overflow-y-auto pr-2 sm:pr-4 custom-scrollbar ${isPerformanceMode ? 'space-y-6' : 'space-y-8 sm:space-y-12'}`}>
+            <div className={`flex-1 overflow-y-auto pr-2 sm:pr-4 custom-scrollbar ${isPerformanceMode ? 'space-y-4' : 'space-y-5 sm:space-y-6'}`}>
               <section className={`bg-white/5 rounded-3xl border border-white/10 ${isPerformanceMode ? 'p-4' : 'p-6'}`}>
                 <div className="flex items-center justify-between gap-4">
                   <button 
@@ -5895,7 +5894,7 @@ export default function App() {
 
               {/* Sequencer Section */}
               <section className={`border-t border-white/10 ${isPerformanceMode ? 'pt-6' : 'pt-10'}`}>
-                <div className={`flex flex-col justify-between gap-6 ${isPerformanceMode ? 'mb-4' : 'mb-8 sm:mb-10'}`}>
+                <div className={`flex flex-col justify-between gap-6 ${isPerformanceMode ? 'mb-3' : 'mb-4 sm:mb-5'}`}>
                   <label className="text-[11px] text-white/40 uppercase tracking-[0.3em] font-black">Sequencer</label>
                   <div className={`flex flex-wrap items-center ${isPerformanceMode ? 'gap-2' : 'gap-4 sm:gap-6'}`}>
                     <div className="flex items-center gap-2">
@@ -5943,7 +5942,7 @@ export default function App() {
                       </button>
                     </div>
                   </div>
-                                <div className={isPerformanceMode ? 'space-y-4' : 'space-y-8'}>
+                                <div className={isPerformanceMode ? 'space-y-3' : 'space-y-5'}>
                   {droneSequencerVoices.map((v, vIdx) => (
                     <div key={vIdx} className={isPerformanceMode ? 'space-y-2' : 'space-y-4'}>
                       <div className={`flex ${isPerformanceMode ? 'flex-col items-start gap-1' : 'items-center gap-4'} min-w-0`}>
@@ -6019,7 +6018,7 @@ export default function App() {
 
                 <div className="grid grid-cols-1 gap-8">
                   {/* Step Editor */}
-                  <div className="bg-white/5 p-4 sm:p-8 rounded-3xl border border-white/10">
+                  <div className="bg-white/5 p-4 sm:p-5 rounded-3xl border border-white/10">
                     <div className="flex flex-col gap-6">
                       <div className="flex items-center justify-between border-b border-white/5 pb-4">
                         <div className="flex flex-col gap-1">
@@ -6052,7 +6051,7 @@ export default function App() {
                       </div>
 
                       {/* Settings Stack */}
-                      <div className="space-y-8">
+                      <div className="space-y-5">
                         <div className="space-y-4">
                           <div className="flex justify-between items-center text-[10px] uppercase tracking-widest font-black text-white/40">
                             <div className="flex items-center gap-2">
@@ -6171,7 +6170,7 @@ export default function App() {
                         </div>
                       </div>
 
-                      <div className="space-y-8">
+                      <div className="space-y-5">
                         <div className="space-y-4">
                           <div className="flex justify-between items-center text-[10px] uppercase tracking-widest font-black text-white/60">
                             <span>Attack</span>
@@ -6250,7 +6249,7 @@ export default function App() {
 
                 {/* Sequencer Effects Chain */}
                 <section className="border-t border-white/10 pt-10">
-                  <label className="text-[11px] text-white/40 uppercase tracking-[0.3em] block mb-8 font-black">Sequencer Effects Chain</label>
+                  <label className="text-[11px] text-white/40 uppercase tracking-[0.3em] block mb-4 font-black">Sequencer Effects Chain</label>
                   
                   <div className="grid grid-cols-1 gap-8">
                     {/* Character Module */}
@@ -6437,10 +6436,10 @@ export default function App() {
             initial={{ opacity: 0, x: 400 }}
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: 400 }}
-            className={`fixed top-0 right-0 bottom-0 sm:top-4 sm:right-4 sm:bottom-4 w-full sm:w-[480px] lg:w-[500px] max-w-full bg-[#0f172a] sm:squircle p-6 sm:p-8 z-50 shadow-2xl flex flex-col border-l sm:border border-white/10 text-white ${isPerformanceMode ? 'sm:w-[260px] lg:w-[260px] !p-4' : ''}`}
+            className={`fixed top-0 right-0 bottom-0 sm:top-4 sm:right-4 sm:bottom-4 w-full sm:w-[480px] lg:w-[500px] max-w-full bg-[#0f172a] sm:squircle p-4 sm:p-5 z-50 shadow-2xl flex flex-col border-l sm:border border-white/10 text-white ${isPerformanceMode ? 'sm:w-[260px] lg:w-[260px] !p-4' : ''}`}
             style={getPerfOffset(4)}
           >
-            <div className={`flex justify-between items-center ${isPerformanceMode ? 'mb-4' : 'mb-8 sm:mb-10'}`}>
+            <div className={`flex justify-between items-center ${isPerformanceMode ? 'mb-3' : 'mb-4 sm:mb-5'}`}>
               <div className="flex items-center gap-4">
                 <div className={`${isPerformanceMode ? 'w-8 h-8' : 'w-10 h-10'} bg-emerald-500 rounded-xl flex items-center justify-center shadow-lg shadow-emerald-500/20`}>
                   <Sparkles className={`text-white ${isPerformanceMode ? 'w-4 h-4' : 'w-6 h-6'}`} />
@@ -6461,7 +6460,7 @@ export default function App() {
               </div>
             </div>
             
-            <div className={`flex-1 overflow-y-auto pr-2 sm:pr-4 custom-scrollbar ${isPerformanceMode ? 'space-y-6' : 'space-y-8 sm:space-y-12'}`}>
+            <div className={`flex-1 overflow-y-auto pr-2 sm:pr-4 custom-scrollbar ${isPerformanceMode ? 'space-y-4' : 'space-y-5 sm:space-y-6'}`}>
               {/* Active Mode Indicator */}
               <section className={`bg-white/5 rounded-3xl border border-white/10 ${isPerformanceMode ? 'p-4' : 'p-6'}`}>
                 <div className={`flex items-center justify-between ${isPerformanceMode ? 'mb-4' : 'mb-6'}`}>
@@ -6796,10 +6795,10 @@ export default function App() {
             initial={{ opacity: 0, x: 400 }}
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: 400 }}
-            className={`fixed top-0 right-0 bottom-0 sm:top-4 sm:right-4 sm:bottom-4 w-full sm:w-[480px] lg:w-[500px] max-w-full bg-[#0f172a] sm:squircle p-6 sm:p-8 z-50 shadow-2xl flex flex-col border-l sm:border border-white/10 text-white ${isPerformanceMode ? 'sm:w-[260px] lg:w-[260px] !p-4' : ''}`}
+            className={`fixed top-0 right-0 bottom-0 sm:top-4 sm:right-4 sm:bottom-4 w-full sm:w-[480px] lg:w-[500px] max-w-full bg-[#0f172a] sm:squircle p-4 sm:p-5 z-50 shadow-2xl flex flex-col border-l sm:border border-white/10 text-white ${isPerformanceMode ? 'sm:w-[260px] lg:w-[260px] !p-4' : ''}`}
             style={getPerfOffset(1)}
           >
-            <div className={`flex justify-between items-center ${isPerformanceMode ? 'mb-4' : 'mb-8 sm:mb-10'}`}>
+            <div className={`flex justify-between items-center ${isPerformanceMode ? 'mb-3' : 'mb-4 sm:mb-5'}`}>
               <div className="flex items-center gap-4">
                 <div className={`${isPerformanceMode ? 'w-8 h-8' : 'w-10 h-10'} bg-emerald-500 rounded-xl flex items-center justify-center shadow-lg shadow-emerald-500/20`}>
                   <Zap className={`text-white ${isPerformanceMode ? 'w-4 h-4' : 'w-6 h-6'}`} />
@@ -6820,7 +6819,7 @@ export default function App() {
               </div>
             </div>
             
-            <div className={`flex-1 overflow-y-auto pr-2 sm:pr-4 custom-scrollbar ${isPerformanceMode ? 'space-y-4' : 'space-y-8 sm:space-y-12'}`}>
+            <div className={`flex-1 overflow-y-auto pr-2 sm:pr-4 custom-scrollbar ${isPerformanceMode ? 'space-y-3' : 'space-y-5 sm:space-y-6'}`}>
               {/* Patches — fastest way to change everything */}
               <section>
                 <div className={`flex items-center justify-between ${isPerformanceMode ? 'mb-4' : 'mb-6'}`}>
@@ -6925,7 +6924,7 @@ export default function App() {
               {/* Engine Parameters */}
               <section>
                 <label className={`text-[10px] text-white/40 uppercase tracking-[0.3em] block font-black ${isPerformanceMode ? 'mb-4' : 'mb-6'}`}>Engine Parameters</label>
-                <div className={`bg-white/5 rounded-3xl border border-white/10 shadow-inner ${isPerformanceMode ? 'p-4 space-y-4' : 'p-8 space-y-8'}`}>
+                <div className={`bg-white/5 rounded-3xl border border-white/10 shadow-inner ${isPerformanceMode ? 'p-3 space-y-3' : 'p-5 space-y-5'}`}>
                   <div className={`grid gap-4 ${isPerformanceMode ? 'grid-cols-1' : 'sm:grid-cols-2 sm:gap-8'}`}>
                     {/* Frequency Range */}
                     <div className="space-y-3">
@@ -7160,7 +7159,7 @@ export default function App() {
                   <motion.div 
                     initial={{ opacity: 0, height: 0 }}
                     animate={{ opacity: 1, height: 'auto' }}
-                    className="space-y-8 overflow-hidden"
+                    className="space-y-5 overflow-hidden"
                   >
                     <div className="space-y-4">
                       <div className="flex justify-between items-baseline text-[10px] uppercase tracking-[0.2em] text-white/40 font-black mb-2">
@@ -7382,11 +7381,11 @@ export default function App() {
                   </div>
                 </div>
 
-                <div className="space-y-10">
+                <div className="space-y-5">
                   {/* Timbre & Envelope Row */}
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                     {/* Timbre */}
-                    <div className="bg-white/5 p-8 rounded-3xl border border-white/10 space-y-8 flex flex-col justify-between">
+                    <div className="bg-white/5 p-5 rounded-3xl border border-white/10 space-y-5 flex flex-col justify-between">
                       <div className="space-y-4">
                         <span className="text-[10px] text-white/40 uppercase font-black tracking-wider block">Wave Shape</span>
                         <select 
@@ -7475,7 +7474,7 @@ export default function App() {
 
                   {/* Modular Mapping */}
                   <div className="bg-white/5 p-8 rounded-3xl border border-white/10">
-                    <label className="text-[10px] text-white/40 uppercase tracking-wider block mb-8 font-black">Modular Mapping</label>
+                    <label className="text-[10px] text-white/40 uppercase tracking-wider block mb-4 font-black">Modular Mapping</label>
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-8">
                       {(['frequency', 'amplitude', 'cutoff', 'q', 'pan', 'attack', 'decay', 'sustain', 'release'] as SoundParam[]).map((param) => (
                         <div key={param} className="flex flex-col gap-3">
@@ -7507,7 +7506,7 @@ export default function App() {
               </section>
 
               <section className="border-t border-white/10 pt-10">
-                <label className="text-[11px] text-white/40 uppercase tracking-[0.3em] block mb-8 font-black">Effects Chain</label>
+                <label className="text-[11px] text-white/40 uppercase tracking-[0.3em] block mb-4 font-black">Effects Chain</label>
                 
                 <div className="grid grid-cols-1 gap-8">
                   {/* Character Module */}
