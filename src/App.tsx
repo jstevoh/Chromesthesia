@@ -2943,147 +2943,255 @@ export default function App() {
   };
 
 
-  // Generate procedural abstract art on a canvas — no API key or cost required
-  const generateProceduralArt = useCallback((size: number = 1024): string => {
+  // Generate hallucinogenic procedural art — no API key or cost required
+  const generateProceduralArt = useCallback((size: number = 512): string => {
     const c = document.createElement('canvas');
     c.width = size;
     c.height = size;
     const ctx = c.getContext('2d')!;
+    const PI2 = Math.PI * 2;
+    const rnd = Math.random;
 
-    // Random palette
+    // Psychedelic palettes — saturated, neon, contrasting
     const palettes = [
-      ['#ff006e', '#8338ec', '#3a86ff', '#fb5607', '#ffbe0b'],
-      ['#0d1b2a', '#1b263b', '#415a77', '#778da9', '#e0e1dd'],
-      ['#ff0000', '#ff8800', '#ffff00', '#00ff00', '#0000ff'],
-      ['#2d00f7', '#6a00f4', '#8900f2', '#a100f2', '#b100e8'],
-      ['#03071e', '#370617', '#6a040f', '#9d0208', '#d00000', '#dc2f02', '#e85d04', '#f48c06', '#faa307', '#ffba08'],
-      ['#001219', '#005f73', '#0a9396', '#94d2bd', '#e9d8a6', '#ee9b00', '#ca6702', '#bb3e03', '#ae2012', '#9b2226'],
-      ['#f72585', '#b5179e', '#7209b7', '#560bad', '#480ca8', '#3a0ca3', '#3f37c9', '#4361ee', '#4895ef', '#4cc9f0'],
-      ['#10002b', '#240046', '#3c096c', '#5a189a', '#7b2cbf', '#9d4edd', '#c77dff', '#e0aaff'],
+      ['#ff0080', '#ff00ff', '#8000ff', '#0080ff', '#00ffff', '#00ff80'],
+      ['#ff3300', '#ff9900', '#ffff00', '#33ff00', '#00ffcc', '#0033ff'],
+      ['#ff006e', '#ff4dff', '#4dffff', '#ffff4d', '#ff4d4d', '#4dff4d'],
+      ['#0affef', '#f72585', '#7209b7', '#3a86ff', '#ffbe0b', '#fb5607'],
+      ['#39ff14', '#ff073a', '#0ff0fc', '#ff6eff', '#fff01f', '#ff6600'],
+      ['#fe019a', '#bc13fe', '#05ffa1', '#01ff07', '#ffe800', '#ff6900'],
+      ['#ff124f', '#ff00a0', '#fe75fe', '#7a04eb', '#120458', '#00d4ff'],
     ];
-    const pal = palettes[Math.floor(Math.random() * palettes.length)];
-    const randColor = () => pal[Math.floor(Math.random() * pal.length)];
+    const pal = palettes[Math.floor(rnd() * palettes.length)];
+    const c0 = () => pal[Math.floor(rnd() * pal.length)];
 
-    // Background gradient
-    const bgGrad = ctx.createLinearGradient(0, 0, size, size);
-    bgGrad.addColorStop(0, randColor());
-    bgGrad.addColorStop(0.5, randColor());
-    bgGrad.addColorStop(1, randColor());
-    ctx.fillStyle = bgGrad;
-    ctx.fillRect(0, 0, size, size);
+    // Plasma field via pixel manipulation — pure hallucinogenic base
+    const imgData = ctx.createImageData(size, size);
+    const d = imgData.data;
+    const seed = rnd() * 100;
+    const f1 = 3 + rnd() * 8, f2 = 2 + rnd() * 6, f3 = 4 + rnd() * 10;
+    const hueShift = rnd() * 360;
+    for (let py = 0; py < size; py++) {
+      for (let px = 0; px < size; px++) {
+        const nx = px / size, ny = py / size;
+        // Plasma formula: sum of sines at different frequencies/angles
+        const v = (
+          Math.sin(nx * f1 + seed) +
+          Math.sin(ny * f2 + seed * 0.7) +
+          Math.sin((nx + ny) * f3 * 0.5 + seed * 1.3) +
+          Math.sin(Math.sqrt(
+            (nx - 0.5 + Math.sin(seed * 0.1) * 0.3) ** 2 +
+            (ny - 0.5 + Math.cos(seed * 0.1) * 0.3) ** 2
+          ) * f1 * 2.5 + seed)
+        ) / 4; // -1 to 1
+        const hue = ((v + 1) * 180 + hueShift) % 360;
+        const sat = 0.8 + v * 0.2;
+        const lit = 0.35 + Math.abs(v) * 0.35;
+        // HSL to RGB inline
+        const hh = hue / 60, q = lit < 0.5 ? lit * (1 + sat) : lit + sat - lit * sat;
+        const pp = 2 * lit - q;
+        const hue2rgb = (t: number) => {
+          if (t < 0) t += 1; if (t > 1) t -= 1;
+          if (t < 1/6) return pp + (q - pp) * 6 * t;
+          if (t < 1/2) return q;
+          if (t < 2/3) return pp + (q - pp) * (2/3 - t) * 6;
+          return pp;
+        };
+        const i = (py * size + px) * 4;
+        d[i]   = hue2rgb((hh + 2) / 6 % 1) * 255;
+        d[i+1] = hue2rgb(hh / 6 % 1) * 255;
+        d[i+2] = hue2rgb((hh - 2 + 6) / 6 % 1) * 255;
+        d[i+3] = 255;
+      }
+    }
+    ctx.putImageData(imgData, 0, 0);
 
-    // Pick a random generative style
-    const style = Math.floor(Math.random() * 5);
+    // Layer multiple psychedelic passes on top
+    const style = Math.floor(rnd() * 6);
+    ctx.globalCompositeOperation = 'screen';
 
     if (style === 0) {
-      // Overlapping radial gradients
-      for (let i = 0; i < 12 + Math.random() * 20; i++) {
-        const x = Math.random() * size;
-        const y = Math.random() * size;
-        const r = 50 + Math.random() * size * 0.4;
-        const grad = ctx.createRadialGradient(x, y, 0, x, y, r);
-        grad.addColorStop(0, randColor());
-        grad.addColorStop(1, 'transparent');
-        ctx.globalAlpha = 0.3 + Math.random() * 0.5;
-        ctx.globalCompositeOperation = ['screen', 'multiply', 'overlay', 'lighten'][Math.floor(Math.random() * 4)] as GlobalCompositeOperation;
+      // Fractal spiral bursts
+      for (let burst = 0; burst < 4 + Math.floor(rnd() * 4); burst++) {
+        const cx = rnd() * size, cy = rnd() * size;
+        const arms = 3 + Math.floor(rnd() * 7);
+        const turns = 2 + rnd() * 5;
+        const grad = ctx.createRadialGradient(cx, cy, 0, cx, cy, size * 0.5);
+        grad.addColorStop(0, c0()); grad.addColorStop(0.5, c0()); grad.addColorStop(1, 'transparent');
+        ctx.save();
+        ctx.globalAlpha = 0.4 + rnd() * 0.4;
+        for (let arm = 0; arm < arms; arm++) {
+          ctx.beginPath();
+          ctx.strokeStyle = c0();
+          ctx.lineWidth = 1 + rnd() * 6;
+          const steps = 300;
+          for (let s = 0; s < steps; s++) {
+            const t = s / steps;
+            const angle = (arm / arms) * PI2 + t * PI2 * turns;
+            const r = t * size * 0.48;
+            const x = cx + Math.cos(angle) * r;
+            const y = cy + Math.sin(angle) * r;
+            s === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+          }
+          ctx.stroke();
+        }
         ctx.fillStyle = grad;
+        ctx.globalAlpha = 0.15;
         ctx.fillRect(0, 0, size, size);
+        ctx.restore();
       }
+
     } else if (style === 1) {
-      // Geometric shapes
-      ctx.globalCompositeOperation = 'screen';
-      for (let i = 0; i < 30 + Math.random() * 40; i++) {
-        ctx.globalAlpha = 0.2 + Math.random() * 0.6;
-        ctx.fillStyle = randColor();
-        ctx.beginPath();
-        const shape = Math.floor(Math.random() * 3);
-        const x = Math.random() * size;
-        const y = Math.random() * size;
-        if (shape === 0) {
-          ctx.arc(x, y, 20 + Math.random() * 200, 0, Math.PI * 2);
-        } else if (shape === 1) {
-          const w = 30 + Math.random() * 300;
-          const h = 30 + Math.random() * 300;
-          ctx.save();
-          ctx.translate(x, y);
-          ctx.rotate(Math.random() * Math.PI);
-          ctx.rect(-w / 2, -h / 2, w, h);
-          ctx.restore();
-        } else {
-          const sides = 3 + Math.floor(Math.random() * 5);
-          const r = 30 + Math.random() * 200;
-          ctx.save();
-          ctx.translate(x, y);
-          ctx.rotate(Math.random() * Math.PI);
-          ctx.moveTo(r, 0);
-          for (let s = 1; s <= sides; s++) {
-            ctx.lineTo(r * Math.cos((s * 2 * Math.PI) / sides), r * Math.sin((s * 2 * Math.PI) / sides));
+      // Interference rings — concentric ripple collision
+      const numCenters = 3 + Math.floor(rnd() * 4);
+      const centers = Array.from({length: numCenters}, () => ({x: rnd() * size, y: rnd() * size, f: 8 + rnd() * 30}));
+      const imgData2 = ctx.createImageData(size, size);
+      const d2 = imgData2.data;
+      for (let py = 0; py < size; py++) {
+        for (let px = 0; px < size; px++) {
+          let v = 0;
+          for (const ctr of centers) {
+            const dist = Math.sqrt((px - ctr.x) ** 2 + (py - ctr.y) ** 2);
+            v += Math.sin(dist / size * ctr.f * PI2);
           }
-          ctx.restore();
+          v = (v / numCenters + 1) / 2;
+          const hue = (v * 360 * 3 + hueShift) % 360;
+          const i = (py * size + px) * 4;
+          d2[i]   = Math.sin(hue / 360 * PI2) * 127 + 128;
+          d2[i+1] = Math.sin((hue / 360 + 0.333) * PI2) * 127 + 128;
+          d2[i+2] = Math.sin((hue / 360 + 0.667) * PI2) * 127 + 128;
+          d2[i+3] = Math.floor(v * 180 + 40);
         }
-        ctx.fill();
       }
+      ctx.putImageData(imgData2, 0, 0);
+
     } else if (style === 2) {
-      // Flowing wave lines
-      ctx.globalCompositeOperation = 'screen';
-      for (let w = 0; w < 15 + Math.random() * 20; w++) {
-        ctx.strokeStyle = randColor();
-        ctx.lineWidth = 2 + Math.random() * 15;
-        ctx.globalAlpha = 0.3 + Math.random() * 0.5;
-        ctx.beginPath();
-        const yBase = Math.random() * size;
-        const freq = 0.005 + Math.random() * 0.03;
-        const amp = 30 + Math.random() * 200;
-        const phase = Math.random() * Math.PI * 2;
-        for (let x = 0; x <= size; x += 4) {
-          const y = yBase + Math.sin(x * freq + phase) * amp + Math.cos(x * freq * 1.7 + phase * 0.5) * amp * 0.5;
-          if (x === 0) ctx.moveTo(x, y);
-          else ctx.lineTo(x, y);
+      // Kaleidoscope petals
+      const segments = (2 + Math.floor(rnd() * 5)) * 2;
+      const cx = size / 2, cy = size / 2;
+      ctx.save();
+      ctx.translate(cx, cy);
+      for (let seg = 0; seg < segments; seg++) {
+        ctx.save();
+        ctx.rotate((seg / segments) * PI2);
+        ctx.globalAlpha = 0.5 + rnd() * 0.4;
+        for (let i = 0; i < 8 + Math.floor(rnd() * 12); i++) {
+          const t = i / 12;
+          const r1 = t * size * 0.5, r2 = (t + 0.1) * size * 0.5;
+          const a1 = (PI2 / segments) * rnd(), a2 = a1 + (PI2 / segments) * (0.5 + rnd() * 0.5);
+          const grad = ctx.createRadialGradient(0, 0, r1, 0, 0, r2);
+          grad.addColorStop(0, c0()); grad.addColorStop(1, 'transparent');
+          ctx.fillStyle = grad;
+          ctx.beginPath();
+          ctx.moveTo(0, 0);
+          ctx.arc(0, 0, r2, a1, a2);
+          ctx.closePath();
+          ctx.fill();
         }
-        ctx.stroke();
+        ctx.restore();
       }
+      ctx.restore();
+
     } else if (style === 3) {
-      // Noise-like pixel blocks
-      const blockSize = 8 + Math.floor(Math.random() * 32);
-      ctx.globalAlpha = 0.8;
-      for (let x = 0; x < size; x += blockSize) {
-        for (let y = 0; y < size; y += blockSize) {
-          if (Math.random() > 0.3) {
-            ctx.fillStyle = randColor();
-            ctx.globalAlpha = 0.3 + Math.random() * 0.7;
-            ctx.fillRect(x, y, blockSize, blockSize);
-          }
+      // Lissajous tunnel — overlapping parametric curves
+      const freqs = [[3,2],[5,4],[7,6],[8,7],[5,3],[11,8]];
+      const [fa, fb] = freqs[Math.floor(rnd() * freqs.length)];
+      const layers = 18 + Math.floor(rnd() * 20);
+      for (let l = 0; l < layers; l++) {
+        const t = l / layers;
+        const phase = rnd() * PI2;
+        const r = (0.1 + t * 0.8) * size * 0.5;
+        ctx.beginPath();
+        ctx.strokeStyle = c0();
+        ctx.lineWidth = 1 + (1 - t) * 8;
+        ctx.globalAlpha = 0.25 + rnd() * 0.5;
+        const steps = 500;
+        for (let s = 0; s <= steps; s++) {
+          const tt = (s / steps) * PI2;
+          const x = size / 2 + Math.sin(fa * tt + phase) * r;
+          const y = size / 2 + Math.sin(fb * tt) * r;
+          s === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+        }
+        ctx.stroke();
+      }
+
+    } else if (style === 4) {
+      // Mandala — recursive petal rings
+      const rings = 5 + Math.floor(rnd() * 5);
+      const cx = size / 2, cy = size / 2;
+      for (let ring = 1; ring <= rings; ring++) {
+        const petals = ring * (3 + Math.floor(rnd() * 3));
+        const r = (ring / rings) * size * 0.47;
+        const petalR = r * 0.45;
+        for (let p = 0; p < petals; p++) {
+          const angle = (p / petals) * PI2;
+          const px2 = cx + Math.cos(angle) * r;
+          const py2 = cy + Math.sin(angle) * r;
+          const grad = ctx.createRadialGradient(px2, py2, 0, px2, py2, petalR);
+          grad.addColorStop(0, c0()); grad.addColorStop(0.6, c0()); grad.addColorStop(1, 'transparent');
+          ctx.beginPath();
+          ctx.fillStyle = grad;
+          ctx.globalAlpha = 0.3 + rnd() * 0.45;
+          ctx.arc(px2, py2, petalR, 0, PI2);
+          ctx.fill();
         }
       }
+
     } else {
-      // Concentric arcs
-      ctx.globalCompositeOperation = 'screen';
-      const cx = size / 2 + (Math.random() - 0.5) * size * 0.3;
-      const cy = size / 2 + (Math.random() - 0.5) * size * 0.3;
-      for (let i = 0; i < 30 + Math.random() * 30; i++) {
-        ctx.strokeStyle = randColor();
-        ctx.lineWidth = 3 + Math.random() * 20;
-        ctx.globalAlpha = 0.2 + Math.random() * 0.5;
+      // Wormhole — nested distorted ellipses zooming inward
+      const cx = size * (0.3 + rnd() * 0.4), cy = size * (0.3 + rnd() * 0.4);
+      const twist = (rnd() - 0.5) * 4;
+      for (let i = 60; i > 0; i--) {
+        const t = i / 60;
+        ctx.save();
+        ctx.translate(cx, cy);
+        ctx.rotate(t * twist);
+        ctx.scale(1, 0.4 + rnd() * 0.6);
+        const grad = ctx.createRadialGradient(0, 0, 0, 0, 0, t * size * 0.5);
+        grad.addColorStop(0, c0()); grad.addColorStop(1, 'transparent');
+        ctx.strokeStyle = c0();
+        ctx.lineWidth = 2 + rnd() * 8;
+        ctx.globalAlpha = 0.2 + rnd() * 0.5;
         ctx.beginPath();
-        const r = 20 + i * (size / 60) + Math.random() * 30;
-        const startAngle = Math.random() * Math.PI * 2;
-        const arcLength = 0.5 + Math.random() * Math.PI * 1.5;
-        ctx.arc(cx, cy, r, startAngle, startAngle + arcLength);
+        ctx.arc(0, 0, t * size * 0.48, 0, PI2);
         ctx.stroke();
+        ctx.restore();
       }
     }
 
-    // Final overlay for depth
+    // Chromatic aberration overlay — splits RGB channels slightly for a trippy fringe
     ctx.globalCompositeOperation = 'source-over';
-    ctx.globalAlpha = 0.15;
-    const vignette = ctx.createRadialGradient(size / 2, size / 2, size * 0.2, size / 2, size / 2, size * 0.7);
-    vignette.addColorStop(0, 'transparent');
-    vignette.addColorStop(1, '#000000');
-    ctx.fillStyle = vignette;
+    ctx.globalAlpha = 0.18;
+    const aberrationCanvas = document.createElement('canvas');
+    aberrationCanvas.width = size; aberrationCanvas.height = size;
+    const aberCtx = aberrationCanvas.getContext('2d')!;
+    aberCtx.drawImage(c, 0, 0);
+    ctx.globalCompositeOperation = 'screen';
+    ctx.globalAlpha = 0.25;
+    ctx.drawImage(aberrationCanvas, -4, 2);  // red shift
+    ctx.globalAlpha = 0.25;
+    ctx.drawImage(aberrationCanvas, 4, -2);  // blue shift
+
+    // Vignette
+    ctx.globalCompositeOperation = 'source-over';
+    ctx.globalAlpha = 0.55;
+    const vig = ctx.createRadialGradient(size/2, size/2, size * 0.15, size/2, size/2, size * 0.75);
+    vig.addColorStop(0, 'transparent');
+    vig.addColorStop(1, '#000000');
+    ctx.fillStyle = vig;
     ctx.fillRect(0, 0, size, size);
 
     return c.toDataURL('image/png');
   }, []);
+
+  // Generate hallucinogenic starting image on first load
+  useEffect(() => {
+    if (!image) {
+      setImage(generateProceduralArt(512));
+      setMediaType('image');
+      setIsLoaded(true);
+    }
+  }, [generateProceduralArt]);
 
   const handleFeelingLucky = useCallback(async () => {
     // Start audio first (must be triggered directly from user gesture)
