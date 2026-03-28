@@ -3669,7 +3669,8 @@ export default function App() {
         if (canvas.width !== sampleW || canvas.height !== sampleH) {
           canvas.width = sampleW;
           canvas.height = sampleH;
-          samplingCtxRef.current = null; // canvas resize invalidates context
+          samplingCtxRef.current = null;
+          requestRef.current = requestAnimationFrame(updateSound);
           return;
         }
         ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
@@ -3681,6 +3682,7 @@ export default function App() {
           canvas.width = sampleW;
           canvas.height = sampleH;
           samplingCtxRef.current = null;
+          requestRef.current = requestAnimationFrame(updateSound);
           return;
         }
         ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
@@ -3695,6 +3697,7 @@ export default function App() {
             canvas.width = sampleW;
             canvas.height = sampleH;
             samplingCtxRef.current = null;
+            requestRef.current = requestAnimationFrame(updateSound);
             return;
           }
           ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
