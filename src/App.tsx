@@ -19,11 +19,9 @@ import {
   Activity,
   Info,
   Sparkles,
-  Loader2,
   Music,
   Video,
   Camera,
-  Key,
   Zap,
   Wind,
   Cloud,
@@ -44,17 +42,6 @@ import {
   Target,
   Clock
 } from 'lucide-react';
-import { GoogleGenAI, Type, ThinkingLevel } from "@google/genai";
-
-declare global {
-  interface Window {
-    aistudio?: {
-      hasSelectedApiKey: () => Promise<boolean>;
-      openSelectKey: () => Promise<void>;
-    };
-  }
-}
-
 // --- Constants & Types ---
 
 const SCAN_SPEED = 0.02; // Time increment per frame
@@ -1412,7 +1399,7 @@ export default function App() {
   const [isSynthMatrixEnabled, setIsSynthMatrixEnabled] = useState(true);
   const [showManual, setShowManual] = useState(false);
   const [isLoaded, setIsLoaded] = useState(false);
-  const [isGenerating, setIsGenerating] = useState(false);
+  const [isGeneratingArt, setIsGeneratingArt] = useState(false);
   
   // Visual Settings State
   const [visualColorMode, setVisualColorMode] = useState<'preset' | 'auto'>('preset');
@@ -1440,10 +1427,8 @@ export default function App() {
     }
   };
 
-  const [hasApiKey, setHasApiKey] = useState(!!(process.env.API_KEY || process.env.GEMINI_API_KEY));
   const [enabledVoices, setEnabledVoices] = useState<boolean[]>(new Array(SAMPLE_POINTS).fill(true));
   const [error, setError] = useState<string | null>(null);
-  const [prompt, setPrompt] = useState('');
   const [baseFreq, setBaseFreq] = useState(110);
   const [freqRange, setFreqRange] = useState(880);
   const [freqMod, setFreqMod] = useState(200);
@@ -1469,9 +1454,6 @@ export default function App() {
       release: 0.8
     }))
   );
-
-  const [luckyPromptInstructions, setLuckyPromptInstructions] = useState("Create a vibrant, high-contrast abstract digital artwork optimized for spectral sound synthesis. Use complex geometric patterns, deep textures, and a wide color palette.");
-  const [showLuckyPromptSettings, setShowLuckyPromptSettings] = useState(false);
 
   const initialMapping: Record<SoundParam, ImageTrait> = {
     frequency: 'hue',
@@ -1695,7 +1677,6 @@ export default function App() {
   const lastFrameTimeRef = useRef<number>(performance.now());
   const globalClockRef = useRef<number>(0);
   const droneEvolutionTimeRef = useRef<number>(0);
-  const abortControllerRef = useRef<AbortController | null>(null);
   const visualizerCanvasRef = useRef<HTMLCanvasElement | null>(null);
 
   const applyPatch = useCallback((patchIdx: number) => {
@@ -2147,8 +2128,6 @@ export default function App() {
     setIsDroneEnabled(false);
     setIsDroneSequencerEnabled(false);
     setIsEvolving(false);
-    setIsGenerating(false);
-    
     // Reset Patches
     setActivePatch(null);
     setActiveDronePatch(null);
@@ -2165,11 +2144,6 @@ export default function App() {
     setScanCenterX(0.5);
     setScanCenterY(0.5);
     
-    // Stop any active AI generation
-    if (abortControllerRef.current) {
-      abortControllerRef.current.abort();
-      abortControllerRef.current = null;
-    }
   }, [isWebcamActive, stopAllAudio]);
 
   // Update Chroma Console Effects
@@ -2969,299 +2943,294 @@ export default function App() {
     }
   };
 
-  const stopGeneration = () => {
-    if (abortControllerRef.current) {
-      abortControllerRef.current.abort();
-      abortControllerRef.current = null;
-    }
-    setIsGenerating(false);
-  };
 
-  // Check for API Key
-  useEffect(() => {
-    const checkKey = async () => {
-      if (window.aistudio?.hasSelectedApiKey) {
-        const hasKey = await window.aistudio.hasSelectedApiKey();
-        setHasApiKey(hasKey);
+  // Generate hallucinogenic procedural art — no API key or cost required
+  const generateProceduralArt = useCallback((size: number = 512): string => {
+    const c = document.createElement('canvas');
+    c.width = size;
+    c.height = size;
+    const ctx = c.getContext('2d')!;
+    const PI2 = Math.PI * 2;
+    const rnd = Math.random;
+
+    // Psychedelic palettes — saturated, neon, contrasting
+    const palettes = [
+      ['#ff0080', '#ff00ff', '#8000ff', '#0080ff', '#00ffff', '#00ff80'],
+      ['#ff3300', '#ff9900', '#ffff00', '#33ff00', '#00ffcc', '#0033ff'],
+      ['#ff006e', '#ff4dff', '#4dffff', '#ffff4d', '#ff4d4d', '#4dff4d'],
+      ['#0affef', '#f72585', '#7209b7', '#3a86ff', '#ffbe0b', '#fb5607'],
+      ['#39ff14', '#ff073a', '#0ff0fc', '#ff6eff', '#fff01f', '#ff6600'],
+      ['#fe019a', '#bc13fe', '#05ffa1', '#01ff07', '#ffe800', '#ff6900'],
+      ['#ff124f', '#ff00a0', '#fe75fe', '#7a04eb', '#120458', '#00d4ff'],
+    ];
+    const pal = palettes[Math.floor(rnd() * palettes.length)];
+    const c0 = () => pal[Math.floor(rnd() * pal.length)];
+
+    // Plasma field via pixel manipulation — pure hallucinogenic base
+    const imgData = ctx.createImageData(size, size);
+    const d = imgData.data;
+    const seed = rnd() * 100;
+    const f1 = 3 + rnd() * 8, f2 = 2 + rnd() * 6, f3 = 4 + rnd() * 10;
+    const hueShift = rnd() * 360;
+    for (let py = 0; py < size; py++) {
+      for (let px = 0; px < size; px++) {
+        const nx = px / size, ny = py / size;
+        // Plasma formula: sum of sines at different frequencies/angles
+        const v = (
+          Math.sin(nx * f1 + seed) +
+          Math.sin(ny * f2 + seed * 0.7) +
+          Math.sin((nx + ny) * f3 * 0.5 + seed * 1.3) +
+          Math.sin(Math.sqrt(
+            (nx - 0.5 + Math.sin(seed * 0.1) * 0.3) ** 2 +
+            (ny - 0.5 + Math.cos(seed * 0.1) * 0.3) ** 2
+          ) * f1 * 2.5 + seed)
+        ) / 4; // -1 to 1
+        const hue = ((v + 1) * 180 + hueShift) % 360;
+        const sat = 0.8 + v * 0.2;
+        const lit = 0.35 + Math.abs(v) * 0.35;
+        // HSL to RGB inline
+        const hh = hue / 60, q = lit < 0.5 ? lit * (1 + sat) : lit + sat - lit * sat;
+        const pp = 2 * lit - q;
+        const hue2rgb = (t: number) => {
+          if (t < 0) t += 1; if (t > 1) t -= 1;
+          if (t < 1/6) return pp + (q - pp) * 6 * t;
+          if (t < 1/2) return q;
+          if (t < 2/3) return pp + (q - pp) * (2/3 - t) * 6;
+          return pp;
+        };
+        const i = (py * size + px) * 4;
+        d[i]   = hue2rgb((hh + 2) / 6 % 1) * 255;
+        d[i+1] = hue2rgb(hh / 6 % 1) * 255;
+        d[i+2] = hue2rgb((hh - 2 + 6) / 6 % 1) * 255;
+        d[i+3] = 255;
       }
-    };
-    checkKey();
+    }
+    ctx.putImageData(imgData, 0, 0);
+
+    // Layer multiple psychedelic passes on top
+    const style = Math.floor(rnd() * 6);
+    ctx.globalCompositeOperation = 'screen';
+
+    if (style === 0) {
+      // Fractal spiral bursts
+      for (let burst = 0; burst < 4 + Math.floor(rnd() * 4); burst++) {
+        const cx = rnd() * size, cy = rnd() * size;
+        const arms = 3 + Math.floor(rnd() * 7);
+        const turns = 2 + rnd() * 5;
+        const grad = ctx.createRadialGradient(cx, cy, 0, cx, cy, size * 0.5);
+        grad.addColorStop(0, c0()); grad.addColorStop(0.5, c0()); grad.addColorStop(1, 'transparent');
+        ctx.save();
+        ctx.globalAlpha = 0.4 + rnd() * 0.4;
+        for (let arm = 0; arm < arms; arm++) {
+          ctx.beginPath();
+          ctx.strokeStyle = c0();
+          ctx.lineWidth = 1 + rnd() * 6;
+          const steps = 300;
+          for (let s = 0; s < steps; s++) {
+            const t = s / steps;
+            const angle = (arm / arms) * PI2 + t * PI2 * turns;
+            const r = t * size * 0.48;
+            const x = cx + Math.cos(angle) * r;
+            const y = cy + Math.sin(angle) * r;
+            s === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+          }
+          ctx.stroke();
+        }
+        ctx.fillStyle = grad;
+        ctx.globalAlpha = 0.15;
+        ctx.fillRect(0, 0, size, size);
+        ctx.restore();
+      }
+
+    } else if (style === 1) {
+      // Interference rings — concentric ripple collision
+      const numCenters = 3 + Math.floor(rnd() * 4);
+      const centers = Array.from({length: numCenters}, () => ({x: rnd() * size, y: rnd() * size, f: 8 + rnd() * 30}));
+      const imgData2 = ctx.createImageData(size, size);
+      const d2 = imgData2.data;
+      for (let py = 0; py < size; py++) {
+        for (let px = 0; px < size; px++) {
+          let v = 0;
+          for (const ctr of centers) {
+            const dist = Math.sqrt((px - ctr.x) ** 2 + (py - ctr.y) ** 2);
+            v += Math.sin(dist / size * ctr.f * PI2);
+          }
+          v = (v / numCenters + 1) / 2;
+          const hue = (v * 360 * 3 + hueShift) % 360;
+          const i = (py * size + px) * 4;
+          d2[i]   = Math.sin(hue / 360 * PI2) * 127 + 128;
+          d2[i+1] = Math.sin((hue / 360 + 0.333) * PI2) * 127 + 128;
+          d2[i+2] = Math.sin((hue / 360 + 0.667) * PI2) * 127 + 128;
+          d2[i+3] = Math.floor(v * 180 + 40);
+        }
+      }
+      ctx.putImageData(imgData2, 0, 0);
+
+    } else if (style === 2) {
+      // Kaleidoscope petals
+      const segments = (2 + Math.floor(rnd() * 5)) * 2;
+      const cx = size / 2, cy = size / 2;
+      ctx.save();
+      ctx.translate(cx, cy);
+      for (let seg = 0; seg < segments; seg++) {
+        ctx.save();
+        ctx.rotate((seg / segments) * PI2);
+        ctx.globalAlpha = 0.5 + rnd() * 0.4;
+        for (let i = 0; i < 8 + Math.floor(rnd() * 12); i++) {
+          const t = i / 12;
+          const r1 = t * size * 0.5, r2 = (t + 0.1) * size * 0.5;
+          const a1 = (PI2 / segments) * rnd(), a2 = a1 + (PI2 / segments) * (0.5 + rnd() * 0.5);
+          const grad = ctx.createRadialGradient(0, 0, r1, 0, 0, r2);
+          grad.addColorStop(0, c0()); grad.addColorStop(1, 'transparent');
+          ctx.fillStyle = grad;
+          ctx.beginPath();
+          ctx.moveTo(0, 0);
+          ctx.arc(0, 0, r2, a1, a2);
+          ctx.closePath();
+          ctx.fill();
+        }
+        ctx.restore();
+      }
+      ctx.restore();
+
+    } else if (style === 3) {
+      // Lissajous tunnel — overlapping parametric curves
+      const freqs = [[3,2],[5,4],[7,6],[8,7],[5,3],[11,8]];
+      const [fa, fb] = freqs[Math.floor(rnd() * freqs.length)];
+      const layers = 18 + Math.floor(rnd() * 20);
+      for (let l = 0; l < layers; l++) {
+        const t = l / layers;
+        const phase = rnd() * PI2;
+        const r = (0.1 + t * 0.8) * size * 0.5;
+        ctx.beginPath();
+        ctx.strokeStyle = c0();
+        ctx.lineWidth = 1 + (1 - t) * 8;
+        ctx.globalAlpha = 0.25 + rnd() * 0.5;
+        const steps = 500;
+        for (let s = 0; s <= steps; s++) {
+          const tt = (s / steps) * PI2;
+          const x = size / 2 + Math.sin(fa * tt + phase) * r;
+          const y = size / 2 + Math.sin(fb * tt) * r;
+          s === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+        }
+        ctx.stroke();
+      }
+
+    } else if (style === 4) {
+      // Mandala — recursive petal rings
+      const rings = 5 + Math.floor(rnd() * 5);
+      const cx = size / 2, cy = size / 2;
+      for (let ring = 1; ring <= rings; ring++) {
+        const petals = ring * (3 + Math.floor(rnd() * 3));
+        const r = (ring / rings) * size * 0.47;
+        const petalR = r * 0.45;
+        for (let p = 0; p < petals; p++) {
+          const angle = (p / petals) * PI2;
+          const px2 = cx + Math.cos(angle) * r;
+          const py2 = cy + Math.sin(angle) * r;
+          const grad = ctx.createRadialGradient(px2, py2, 0, px2, py2, petalR);
+          grad.addColorStop(0, c0()); grad.addColorStop(0.6, c0()); grad.addColorStop(1, 'transparent');
+          ctx.beginPath();
+          ctx.fillStyle = grad;
+          ctx.globalAlpha = 0.3 + rnd() * 0.45;
+          ctx.arc(px2, py2, petalR, 0, PI2);
+          ctx.fill();
+        }
+      }
+
+    } else {
+      // Wormhole — nested distorted ellipses zooming inward
+      const cx = size * (0.3 + rnd() * 0.4), cy = size * (0.3 + rnd() * 0.4);
+      const twist = (rnd() - 0.5) * 4;
+      for (let i = 60; i > 0; i--) {
+        const t = i / 60;
+        ctx.save();
+        ctx.translate(cx, cy);
+        ctx.rotate(t * twist);
+        ctx.scale(1, 0.4 + rnd() * 0.6);
+        const grad = ctx.createRadialGradient(0, 0, 0, 0, 0, t * size * 0.5);
+        grad.addColorStop(0, c0()); grad.addColorStop(1, 'transparent');
+        ctx.strokeStyle = c0();
+        ctx.lineWidth = 2 + rnd() * 8;
+        ctx.globalAlpha = 0.2 + rnd() * 0.5;
+        ctx.beginPath();
+        ctx.arc(0, 0, t * size * 0.48, 0, PI2);
+        ctx.stroke();
+        ctx.restore();
+      }
+    }
+
+    // Chromatic aberration overlay — splits RGB channels slightly for a trippy fringe
+    ctx.globalCompositeOperation = 'source-over';
+    ctx.globalAlpha = 0.18;
+    const aberrationCanvas = document.createElement('canvas');
+    aberrationCanvas.width = size; aberrationCanvas.height = size;
+    const aberCtx = aberrationCanvas.getContext('2d')!;
+    aberCtx.drawImage(c, 0, 0);
+    ctx.globalCompositeOperation = 'screen';
+    ctx.globalAlpha = 0.25;
+    ctx.drawImage(aberrationCanvas, -4, 2);  // red shift
+    ctx.globalAlpha = 0.25;
+    ctx.drawImage(aberrationCanvas, 4, -2);  // blue shift
+
+    // Vignette
+    ctx.globalCompositeOperation = 'source-over';
+    ctx.globalAlpha = 0.55;
+    const vig = ctx.createRadialGradient(size/2, size/2, size * 0.15, size/2, size/2, size * 0.75);
+    vig.addColorStop(0, 'transparent');
+    vig.addColorStop(1, '#000000');
+    ctx.fillStyle = vig;
+    ctx.fillRect(0, 0, size, size);
+
+    return c.toDataURL('image/png');
   }, []);
 
-  const handleConnectKey = async () => {
-    if (window.aistudio?.openSelectKey) {
-      await window.aistudio.openSelectKey();
-      setHasApiKey(true);
+  // Generate hallucinogenic starting image on first load
+  useEffect(() => {
+    if (!image) {
+      setImage(generateProceduralArt(512));
+      setMediaType('image');
+      setIsLoaded(true);
     }
-  };
-
-  const handleGenerateImage = useCallback(async (useCurrentImage: boolean = false, promptOverride?: string, shouldPlay: boolean = false) => {
-    const currentPrompt = promptOverride || prompt;
-    if (!currentPrompt && !useCurrentImage) return;
-    
-    // Check for API key if using high-end models (optional but good for reliability)
-    const hasKey = (await window.aistudio?.hasSelectedApiKey?.()) || hasApiKey || !!(process.env.API_KEY || process.env.GEMINI_API_KEY);
-    if (!hasKey && window.aistudio?.openSelectKey) {
-      console.log("No API key found, opening selection dialog...");
-      setError("Please connect your Gemini API key in settings to use AI generation.");
-      setShowSettings(true);
-      return;
-    }
-    
-    // Cancel any existing generation
-    if (abortControllerRef.current) {
-      abortControllerRef.current.abort();
-    }
-    
-    const controller = new AbortController();
-    abortControllerRef.current = controller;
-    setIsGenerating(true);
-    setError(null);
-
-    const timeoutId = setTimeout(() => {
-      controller.abort();
-      setError("Generation timed out. Please try again.");
-      console.warn("Generation timed out");
-      // Force stop spinning even if the await is stuck
-      setIsGenerating(false);
-    }, 90000); // Increased to 90 seconds
-
-    try {
-      // Create a new instance right before the call to ensure the latest API key is used
-      const apiKey = process.env.API_KEY || process.env.GEMINI_API_KEY;
-      if (!apiKey) {
-        throw new Error("API Key not found. Please select an API key in the settings.");
-      }
-      console.log("Initializing GoogleGenAI with key:", apiKey.substring(0, 4) + "...");
-      const ai = new GoogleGenAI({ apiKey });
-      
-      if (controller.signal.aborted) throw new Error("Aborted");
-      
-      console.log("Step 1: Interpreting prompt and generating synth settings...");
-      // 1. Use Gemini 3.1 Pro to interpret the prompt and generate synth settings (more reliable)
-      const synthResponse = await ai.models.generateContent({
-        model: 'gemini-3.1-pro-preview',
-        contents: { 
-          parts: [{ 
-            text: `Interpret this musical/visual request: "${currentPrompt || (useCurrentImage ? "A variation of the current visual" : "A musically inspiring scene")}". 
-            Provide a visual prompt for an image generator and a synthesizer configuration.` 
-          }] 
-        },
-        config: {
-          systemInstruction: `You are a synthesizer expert for "Chromesthesia", an app that converts images to sound using 16 scanning oscillators.
-          Translate the user's request into a visual prompt and a technical synth configuration.
-          
-          Synth Parameters:
-          - baseFreq: 50-440 (lower for heavy, higher for ethereal)
-          - scanSpeed: 0.1-5.0 (faster for aggressive, slower for ambient)
-          - voiceWaveShapes: Array of 16. Options: 'sine', 'triangle', 'square', 'sawtooth', 'Organ', 'Brass', 'Strings', 'Electric Piano', 'auto'.
-          - adsr: {attack, decay, sustain, release} (0.0-1.0)
-          - triggerThreshold: 0.0-0.5
-          - scanScale: 0.1-3.0
-          - activePreset: 0-33 (0:Horizontal, 1:Vertical, 2:Circular, 3:Lissajous, 4:Spiral, 5:Interference, 6:Helix, 14:Radial Burst, 20:Heart Shape, 33:Quantum Tunneling)
-          - freqRange: 20-2000 (Frequency spread)
-          - freqMod: 0-1000 (Frequency modulation depth)
-          - ampMod: 0.0-2.0 (Amplitude modulation depth)
-          - cutoffMod: 0-10000 (Filter cutoff modulation)
-          - qMod: 0-30 (Filter resonance modulation)
-          - synthMatrixVolume: 0.0-1.0 (Master volume for the matrix)`,
-          responseMimeType: "application/json",
-          responseSchema: {
-            type: Type.OBJECT,
-            properties: {
-              visualPrompt: { type: Type.STRING, description: "A detailed visual description for an image generator." },
-              synthSettings: {
-                type: Type.OBJECT,
-                properties: {
-                  baseFreq: { type: Type.NUMBER },
-                  scanSpeed: { type: Type.NUMBER },
-                  voiceWaveShapes: { type: Type.ARRAY, items: { type: Type.STRING } },
-                  adsr: {
-                    type: Type.OBJECT,
-                    properties: {
-                      attack: { type: Type.NUMBER },
-                      decay: { type: Type.NUMBER },
-                      sustain: { type: Type.NUMBER },
-                      release: { type: Type.NUMBER }
-                    }
-                  },
-                  triggerThreshold: { type: Type.NUMBER },
-                  scanScale: { type: Type.NUMBER },
-                  activePreset: { type: Type.INTEGER },
-                  freqRange: { type: Type.NUMBER },
-                  freqMod: { type: Type.NUMBER },
-                  ampMod: { type: Type.NUMBER },
-                  cutoffMod: { type: Type.NUMBER },
-                  qMod: { type: Type.NUMBER },
-                  synthMatrixVolume: { type: Type.NUMBER },
-                  autoPalette: { type: Type.ARRAY, items: { type: Type.STRING }, description: "An array of 3-5 hex colors for the visual palette." }
-                }
-              }
-            },
-            required: ["visualPrompt", "synthSettings"]
-          }
-        }
-      });
-
-      if (controller.signal.aborted) throw new Error("Aborted");
-
-      let synthData;
-      try {
-        synthData = JSON.parse(synthResponse.text);
-      } catch (e) {
-        console.error("Failed to parse synth response:", synthResponse.text);
-        throw new Error("AI returned invalid configuration format.");
-      }
-
-      const visualPrompt = synthData.visualPrompt;
-      const settings = synthData.synthSettings;
-
-      // Apply synth settings
-      if (settings) {
-        if (settings.baseFreq) setBaseFreq(settings.baseFreq);
-        if (settings.scanSpeed) setScanSpeed(settings.scanSpeed);
-        if (settings.autoPalette && Array.isArray(settings.autoPalette) && settings.autoPalette.length > 0) {
-          setAutoPalette(settings.autoPalette);
-          setVisualColorMode('auto');
-        }
-        
-        if (settings.voiceWaveShapes && Array.isArray(settings.voiceWaveShapes) && settings.voiceWaveShapes.length > 0) {
-          const newShapes = new Array(SAMPLE_POINTS).fill('auto').map((_, i) => 
-            settings.voiceWaveShapes[i] || settings.voiceWaveShapes[i % settings.voiceWaveShapes.length]
-          );
-          setVoiceWaveShapes(newShapes);
-        }
-
-        if (settings.adsr) {
-          const newAdsr = new Array(SAMPLE_POINTS).fill(null).map(() => ({
-            attack: settings.adsr.attack ?? 0.1,
-            decay: settings.adsr.decay ?? 0.2,
-            sustain: settings.adsr.sustain ?? 0.5,
-            release: settings.adsr.release ?? 0.8
-          }));
-          setAdsr(newAdsr);
-        }
-
-        if (settings.triggerThreshold !== undefined) setTriggerThreshold(settings.triggerThreshold);
-        if (settings.scanScale !== undefined) setScanScale(settings.scanScale);
-        if (settings.freqRange !== undefined) setFreqRange(settings.freqRange);
-        if (settings.freqMod !== undefined) setFreqMod(settings.freqMod);
-        if (settings.ampMod !== undefined) setAmpMod(settings.ampMod);
-        if (settings.cutoffMod !== undefined) setCutoffMod(settings.cutoffMod);
-        if (settings.qMod !== undefined) setQMod(settings.qMod);
-        if (settings.synthMatrixVolume !== undefined) setSynthMatrixVolume(settings.synthMatrixVolume);
-        
-        if (settings.activePreset !== undefined && SCAN_PRESETS[settings.activePreset]) {
-          setActivePreset(settings.activePreset);
-          setFormulaX(SCAN_PRESETS[settings.activePreset].formulaX);
-          setFormulaY(SCAN_PRESETS[settings.activePreset].formulaY);
-        }
-      }
-
-      // 2. Generate the image using gemini-2.5-flash-image (faster than Imagen)
-      const parts: any[] = [];
-      if (useCurrentImage && (image || (mediaType === 'video' && canvasRef.current))) {
-        let base64Data = "";
-        let mimeType = "image/png";
-
-        if (mediaType === 'image' && image) {
-          base64Data = image.split(',')[1];
-          mimeType = image.split(',')[0].split(':')[1].split(';')[0];
-        } else if (mediaType === 'video' && canvasRef.current) {
-          const canvas = canvasRef.current;
-          const dataUrl = canvas.toDataURL('image/png');
-          base64Data = dataUrl.split(',')[1];
-          mimeType = 'image/png';
-        }
-
-        if (base64Data) {
-          parts.push({
-            inlineData: {
-              data: base64Data,
-              mimeType: mimeType
-            }
-          });
-          parts.push({ text: `Modify this image based on: ${visualPrompt}` });
-        } else {
-          parts.push({ text: visualPrompt });
-        }
-      } else {
-        parts.push({ text: visualPrompt });
-      }
-
-      if (controller.signal.aborted) throw new Error("Aborted");
-
-      console.log("Step 2: Generating image with visual prompt:", visualPrompt);
-      const imageResponse = await ai.models.generateContent({
-        model: 'gemini-2.5-flash-image',
-        contents: { parts },
-        config: {
-          imageConfig: {
-            aspectRatio: '1:1'
-          }
-        }
-      });
-
-      if (controller.signal.aborted) throw new Error("Aborted");
-
-      let imageUrl = null;
-      for (const part of imageResponse.candidates?.[0]?.content?.parts || []) {
-        if (part.inlineData) {
-          imageUrl = `data:${part.inlineData.mimeType};base64,${part.inlineData.data}`;
-          break;
-        }
-      }
-
-      if (imageUrl) {
-        console.log("Step 3: Image generated successfully. Applying to synth...");
-        setImage(imageUrl);
-        setVideoUrl(null);
-        setMediaType('image');
-        setScanTime(0);
-        scanTimeRef.current = 0;
-        
-        if (shouldPlay) {
-          await initAudio();
-          setIsPlaying(true);
-          setIsSynthMatrixEnabled(true);
-        } else {
-          setIsPlaying(false);
-        }
-        
-        setIsLoaded(true);
-      } else {
-        throw new Error("AI did not return any images.");
-      }
-    } catch (error: any) {
-      if (error.message?.includes("Requested entity was not found")) {
-        console.error("API Key error: Requested entity not found. Resetting key selection.");
-        setHasApiKey(false);
-        setError("Your API key selection is invalid or expired. Please connect it again in settings.");
-        setShowSettings(true);
-      } else if (error.name === 'AbortError' || error.message === 'Aborted') {
-        console.log("Generation cancelled or timed out");
-      } else {
-        console.error("Image generation failed:", error);
-        setError(error.message || "Failed to generate image. Please try again.");
-      }
-    } finally {
-      clearTimeout(timeoutId);
-      if (abortControllerRef.current === controller) {
-        abortControllerRef.current = null;
-      }
-      setIsGenerating(false);
-    }
-  }, [prompt, hasApiKey, image, mediaType, setError, setShowSettings, setIsGenerating, setBaseFreq, setScanSpeed, setVoiceWaveShapes, setAdsr, setTriggerThreshold, setScanScale, setActivePreset, setFormulaX, setFormulaY, setImage, setVideoUrl, setMediaType, setScanTime, setIsPlaying, setIsLoaded, setFreqRange, setFreqMod, setAmpMod, setCutoffMod, setQMod, setSynthMatrixVolume, setIsSynthMatrixEnabled, initAudio]);
+  }, [generateProceduralArt]);
 
   const handleFeelingLucky = useCallback(async () => {
-    // Pick a random patch to start with
-    const randomPatchIdx = Math.floor(Math.random() * PATCHES.length);
-    applyPatch(randomPatchIdx);
-    setScanTime(0);
-    scanTimeRef.current = 0;
-    
-    await handleGenerateImage(false, luckyPromptInstructions, true);
-  }, [handleGenerateImage, luckyPromptInstructions, applyPatch, setScanTime]);
+    if (isGeneratingArt) return;
+    setIsGeneratingArt(true);
+
+    // Start audio first (must be triggered directly from user gesture)
+    await initAudio();
+
+    // Yield to browser so spinner renders before heavy canvas work
+    await new Promise(resolve => setTimeout(resolve, 30));
+
+    try {
+      // Pick a random patch
+      const randomPatchIdx = Math.floor(Math.random() * PATCHES.length);
+      applyPatch(randomPatchIdx);
+      setScanTime(0);
+      scanTimeRef.current = 0;
+
+      // Generate procedural art
+      const imageUrl = generateProceduralArt(512);
+      if (!imageUrl || imageUrl === 'data:,') throw new Error('canvas empty');
+      setImage(imageUrl);
+      setVideoUrl(null);
+      setMediaType('image');
+      setIsLoaded(true);
+      setIsPlaying(true);
+      setIsSynthMatrixEnabled(true);
+    } catch (e) {
+      // Fallback: solid gradient image via SVG data URL
+      const hue = Math.floor(Math.random() * 360);
+      const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="hsl(${hue},80%,30%)"/><stop offset="100%" stop-color="hsl(${(hue+120)%360},80%,60%)"/></linearGradient></defs><rect width="512" height="512" fill="url(#g)"/></svg>`;
+      setImage('data:image/svg+xml;base64,' + btoa(svg));
+      setMediaType('image');
+      setIsLoaded(true);
+    } finally {
+      setIsGeneratingArt(false);
+    }
+  }, [generateProceduralArt, applyPatch, initAudio, isGeneratingArt]);
 
   const playStep = useCallback((vIdx: number, sIdx: number) => {
     if (!audioContextRef.current || !droneSequencerVoicesRef.current[vIdx]) return;
@@ -4685,7 +4654,7 @@ export default function App() {
                       </li>
                       <li className="flex flex-col gap-1">
                         <span className="text-[10px] text-synth-accent font-black uppercase tracking-widest">AI Synergy</span>
-                        <p className="text-[10px] text-white/50 leading-tight">Use "I'm Feeling Lucky" to generate AI art tuned for spectral responses.</p>
+                        <p className="text-[10px] text-white/50 leading-tight">Use "I'm Feeling Lucky" to generate a random hallucinogenic image and patch — no AI needed.</p>
                       </li>
                       <li className="flex flex-col gap-1">
                         <span className="text-[10px] text-synth-accent font-black uppercase tracking-widest">Spectral Sculpting</span>
@@ -4718,61 +4687,25 @@ export default function App() {
               <span>Synesthchroming for beginners</span>
             </button>
             <div className="flex items-center gap-2">
-              <button 
-                onClick={handleFeelingLucky}
-                disabled={isGenerating}
-                className={`flex items-center gap-2 px-4 py-2 rounded-full transition-all group disabled:cursor-not-allowed shadow-sm active:scale-95 border ${
-                  isGenerating 
-                    ? 'bg-white/5 border-white/10 text-white/20 animate-pulse' 
-                    : 'bg-white/5 text-white border-white/10 hover:bg-white/10 hover:shadow-md'
-                }`}
-              >
-                {isGenerating ? (
-                  <>
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                    <span className="font-black uppercase tracking-widest text-[10px]">Generating Magic...</span>
-                  </>
-                ) : (
-                  <>
-                    <Sparkles className="w-4 h-4 group-hover:rotate-12 transition-transform" />
-                    <span className="font-black uppercase tracking-widest text-[10px]">I'm Feeling Lucky</span>
-                  </>
-                )}
-              </button>
               <button
-                onClick={() => setShowLuckyPromptSettings(!showLuckyPromptSettings)}
-                className={`p-2 rounded-full transition-all border ${
-                  showLuckyPromptSettings ? 'bg-white/10 border-white/20' : 'bg-white/5 border-white/10 hover:bg-white/10'
-                }`}
+                onClick={handleFeelingLucky}
+                disabled={isGeneratingArt}
+                className="flex items-center gap-2 px-4 py-2 rounded-full transition-all group shadow-sm active:scale-95 border border-white/10 hover:shadow-md disabled:opacity-60 disabled:cursor-not-allowed bg-white/5 text-white hover:bg-white/10"
               >
-                <Settings2 className="w-4 h-4 text-white/40" />
+                <Sparkles className={`w-4 h-4 transition-transform ${isGeneratingArt ? 'animate-spin' : 'group-hover:rotate-12'}`} />
+                <span className="font-black uppercase tracking-widest text-[10px]">
+                  {isGeneratingArt ? 'Generating…' : "I'm Feeling Lucky"}
+                </span>
               </button>
-              <AnimatePresence>
-                {showLuckyPromptSettings && (
-                  <motion.div
-                    initial={{ width: 0, opacity: 0 }}
-                    animate={{ width: 200, opacity: 1 }}
-                    exit={{ width: 0, opacity: 0 }}
-                    className="overflow-hidden flex items-center"
-                  >
-                    <input
-                      type="text"
-                      value={luckyPromptInstructions}
-                      onChange={(e) => setLuckyPromptInstructions(e.target.value)}
-                      placeholder="Lucky Prompt Instructions..."
-                      className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-1.5 text-[10px] uppercase font-black tracking-widest focus:outline-none focus:border-white/20 transition-all ml-2 text-white"
-                    />
-                  </motion.div>
-                )}
-              </AnimatePresence>
             </div>
           </div>
           <div className="flex items-center gap-8">
-            <button 
-              onClick={() => handleGenerateImage(false, "math and rainbows", true)}
-              className="text-white/20 font-bold hover:text-synth-accent transition-colors"
+            <button
+              onClick={handleFeelingLucky}
+              disabled={isGeneratingArt}
+              className="text-white/20 font-bold hover:text-synth-accent transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
             >
-              Powered by Math and Rainbows
+              {isGeneratingArt ? 'Generating…' : 'Powered by Math and Rainbows'}
             </button>
             <span>Chromesthesia v2.5</span>
             <span>Optical Scanning Synthesizer</span>
@@ -6600,35 +6533,6 @@ export default function App() {
                     </div>
                   </motion.div>
 
-                  {/* AI Synth Image */}
-                  <div className={`bg-white/5 border border-white/10 rounded-2xl space-y-4 ${isPerformanceMode ? 'p-3' : 'p-4'}`}>
-                    <div className="flex items-center gap-4">
-                      <div className={`${isPerformanceMode ? 'w-8 h-8' : 'w-10 h-10'} rounded-xl bg-white/10 flex items-center justify-center text-emerald-400`}>
-                        <Sparkles className={isPerformanceMode ? 'w-4 h-4' : 'w-5 h-5'} />
-                      </div>
-                      <div>
-                        <p className="text-[10px] font-black uppercase tracking-widest text-white">AI Synth Image</p>
-                        <p className="text-[8px] text-white/40 font-bold uppercase tracking-widest">Generative Art</p>
-                      </div>
-                    </div>
-                    <div className="flex gap-2">
-                      <input 
-                        type="text" 
-                        placeholder="Mood/prompt..." 
-                        value={prompt}
-                        onChange={(e) => setPrompt(e.target.value)}
-                        onKeyDown={(e) => e.key === 'Enter' && handleGenerateImage()}
-                        className="flex-1 bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-[9px] text-white outline-none focus:border-emerald-500/50 font-mono"
-                      />
-                      <button 
-                        onClick={() => handleGenerateImage()}
-                        disabled={isGenerating || !prompt}
-                        className="bg-emerald-500 hover:bg-emerald-600 text-white rounded-lg px-3 py-2 font-black text-[9px] uppercase tracking-widest transition-all disabled:opacity-30"
-                      >
-                        {isGenerating ? <Loader2 className="w-3 h-3 animate-spin" /> : 'Gen'}
-                      </button>
-                    </div>
-                  </div>
                 </div>
               </section>
 
@@ -7068,31 +6972,6 @@ export default function App() {
                 </div>
               </section>
 
-              {(image || videoUrl) && (
-                <section className="border-t border-white/10 pt-10">
-                  <label className="text-[11px] text-white/40 uppercase tracking-[0.3em] block mb-6 font-black">AI Media Remix</label>
-                  <div className="space-y-6 bg-white/5 p-8 rounded-3xl border border-white/10">
-                    <div className="flex flex-col gap-4">
-                      <input 
-                        type="text" 
-                        placeholder="Variation prompt (optional)..." 
-                        value={prompt}
-                        onChange={(e) => setPrompt(e.target.value)}
-                        className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-xs text-white outline-none focus:border-emerald-500/50 transition-all font-medium"
-                      />
-                      <button 
-                        onClick={() => handleGenerateImage(true)}
-                        disabled={isGenerating}
-                        className="w-full bg-emerald-500 text-white rounded-xl py-4 font-black text-xs hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-50 flex items-center justify-center gap-2 shadow-lg"
-                      >
-                        {isGenerating ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
-                        Generate Variation
-                      </button>
-                    </div>
-                    <p className="text-[10px] text-white/40 text-center uppercase tracking-widest font-black">Uses current {mediaType} as visual context</p>
-                  </div>
-                </section>
-              )}
 
               <section className="border-t border-white/10 pt-10">
                 <label className="text-[11px] text-white/60 uppercase tracking-[0.3em] block mb-6 font-black">Voice Activity</label>
@@ -7473,16 +7352,6 @@ export default function App() {
               <section className="pt-10 border-t border-white/10 pb-20">
               </section>
               <section className="pt-10 border-t border-white/10 space-y-6">
-                <div className="flex items-center justify-center gap-3 py-2">
-                  <div className={`w-1.5 h-1.5 rounded-full ${hasApiKey ? 'bg-green-500 shadow-[0_0_8px_#22c55e]' : 'bg-white/10'}`} />
-                  <button 
-                    onClick={handleConnectKey}
-                    className="text-[9px] uppercase tracking-[0.2em] font-black text-white/20 hover:text-white transition-colors flex items-center gap-2"
-                  >
-                    <Key className="w-3 h-3" />
-                    {hasApiKey ? 'Gemini API Connected' : 'Connect Gemini API Key'}
-                  </button>
-                </div>
 
                 <button 
                   onClick={resetToDefaults}
