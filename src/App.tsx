@@ -1118,6 +1118,171 @@ const DRONE_PATCHES = [
         { name: 'Perc', type: 'auto', steps: [false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false], pitch: [36, 36, 36, 36, 36, 36, 36, 36, 36, 36, 36, 36, 36, 36, 36, 36], volume: [0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2], probability: new Array(16).fill(0.3), duration: new Array(16).fill(0.1), adsr: { attack: 0.5, decay: 0.5, sustain: 0.1, release: 0.5 } }
       ]
     }
+  },
+  {
+    name: "Cosmic Cathedral",
+    description: "Wide reverby drone with slow arpeggiated sequencer and celestial sine waves.",
+    settings: {
+      isDroneEnabled: true,
+      isDroneSequencerEnabled: true,
+      droneMasterVolume: 0.45,
+      droneFilterCutoff: 2200,
+      droneFilterResonance: 2.5,
+      droneSpread: 0.7,
+      droneLfoFreq: 0.08,
+      droneLfoAmount: 400,
+      droneLfoTarget: 'cutoff',
+      droneSaturation: 0.15,
+      droneReverbSend: 0.9,
+      droneSubAmount: 0.2,
+      droneVoices: [
+        { type: 'sine', freq: 130.81, volume: 0.5, detune: 3, pan: -0.6, adsr: { attack: 3.0, decay: 1.5, sustain: 0.8, release: 5.0 } },
+        { type: 'sine', freq: 196.0, volume: 0.4, detune: -3, pan: 0.6, adsr: { attack: 3.5, decay: 2.0, sustain: 0.7, release: 5.5 } },
+        { type: 'sine', freq: 261.63, volume: 0.3, detune: 5, pan: -0.3, adsr: { attack: 4.0, decay: 2.5, sustain: 0.6, release: 6.0 } },
+        { type: 'triangle', freq: 65.41, volume: 0.6, detune: 0, pan: 0.3, adsr: { attack: 2.5, decay: 1.0, sustain: 0.9, release: 4.0 } }
+      ],
+      droneSequencerBpm: 70,
+      droneSequencerSwing: 0.05,
+      droneSequencerLinkToMatrix: true,
+      droneSequencerVoices: [
+        { name: 'Sub', type: 'sine', steps: [true, false, false, false, false, false, false, false, true, false, false, false, false, false, false, false], pitch: [36, 36, 36, 36, 36, 36, 36, 36, 36, 36, 36, 36, 36, 36, 36, 36], volume: [0.6, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3, 0.6, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3], probability: new Array(16).fill(1.0), duration: new Array(16).fill(1.0), adsr: { attack: 0.8, decay: 0.5, sustain: 0.7, release: 1.5 } },
+        { name: 'Bass', type: 'sine', steps: [false, false, false, false, true, false, false, false, false, false, false, false, true, false, false, false], pitch: [48, 48, 48, 48, 52, 52, 52, 52, 48, 48, 48, 48, 55, 55, 55, 55], volume: [0.4, 0.3, 0.3, 0.3, 0.5, 0.3, 0.3, 0.3, 0.4, 0.3, 0.3, 0.3, 0.5, 0.3, 0.3, 0.3], probability: new Array(16).fill(0.9), duration: new Array(16).fill(0.8), adsr: { attack: 0.5, decay: 0.4, sustain: 0.6, release: 1.0 } },
+        { name: 'Lead', type: 'sine', steps: [true, false, true, false, true, false, true, false, true, false, true, false, true, false, true, false], pitch: [60, 60, 64, 64, 67, 67, 72, 72, 76, 76, 72, 72, 67, 67, 64, 64], volume: [0.25, 0.2, 0.25, 0.2, 0.25, 0.2, 0.25, 0.2, 0.25, 0.2, 0.25, 0.2, 0.25, 0.2, 0.25, 0.2], probability: new Array(16).fill(0.7), duration: new Array(16).fill(1.0), adsr: { attack: 1.5, decay: 1.0, sustain: 0.8, release: 2.5 } },
+        { name: 'Perc', type: 'auto', steps: [false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false], pitch: [36, 36, 36, 36, 36, 36, 36, 36, 36, 36, 36, 36, 36, 36, 36, 36], volume: [0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2], probability: new Array(16).fill(0.3), duration: new Array(16).fill(0.2), adsr: { attack: 0.3, decay: 0.3, sustain: 0.1, release: 0.5 } }
+      ]
+    }
+  },
+  {
+    name: "Neon Underground",
+    description: "Punchy sawtooth and square waves with fast glitchy sequencer and high saturation.",
+    settings: {
+      isDroneEnabled: true,
+      isDroneSequencerEnabled: true,
+      droneMasterVolume: 0.6,
+      droneFilterCutoff: 1800,
+      droneFilterResonance: 7,
+      droneSpread: 0.15,
+      droneLfoFreq: 3.0,
+      droneLfoAmount: 600,
+      droneLfoTarget: 'cutoff',
+      droneSaturation: 0.75,
+      droneReverbSend: 0.15,
+      droneSubAmount: 0.5,
+      droneVoices: [
+        { type: 'sawtooth', freq: 55, volume: 0.6, detune: 8, pan: -0.3, adsr: { attack: 0.01, decay: 0.08, sustain: 0.7, release: 0.1 } },
+        { type: 'square', freq: 55, volume: 0.5, detune: -8, pan: 0.3, adsr: { attack: 0.01, decay: 0.08, sustain: 0.7, release: 0.1 } },
+        { type: 'sawtooth', freq: 110, volume: 0.35, detune: 12, pan: -0.5, adsr: { attack: 0.02, decay: 0.1, sustain: 0.5, release: 0.15 } },
+        { type: 'square', freq: 110, volume: 0.3, detune: -12, pan: 0.5, adsr: { attack: 0.02, decay: 0.1, sustain: 0.5, release: 0.15 } }
+      ],
+      droneSequencerBpm: 140,
+      droneSequencerSwing: 0.15,
+      droneSequencerLinkToMatrix: true,
+      droneSequencerVoices: [
+        { name: 'Sub', type: 'sine', steps: [true, false, false, true, false, false, true, false, true, false, false, true, false, false, true, false], pitch: [30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30], volume: [1.0, 0.5, 0.5, 0.8, 0.5, 0.5, 1.0, 0.5, 0.9, 0.5, 0.5, 0.8, 0.5, 0.5, 1.0, 0.5], probability: new Array(16).fill(1.0), duration: new Array(16).fill(0.1), adsr: { attack: 0.005, decay: 0.05, sustain: 0.3, release: 0.05 } },
+        { name: 'Bass', type: 'square', steps: [true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true], pitch: [36, 36, 39, 36, 41, 36, 39, 36, 36, 36, 39, 36, 43, 36, 41, 36], volume: [0.8, 0.5, 0.7, 0.5, 0.8, 0.5, 0.7, 0.5, 0.8, 0.5, 0.7, 0.5, 0.9, 0.5, 0.7, 0.5], probability: new Array(16).fill(1.0), duration: new Array(16).fill(0.08), adsr: { attack: 0.005, decay: 0.03, sustain: 0.4, release: 0.03 } },
+        { name: 'Lead', type: 'sawtooth', steps: [false, true, false, true, false, true, false, true, false, true, false, true, false, true, false, true], pitch: [48, 51, 48, 53, 48, 55, 48, 53, 48, 51, 48, 53, 48, 56, 48, 53], volume: [0.5, 0.6, 0.5, 0.7, 0.5, 0.6, 0.5, 0.7, 0.5, 0.6, 0.5, 0.7, 0.5, 0.8, 0.5, 0.7], probability: [1.0, 0.9, 1.0, 0.8, 1.0, 0.7, 1.0, 0.9, 1.0, 0.9, 1.0, 0.8, 1.0, 0.6, 1.0, 0.9], duration: new Array(16).fill(0.15), adsr: { attack: 0.005, decay: 0.05, sustain: 0.5, release: 0.08 } },
+        { name: 'Perc', type: 'auto', steps: [true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true], pitch: [42, 38, 42, 38, 42, 38, 42, 38, 42, 38, 42, 38, 42, 38, 42, 38], volume: [0.5, 0.3, 0.5, 0.3, 0.5, 0.3, 0.5, 0.3, 0.5, 0.3, 0.5, 0.3, 0.5, 0.3, 0.5, 0.3], probability: [1.0, 0.5, 0.8, 0.4, 1.0, 0.5, 0.8, 0.4, 1.0, 0.5, 0.8, 0.4, 1.0, 0.5, 0.8, 0.4], duration: new Array(16).fill(0.03), adsr: { attack: 0.001, decay: 0.02, sustain: 0.0, release: 0.02 } }
+      ]
+    }
+  },
+  {
+    name: "Frozen Tundra",
+    description: "Sparse, cold sine tones with minimal sequencing and wide stereo field.",
+    settings: {
+      isDroneEnabled: true,
+      isDroneSequencerEnabled: true,
+      droneMasterVolume: 0.35,
+      droneFilterCutoff: 350,
+      droneFilterResonance: 3,
+      droneSpread: 0.95,
+      droneLfoFreq: 0.03,
+      droneLfoAmount: 150,
+      droneLfoTarget: 'cutoff',
+      droneSaturation: 0.05,
+      droneReverbSend: 0.85,
+      droneSubAmount: 0.15,
+      droneVoices: [
+        { type: 'sine', freq: 73.42, volume: 0.4, detune: 1, pan: -0.9, adsr: { attack: 5.0, decay: 3.0, sustain: 0.7, release: 8.0 } },
+        { type: 'sine', freq: 110.0, volume: 0.3, detune: -1, pan: 0.9, adsr: { attack: 6.0, decay: 3.5, sustain: 0.6, release: 9.0 } },
+        { type: 'triangle', freq: 146.83, volume: 0.2, detune: 2, pan: -0.5, adsr: { attack: 7.0, decay: 4.0, sustain: 0.5, release: 10.0 } },
+        { type: 'sine', freq: 55.0, volume: 0.5, detune: 0, pan: 0.0, adsr: { attack: 4.0, decay: 2.0, sustain: 0.8, release: 7.0 } }
+      ],
+      droneSequencerBpm: 50,
+      droneSequencerSwing: 0,
+      droneSequencerLinkToMatrix: true,
+      droneSequencerVoices: [
+        { name: 'Sub', type: 'sine', steps: [true, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false], pitch: [36, 36, 36, 36, 36, 36, 36, 36, 36, 36, 36, 36, 36, 36, 36, 36], volume: [0.5, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2], probability: new Array(16).fill(1.0), duration: new Array(16).fill(1.0), adsr: { attack: 1.5, decay: 1.0, sustain: 0.6, release: 3.0 } },
+        { name: 'Bass', type: 'sine', steps: [false, false, false, false, false, false, false, false, true, false, false, false, false, false, false, false], pitch: [48, 48, 48, 48, 48, 48, 48, 48, 50, 50, 50, 50, 48, 48, 48, 48], volume: [0.3, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.35, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2], probability: new Array(16).fill(0.8), duration: new Array(16).fill(0.9), adsr: { attack: 1.0, decay: 0.8, sustain: 0.5, release: 2.0 } },
+        { name: 'Pad', type: 'sine', steps: [true, false, false, false, false, false, false, false, true, false, false, false, false, false, false, false], pitch: [60, 60, 60, 60, 60, 60, 60, 60, 64, 64, 64, 64, 60, 60, 60, 60], volume: [0.15, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.15, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1], probability: new Array(16).fill(0.6), duration: new Array(16).fill(1.0), adsr: { attack: 3.0, decay: 2.0, sustain: 0.9, release: 5.0 } },
+        { name: 'Perc', type: 'auto', steps: [false, false, false, false, false, false, false, false, false, false, false, false, true, false, false, false], pitch: [36, 36, 36, 36, 36, 36, 36, 36, 36, 36, 36, 36, 36, 36, 36, 36], volume: [0.15, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.2, 0.1, 0.1, 0.1], probability: new Array(16).fill(0.4), duration: new Array(16).fill(0.3), adsr: { attack: 0.2, decay: 0.3, sustain: 0.1, release: 0.5 } }
+      ]
+    }
+  },
+  {
+    name: "Volcanic Rumble",
+    description: "Deep aggressive bass with driving rhythm, high saturation, and square/sawtooth waves.",
+    settings: {
+      isDroneEnabled: true,
+      isDroneSequencerEnabled: true,
+      droneMasterVolume: 0.75,
+      droneFilterCutoff: 700,
+      droneFilterResonance: 9,
+      droneSpread: 0.08,
+      droneLfoFreq: 1.5,
+      droneLfoAmount: 500,
+      droneLfoTarget: 'cutoff',
+      droneSaturation: 0.85,
+      droneReverbSend: 0.2,
+      droneSubAmount: 0.7,
+      droneVoices: [
+        { type: 'square', freq: 36.71, volume: 0.8, detune: 6, pan: -0.2, adsr: { attack: 0.05, decay: 0.15, sustain: 0.85, release: 0.3 } },
+        { type: 'sawtooth', freq: 36.71, volume: 0.7, detune: -6, pan: 0.2, adsr: { attack: 0.05, decay: 0.15, sustain: 0.85, release: 0.3 } },
+        { type: 'square', freq: 73.42, volume: 0.5, detune: 10, pan: -0.4, adsr: { attack: 0.08, decay: 0.2, sustain: 0.7, release: 0.4 } },
+        { type: 'sawtooth', freq: 55.0, volume: 0.6, detune: -3, pan: 0.4, adsr: { attack: 0.1, decay: 0.25, sustain: 0.75, release: 0.5 } }
+      ],
+      droneSequencerBpm: 110,
+      droneSequencerSwing: 0.25,
+      droneSequencerLinkToMatrix: true,
+      droneSequencerVoices: [
+        { name: 'Sub', type: 'sine', steps: [true, false, true, false, true, false, true, false, true, false, true, false, true, false, true, false], pitch: [24, 24, 24, 24, 24, 24, 24, 24, 24, 24, 24, 24, 24, 24, 24, 24], volume: [1.0, 0.6, 0.9, 0.6, 1.0, 0.6, 0.9, 0.6, 1.0, 0.6, 0.9, 0.6, 1.0, 0.6, 0.9, 0.6], probability: new Array(16).fill(1.0), duration: new Array(16).fill(0.15), adsr: { attack: 0.01, decay: 0.08, sustain: 0.4, release: 0.08 } },
+        { name: 'Bass', type: 'sawtooth', steps: [true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true], pitch: [36, 36, 36, 36, 38, 38, 38, 38, 36, 36, 36, 36, 41, 41, 41, 41], volume: [0.9, 0.6, 0.8, 0.6, 0.9, 0.6, 0.8, 0.6, 0.9, 0.6, 0.8, 0.6, 1.0, 0.7, 0.9, 0.6], probability: new Array(16).fill(1.0), duration: new Array(16).fill(0.1), adsr: { attack: 0.01, decay: 0.06, sustain: 0.5, release: 0.06 } },
+        { name: 'Lead', type: 'square', steps: [false, false, false, true, false, false, false, true, false, false, false, true, false, false, true, true], pitch: [48, 48, 48, 48, 48, 48, 48, 51, 48, 48, 48, 53, 48, 48, 48, 48], volume: [0.5, 0.4, 0.5, 0.7, 0.5, 0.4, 0.5, 0.7, 0.5, 0.4, 0.5, 0.8, 0.5, 0.4, 0.7, 0.7], probability: new Array(16).fill(0.9), duration: new Array(16).fill(0.12), adsr: { attack: 0.01, decay: 0.08, sustain: 0.4, release: 0.1 } },
+        { name: 'Perc', type: 'auto', steps: [true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true], pitch: [36, 40, 36, 40, 36, 40, 36, 40, 36, 40, 36, 40, 36, 40, 36, 40], volume: [0.7, 0.4, 0.6, 0.4, 0.7, 0.4, 0.6, 0.4, 0.7, 0.4, 0.6, 0.4, 0.7, 0.4, 0.6, 0.4], probability: [1.0, 0.7, 0.9, 0.6, 1.0, 0.7, 0.9, 0.6, 1.0, 0.7, 0.9, 0.6, 1.0, 0.7, 0.9, 0.6], duration: new Array(16).fill(0.04), adsr: { attack: 0.002, decay: 0.02, sustain: 0.0, release: 0.02 } }
+      ]
+    }
+  },
+  {
+    name: "Stellar Nursery",
+    description: "Ethereal high-frequency tones with probabilistic sequencing and gentle sine/triangle blend.",
+    settings: {
+      isDroneEnabled: true,
+      isDroneSequencerEnabled: true,
+      droneMasterVolume: 0.4,
+      droneFilterCutoff: 3200,
+      droneFilterResonance: 1.8,
+      droneSpread: 0.85,
+      droneLfoFreq: 0.12,
+      droneLfoAmount: 0.6,
+      droneLfoTarget: 'pan',
+      droneSaturation: 0.1,
+      droneReverbSend: 0.75,
+      droneSubAmount: 0.1,
+      droneVoices: [
+        { type: 'sine', freq: 523.25, volume: 0.35, detune: 4, pan: -0.7, adsr: { attack: 3.0, decay: 2.0, sustain: 0.7, release: 5.0 } },
+        { type: 'triangle', freq: 659.25, volume: 0.25, detune: -4, pan: 0.7, adsr: { attack: 3.5, decay: 2.5, sustain: 0.6, release: 5.5 } },
+        { type: 'sine', freq: 783.99, volume: 0.2, detune: 7, pan: -0.4, adsr: { attack: 4.0, decay: 3.0, sustain: 0.5, release: 6.0 } },
+        { type: 'triangle', freq: 392.0, volume: 0.4, detune: -2, pan: 0.4, adsr: { attack: 2.5, decay: 1.5, sustain: 0.8, release: 4.5 } }
+      ],
+      droneSequencerBpm: 90,
+      droneSequencerSwing: 0,
+      droneSequencerLinkToMatrix: true,
+      droneSequencerVoices: [
+        { name: 'Sub', type: 'sine', steps: [true, false, false, false, false, false, false, false, true, false, false, false, false, false, false, false], pitch: [48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48, 48], volume: [0.4, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.4, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2], probability: new Array(16).fill(0.8), duration: new Array(16).fill(1.0), adsr: { attack: 0.8, decay: 0.5, sustain: 0.6, release: 1.5 } },
+        { name: 'Bass', type: 'triangle', steps: [false, false, true, false, false, false, true, false, false, false, true, false, false, false, true, false], pitch: [60, 60, 64, 60, 60, 60, 67, 60, 60, 60, 64, 60, 60, 60, 72, 60], volume: [0.2, 0.2, 0.3, 0.2, 0.2, 0.2, 0.3, 0.2, 0.2, 0.2, 0.3, 0.2, 0.2, 0.2, 0.35, 0.2], probability: new Array(16).fill(0.7), duration: new Array(16).fill(0.8), adsr: { attack: 0.5, decay: 0.4, sustain: 0.5, release: 1.0 } },
+        { name: 'Lead', type: 'sine', steps: [true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true], pitch: [72, 76, 79, 84, 79, 76, 72, 67, 72, 76, 79, 84, 88, 84, 79, 76], volume: [0.2, 0.15, 0.2, 0.15, 0.2, 0.15, 0.2, 0.15, 0.2, 0.15, 0.2, 0.15, 0.25, 0.15, 0.2, 0.15], probability: [0.5, 0.3, 0.6, 0.4, 0.7, 0.3, 0.5, 0.2, 0.6, 0.4, 0.7, 0.5, 0.8, 0.3, 0.5, 0.4], duration: new Array(16).fill(1.0), adsr: { attack: 1.5, decay: 1.0, sustain: 0.8, release: 2.5 } },
+        { name: 'Perc', type: 'auto', steps: [false, false, false, true, false, false, false, true, false, false, false, true, false, false, false, true], pitch: [36, 36, 36, 36, 36, 36, 36, 36, 36, 36, 36, 36, 36, 36, 36, 36], volume: [0.15, 0.1, 0.1, 0.2, 0.1, 0.1, 0.1, 0.2, 0.1, 0.1, 0.1, 0.2, 0.1, 0.1, 0.1, 0.25], probability: [0.3, 0.2, 0.2, 0.6, 0.3, 0.2, 0.2, 0.6, 0.3, 0.2, 0.2, 0.6, 0.3, 0.2, 0.2, 0.7], duration: new Array(16).fill(0.15), adsr: { attack: 0.1, decay: 0.2, sustain: 0.1, release: 0.3 } }
+      ]
+    }
   }
 ];
 
@@ -1172,6 +1337,110 @@ const DRONE_PRESETS = [
       { type: 'sawtooth', freq: 164.81, volume: 0.4, detune: -15, pan: 0.8, adsr: { attack: 0.6, decay: 0.6, sustain: 0.6, release: 1.2 } },
       { type: 'sawtooth', freq: 246.94, volume: 0.3, detune: 10, pan: -0.4, adsr: { attack: 0.7, decay: 0.7, sustain: 0.5, release: 1.4 } },
       { type: 'sawtooth', freq: 329.63, volume: 0.2, detune: -10, pan: 0.4, adsr: { attack: 0.8, decay: 0.8, sustain: 0.4, release: 1.6 } }
+    ]
+  },
+  {
+    name: "Subterranean",
+    description: "Ultra-low frequency rumbles from deep below the earth.",
+    cutoff: 200,
+    resonance: 6,
+    spread: 0.5,
+    voices: [
+      { type: 'triangle', freq: 30, volume: 0.7, detune: 3, pan: -0.3, adsr: { attack: 2.0, decay: 1.0, sustain: 0.9, release: 3.0 } },
+      { type: 'sine', freq: 45, volume: 0.6, detune: -2, pan: 0.3, adsr: { attack: 2.5, decay: 1.5, sustain: 0.85, release: 3.5 } },
+      { type: 'triangle', freq: 60, volume: 0.5, detune: 1, pan: -0.5, adsr: { attack: 3.0, decay: 2.0, sustain: 0.8, release: 4.0 } },
+      { type: 'sine', freq: 80, volume: 0.4, detune: -1, pan: 0.5, adsr: { attack: 3.5, decay: 2.5, sustain: 0.75, release: 4.5 } }
+    ]
+  },
+  {
+    name: "Crystal Caves",
+    description: "High-pitched shimmering tones with crystalline detune.",
+    cutoff: 4000,
+    resonance: 2,
+    spread: 0.7,
+    voices: [
+      { type: 'triangle', freq: 880, volume: 0.3, detune: 20, pan: -0.6, adsr: { attack: 0.8, decay: 0.4, sustain: 0.6, release: 1.5 } },
+      { type: 'triangle', freq: 1200, volume: 0.25, detune: -25, pan: 0.6, adsr: { attack: 1.0, decay: 0.5, sustain: 0.5, release: 1.8 } },
+      { type: 'triangle', freq: 1600, volume: 0.2, detune: 30, pan: -0.3, adsr: { attack: 1.2, decay: 0.6, sustain: 0.4, release: 2.0 } },
+      { type: 'triangle', freq: 2000, volume: 0.15, detune: -18, pan: 0.3, adsr: { attack: 1.5, decay: 0.8, sustain: 0.3, release: 2.5 } }
+    ]
+  },
+  {
+    name: "Dark Matter",
+    description: "Thick, dissonant square waves creating an ominous wall of sound.",
+    cutoff: 600,
+    resonance: 10,
+    spread: 0.4,
+    voices: [
+      { type: 'square', freq: 40, volume: 0.6, detune: 25, pan: -0.4, adsr: { attack: 0.3, decay: 0.2, sustain: 0.95, release: 0.8 } },
+      { type: 'square', freq: 42, volume: 0.55, detune: -30, pan: 0.4, adsr: { attack: 0.35, decay: 0.25, sustain: 0.9, release: 0.9 } },
+      { type: 'square', freq: 80, volume: 0.4, detune: 18, pan: -0.2, adsr: { attack: 0.4, decay: 0.3, sustain: 0.85, release: 1.0 } },
+      { type: 'square', freq: 100, volume: 0.35, detune: -22, pan: 0.2, adsr: { attack: 0.5, decay: 0.35, sustain: 0.8, release: 1.2 } }
+    ]
+  },
+  {
+    name: "Solar Wind",
+    description: "Gentle sawtooth currents sweeping across the stereo field.",
+    cutoff: 1800,
+    resonance: 3,
+    spread: 1.0,
+    voices: [
+      { type: 'sawtooth', freq: 150, volume: 0.35, detune: 5, pan: -0.9, adsr: { attack: 1.5, decay: 0.8, sustain: 0.7, release: 2.5 } },
+      { type: 'sawtooth', freq: 225, volume: 0.3, detune: -7, pan: 0.9, adsr: { attack: 2.0, decay: 1.0, sustain: 0.6, release: 3.0 } },
+      { type: 'sawtooth', freq: 337, volume: 0.25, detune: 3, pan: -0.5, adsr: { attack: 2.5, decay: 1.2, sustain: 0.55, release: 3.5 } },
+      { type: 'sawtooth', freq: 500, volume: 0.2, detune: -4, pan: 0.5, adsr: { attack: 3.0, decay: 1.5, sustain: 0.5, release: 4.0 } }
+    ]
+  },
+  {
+    name: "Tibetan Bowl",
+    description: "Pure sine harmonics in perfect ratios evoking singing bowls.",
+    cutoff: 3500,
+    resonance: 1,
+    spread: 0.6,
+    voices: [
+      { type: 'sine', freq: 130.81, volume: 0.5, detune: 0, pan: -0.4, adsr: { attack: 4.0, decay: 2.0, sustain: 0.9, release: 6.0 } },
+      { type: 'sine', freq: 261.63, volume: 0.4, detune: 1, pan: 0.4, adsr: { attack: 4.5, decay: 2.5, sustain: 0.85, release: 6.5 } },
+      { type: 'sine', freq: 392.44, volume: 0.3, detune: -1, pan: -0.2, adsr: { attack: 5.0, decay: 3.0, sustain: 0.8, release: 7.0 } },
+      { type: 'sine', freq: 523.25, volume: 0.25, detune: 0, pan: 0.2, adsr: { attack: 5.5, decay: 3.5, sustain: 0.75, release: 7.5 } }
+    ]
+  },
+  {
+    name: "Machine Room",
+    description: "Aggressive mechanical squares with tight panning and heavy resonance.",
+    cutoff: 900,
+    resonance: 14,
+    spread: 0.2,
+    voices: [
+      { type: 'square', freq: 50, volume: 0.6, detune: 0, pan: -0.15, adsr: { attack: 0.02, decay: 0.05, sustain: 0.95, release: 0.1 } },
+      { type: 'square', freq: 100, volume: 0.5, detune: 3, pan: 0.15, adsr: { attack: 0.02, decay: 0.05, sustain: 0.9, release: 0.1 } },
+      { type: 'square', freq: 150, volume: 0.4, detune: -3, pan: -0.1, adsr: { attack: 0.03, decay: 0.06, sustain: 0.85, release: 0.12 } },
+      { type: 'square', freq: 200, volume: 0.3, detune: 5, pan: 0.1, adsr: { attack: 0.03, decay: 0.06, sustain: 0.8, release: 0.12 } }
+    ]
+  },
+  {
+    name: "Northern Lights",
+    description: "Slowly evolving sine and triangle blend with aurora-like movement.",
+    cutoff: 2000,
+    resonance: 2.5,
+    spread: 0.9,
+    voices: [
+      { type: 'sine', freq: 180, volume: 0.4, detune: 25, pan: -0.7, adsr: { attack: 5.0, decay: 3.0, sustain: 0.7, release: 7.0 } },
+      { type: 'triangle', freq: 270, volume: 0.35, detune: -30, pan: 0.7, adsr: { attack: 6.0, decay: 3.5, sustain: 0.65, release: 8.0 } },
+      { type: 'sine', freq: 400, volume: 0.3, detune: 20, pan: -0.4, adsr: { attack: 7.0, decay: 4.0, sustain: 0.6, release: 9.0 } },
+      { type: 'triangle', freq: 600, volume: 0.2, detune: -35, pan: 0.4, adsr: { attack: 8.0, decay: 5.0, sustain: 0.55, release: 10.0 } }
+    ]
+  },
+  {
+    name: "Tectonic Plates",
+    description: "Very low frequency rumbles at the threshold of hearing.",
+    cutoff: 100,
+    resonance: 5,
+    spread: 0.3,
+    voices: [
+      { type: 'sine', freq: 20, volume: 0.8, detune: 2, pan: -0.2, adsr: { attack: 4.0, decay: 2.0, sustain: 0.95, release: 5.0 } },
+      { type: 'triangle', freq: 30, volume: 0.7, detune: -3, pan: 0.2, adsr: { attack: 4.5, decay: 2.5, sustain: 0.9, release: 5.5 } },
+      { type: 'sine', freq: 40, volume: 0.6, detune: 1, pan: -0.3, adsr: { attack: 5.0, decay: 3.0, sustain: 0.85, release: 6.0 } },
+      { type: 'triangle', freq: 55, volume: 0.5, detune: -2, pan: 0.3, adsr: { attack: 5.5, decay: 3.5, sustain: 0.8, release: 6.5 } }
     ]
   }
 ];
@@ -3215,6 +3484,27 @@ export default function App() {
       setScanTime(0);
       scanTimeRef.current = 0;
 
+      // Reset scan center
+      setScanCenterX(0.5);
+      setScanCenterY(0.5);
+
+      // Apply random drone patch
+      const randomDronePatchIdx = Math.floor(Math.random() * DRONE_PATCHES.length);
+      applyDronePatch(randomDronePatchIdx);
+
+      // Apply random sequencer preset
+      const randomSeqPresetIdx = Math.floor(Math.random() * SEQUENCER_PRESETS.length);
+      applySequencerPreset(randomSeqPresetIdx);
+
+      // Enable drone and sequencer
+      setIsDroneEnabled(true);
+      setIsDroneSequencerEnabled(true);
+
+      // Randomize visual palette
+      const randomPaletteIdx = Math.floor(Math.random() * VISUAL_PALETTES.length);
+      setVisualPalette(VISUAL_PALETTES[randomPaletteIdx].colors);
+      setVisualPaletteName(VISUAL_PALETTES[randomPaletteIdx].name);
+
       // Generate procedural art
       const imageUrl = generateProceduralArt(512);
       if (!imageUrl || imageUrl === 'data:,') throw new Error('canvas empty');
@@ -3234,7 +3524,7 @@ export default function App() {
     } finally {
       setIsGeneratingArt(false);
     }
-  }, [generateProceduralArt, applyPatch, initAudio, isGeneratingArt]);
+  }, [generateProceduralArt, applyPatch, applyDronePatch, applySequencerPreset, initAudio, isGeneratingArt]);
 
   const playStep = useCallback((vIdx: number, sIdx: number) => {
     if (!audioContextRef.current || !droneSequencerVoicesRef.current[vIdx]) return;
@@ -4208,20 +4498,22 @@ export default function App() {
             <canvas ref={samplingCanvasRef} width={640} height={360} className="hidden" />
             
             {/* Scan Points Visualization - Optimized Canvas Component */}
-            <ScanningVisuals
-              pointsRef={scanPointsRef}
-              canvasRef={visualsCanvasRef}
-              width={isPerformanceMode ? 320 : 640}
-              height={isPerformanceMode ? 180 : 360}
-              isPlaying={isPlaying}
-              transparency={0.6}
-              colorMode={visualColorMode}
-              manualColor="#ffffff"
-              palette={visualColorMode === 'auto' ? autoPalette : (visualColorMode === 'preset' ? visualPalette : [])}
-              trippy={0}
-              subtle={0}
-              performanceMode={isPerformanceMode}
-            />
+            {isVisualsEnabled && (
+              <ScanningVisuals
+                pointsRef={scanPointsRef}
+                canvasRef={visualsCanvasRef}
+                width={isPerformanceMode ? 320 : 640}
+                height={isPerformanceMode ? 180 : 360}
+                isPlaying={isPlaying}
+                transparency={0.6}
+                colorMode={visualColorMode}
+                manualColor="#ffffff"
+                palette={visualColorMode === 'auto' ? autoPalette : (visualColorMode === 'preset' ? visualPalette : [])}
+                trippy={0}
+                subtle={0}
+                performanceMode={isPerformanceMode}
+              />
+            )}
           </motion.div>
         )}
       </AnimatePresence>
@@ -4438,18 +4730,18 @@ export default function App() {
 
             {/* Visuals Settings */}
             <div className={`flex items-center rounded-lg transition-all duration-300 overflow-hidden ${
-              showVisualsModule 
-                ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-500/20' 
+              showVisualsModule
+                ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-500/20'
                 : 'bg-transparent text-white/40'
             }`}>
-              <button 
+              <button
                 onClick={() => setIsVisualsEnabled(!isVisualsEnabled)}
                 className={`px-2 py-2 hover:bg-white/10 transition-colors border-r ${showVisualsModule ? 'border-white/10' : 'border-white/5'}`}
-                title="Toggle Visuals"
+                title={isVisualsEnabled ? 'Hide Scan Overlay' : 'Show Scan Overlay'}
               >
-                <div className={`w-1.5 h-1.5 rounded-full transition-all duration-500 ${isVisualsEnabled ? 'bg-white animate-pulse' : 'bg-white/20'}`} />
+                <Eye className={`w-3 h-3 transition-all duration-300 ${isVisualsEnabled ? 'opacity-100' : 'opacity-30'}`} />
               </button>
-              <button 
+              <button
                 onClick={() => setShowVisualsModule(!showVisualsModule)}
                 className="px-2.5 py-2 flex items-center gap-1.5 hover:bg-white/10 transition-colors"
                 title="Visual Settings"
@@ -5026,40 +5318,6 @@ export default function App() {
             </div>
             
             <div className={`flex-1 overflow-y-auto pr-2 sm:pr-4 custom-scrollbar ${isPerformanceMode ? 'space-y-6' : 'space-y-8 sm:space-y-12'}`}>
-              {/* Drone Presets */}
-              <section className="space-y-4">
-                <label className="text-[11px] text-white/40 uppercase tracking-[0.3em] block font-black">Presets</label>
-                <div className="grid grid-cols-2 gap-2">
-                  {DRONE_PRESETS.map((preset, idx) => (
-                    <button
-                      key={idx}
-                      onClick={() => applyDronePreset(idx)}
-                      className={`group relative p-3 rounded-2xl border transition-all text-left flex flex-col justify-center ${
-                        activeDronePreset === idx 
-                          ? 'bg-emerald-500/20 border-white ring-2 ring-white/50 shadow-[0_0_15px_rgba(255,255,255,0.2)] scale-[1.02] z-10' 
-                          : 'bg-white/5 border-white/10 hover:bg-white/10 hover:border-white/20'
-                      }`}
-                    >
-                      <div className="flex items-center justify-between mb-1">
-                        <span className={`text-[11px] font-black uppercase tracking-widest ${activeDronePreset === idx ? 'text-white' : 'text-white/60 group-hover:text-emerald-400'}`}>
-                          {preset.name}
-                        </span>
-                        {activeDronePreset === idx && (
-                          <motion.div 
-                            layoutId="drone-preset-selection-dot"
-                            className="absolute -top-1 -right-1 w-2 h-2 bg-white rounded-full shadow-[0_0_8px_white] z-20"
-                          />
-                        )}
-                        {activeDronePreset === idx && <Zap className="w-3 h-3 text-white animate-pulse" />}
-                      </div>
-                      <p className={`text-[8px] line-clamp-1 transition-colors ${activeDronePreset === idx ? 'text-white/60' : 'text-white/30 group-hover:text-white/50'}`}>
-                        {preset.description}
-                      </p>
-                    </button>
-                  ))}
-                </div>
-              </section>
-
               {/* Master Controls */}
               <section className={`bg-white/5 rounded-3xl border border-white/10 ${isPerformanceMode ? 'p-4' : 'p-6'}`}>
                 <div className={`flex items-center justify-between ${isPerformanceMode ? 'mb-4' : 'mb-6'}`}>
@@ -5222,6 +5480,40 @@ export default function App() {
                       className="w-full accent-emerald-500 h-1.5 bg-white/20 rounded-lg appearance-none cursor-pointer"
                     />
                   </div>
+                </div>
+              </section>
+
+              {/* Drone Presets */}
+              <section className="space-y-4">
+                <label className="text-[11px] text-white/40 uppercase tracking-[0.3em] block font-black">Presets</label>
+                <div className="grid grid-cols-2 gap-2">
+                  {DRONE_PRESETS.map((preset, idx) => (
+                    <button
+                      key={idx}
+                      onClick={() => applyDronePreset(idx)}
+                      className={`group relative p-3 rounded-2xl border transition-all text-left flex flex-col justify-center ${
+                        activeDronePreset === idx
+                          ? 'bg-emerald-500/20 border-white ring-2 ring-white/50 shadow-[0_0_15px_rgba(255,255,255,0.2)] scale-[1.02] z-10'
+                          : 'bg-white/5 border-white/10 hover:bg-white/10 hover:border-white/20'
+                      }`}
+                    >
+                      <div className="flex items-center justify-between mb-1">
+                        <span className={`text-[11px] font-black uppercase tracking-widest ${activeDronePreset === idx ? 'text-white' : 'text-white/60 group-hover:text-emerald-400'}`}>
+                          {preset.name}
+                        </span>
+                        {activeDronePreset === idx && (
+                          <motion.div
+                            layoutId="drone-preset-selection-dot"
+                            className="absolute -top-1 -right-1 w-2 h-2 bg-white rounded-full shadow-[0_0_8px_white] z-20"
+                          />
+                        )}
+                        {activeDronePreset === idx && <Zap className="w-3 h-3 text-white animate-pulse" />}
+                      </div>
+                      <p className={`text-[8px] line-clamp-1 transition-colors ${activeDronePreset === idx ? 'text-white/60' : 'text-white/30 group-hover:text-white/50'}`}>
+                        {preset.description}
+                      </p>
+                    </button>
+                  ))}
                 </div>
               </section>
 
@@ -6529,48 +6821,7 @@ export default function App() {
             </div>
             
             <div className={`flex-1 overflow-y-auto pr-2 sm:pr-4 custom-scrollbar ${isPerformanceMode ? 'space-y-4' : 'space-y-8 sm:space-y-12'}`}>
-              <section className={isPerformanceMode ? 'space-y-3' : 'space-y-6'}>
-                <div className="flex items-center justify-between">
-                  <label className="text-[10px] text-white/40 uppercase tracking-[0.3em] font-black">Signal Sources</label>
-                  <span className="text-[8px] text-white/20 uppercase tracking-widest font-black">Inputs</span>
-                </div>
-                <div className="grid grid-cols-1 gap-3">
-                  {/* File Upload */}
-                  <motion.div 
-                    whileHover={{ scale: 1.01 }}
-                    whileTap={{ scale: 0.99 }}
-                    onClick={() => document.getElementById('image-input-settings')?.click()}
-                    className={`bg-white/5 border border-white/10 rounded-2xl flex items-center gap-4 cursor-pointer hover:bg-emerald-500/5 hover:border-emerald-500/30 transition-all group ${isPerformanceMode ? 'p-3' : 'p-4'}`}
-                  >
-                    <div className={`${isPerformanceMode ? 'w-8 h-8' : 'w-10 h-10'} rounded-xl bg-white/10 flex items-center justify-center group-hover:bg-emerald-500 group-hover:text-white transition-all`}>
-                      <Upload className={isPerformanceMode ? 'w-4 h-4' : 'w-5 h-5'} />
-                    </div>
-                    <div>
-                      <p className="text-[10px] font-black uppercase tracking-widest text-white">Upload Local File</p>
-                      <p className="text-[8px] text-white/40 font-bold uppercase tracking-widest">Image or Video</p>
-                    </div>
-                    <input id="image-input-settings" type="file" accept="image/*,video/*" className="hidden" onChange={handleMediaUpload} />
-                  </motion.div>
-
-                  {/* Camera */}
-                  <motion.div 
-                    whileHover={{ scale: 1.01 }}
-                    whileTap={{ scale: 0.99 }}
-                    onClick={toggleWebcam}
-                    className={`bg-white/5 border border-white/10 rounded-2xl p-4 flex items-center gap-4 cursor-pointer hover:bg-emerald-500/5 hover:border-emerald-500/30 transition-all group ${isWebcamActive ? 'border-emerald-500/50 bg-emerald-500/5' : ''}`}
-                  >
-                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all ${isWebcamActive ? 'bg-emerald-500 text-white' : 'bg-white/10 group-hover:bg-emerald-500 group-hover:text-white'}`}>
-                      <Camera className="w-5 h-5" />
-                    </div>
-                    <div>
-                      <p className="text-[11px] font-black uppercase tracking-widest text-white">Live Camera</p>
-                      <p className="text-[9px] text-white/40 font-bold uppercase tracking-widest">{isWebcamActive ? 'Active' : 'Stream'}</p>
-                    </div>
-                  </motion.div>
-
-                </div>
-              </section>
-
+              {/* Patches — fastest way to change everything */}
               <section>
                 <div className={`flex items-center justify-between ${isPerformanceMode ? 'mb-4' : 'mb-6'}`}>
                   <label className="text-[10px] text-white/40 uppercase tracking-[0.3em] font-black">Patches</label>
@@ -6595,6 +6846,83 @@ export default function App() {
                 </div>
               </section>
 
+              {/* Signal Sources */}
+              <section className={isPerformanceMode ? 'space-y-3' : 'space-y-6'}>
+                <div className="flex items-center justify-between">
+                  <label className="text-[10px] text-white/40 uppercase tracking-[0.3em] font-black">Signal Sources</label>
+                  <span className="text-[8px] text-white/20 uppercase tracking-widest font-black">Inputs</span>
+                </div>
+                <div className="grid grid-cols-1 gap-3">
+                  {/* File Upload */}
+                  <motion.div
+                    whileHover={{ scale: 1.01 }}
+                    whileTap={{ scale: 0.99 }}
+                    onClick={() => document.getElementById('image-input-settings')?.click()}
+                    className={`bg-white/5 border border-white/10 rounded-2xl flex items-center gap-4 cursor-pointer hover:bg-emerald-500/5 hover:border-emerald-500/30 transition-all group ${isPerformanceMode ? 'p-3' : 'p-4'}`}
+                  >
+                    <div className={`${isPerformanceMode ? 'w-8 h-8' : 'w-10 h-10'} rounded-xl bg-white/10 flex items-center justify-center group-hover:bg-emerald-500 group-hover:text-white transition-all`}>
+                      <Upload className={isPerformanceMode ? 'w-4 h-4' : 'w-5 h-5'} />
+                    </div>
+                    <div>
+                      <p className="text-[10px] font-black uppercase tracking-widest text-white">Upload Local File</p>
+                      <p className="text-[8px] text-white/40 font-bold uppercase tracking-widest">Image or Video</p>
+                    </div>
+                    <input id="image-input-settings" type="file" accept="image/*,video/*" className="hidden" onChange={handleMediaUpload} />
+                  </motion.div>
+
+                  {/* Camera */}
+                  <motion.div
+                    whileHover={{ scale: 1.01 }}
+                    whileTap={{ scale: 0.99 }}
+                    onClick={toggleWebcam}
+                    className={`bg-white/5 border border-white/10 rounded-2xl p-4 flex items-center gap-4 cursor-pointer hover:bg-emerald-500/5 hover:border-emerald-500/30 transition-all group ${isWebcamActive ? 'border-emerald-500/50 bg-emerald-500/5' : ''}`}
+                  >
+                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all ${isWebcamActive ? 'bg-emerald-500 text-white' : 'bg-white/10 group-hover:bg-emerald-500 group-hover:text-white'}`}>
+                      <Camera className="w-5 h-5" />
+                    </div>
+                    <div>
+                      <p className="text-[11px] font-black uppercase tracking-widest text-white">Live Camera</p>
+                      <p className="text-[9px] text-white/40 font-bold uppercase tracking-widest">{isWebcamActive ? 'Active' : 'Stream'}</p>
+                    </div>
+                  </motion.div>
+
+                </div>
+              </section>
+
+              {/* Scanning Presets — choose scan pattern */}
+              <section>
+                <label className={`text-[11px] text-white/40 uppercase tracking-[0.3em] block font-black ${isPerformanceMode ? 'mb-4' : 'mb-6'}`}>Scanning Presets</label>
+                <div className="space-y-4">
+                  <select
+                    value={activePreset}
+                    onChange={(e) => {
+                      const idx = parseInt(e.target.value);
+                      const preset = SCAN_PRESETS[idx];
+                      setActivePreset(idx);
+                      setFormulaX(preset.formulaX);
+                      setFormulaY(preset.formulaY);
+                      setScanTime(0);
+                      scanTimeRef.current = 0;
+                    }}
+                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-4 text-[11px] text-white outline-none focus:border-emerald-500/50 font-black uppercase tracking-widest"
+                  >
+                    {SCAN_PRESETS.map((preset, idx) => (
+                      <option key={preset.name} value={idx} className="bg-[#0f172a]">
+                        {preset.name}
+                      </option>
+                    ))}
+                  </select>
+                  {activePreset !== undefined && SCAN_PRESETS[activePreset] && (
+                    <div className="p-4 bg-white/5 rounded-xl border border-white/10">
+                      <p className="text-[10px] text-white/60 font-black uppercase tracking-widest leading-relaxed">
+                        {SCAN_PRESETS[activePreset].description}
+                      </p>
+                    </div>
+                  )}
+                </div>
+              </section>
+
+              {/* Engine Parameters */}
               <section>
                 <label className={`text-[10px] text-white/40 uppercase tracking-[0.3em] block font-black ${isPerformanceMode ? 'mb-4' : 'mb-6'}`}>Engine Parameters</label>
                 <div className={`bg-white/5 rounded-3xl border border-white/10 shadow-inner ${isPerformanceMode ? 'p-4 space-y-4' : 'p-8 space-y-8'}`}>
@@ -6951,38 +7279,6 @@ export default function App() {
                     </div>
                   </motion.div>
                 )}
-              </section>
-
-              <section className="border-t border-white/10 pt-10">
-                <label className="text-[11px] text-white/40 uppercase tracking-[0.3em] block mb-6 font-black">Scanning Presets</label>
-                <div className="space-y-4">
-                  <select 
-                    value={activePreset}
-                    onChange={(e) => {
-                      const idx = parseInt(e.target.value);
-                      const preset = SCAN_PRESETS[idx];
-                      setActivePreset(idx);
-                      setFormulaX(preset.formulaX);
-                      setFormulaY(preset.formulaY);
-                      setScanTime(0);
-                      scanTimeRef.current = 0;
-                    }}
-                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-4 text-[11px] text-white outline-none focus:border-emerald-500/50 font-black uppercase tracking-widest"
-                  >
-                    {SCAN_PRESETS.map((preset, idx) => (
-                      <option key={preset.name} value={idx} className="bg-[#0f172a]">
-                        {preset.name}
-                      </option>
-                    ))}
-                  </select>
-                  {activePreset !== undefined && SCAN_PRESETS[activePreset] && (
-                    <div className="p-4 bg-white/5 rounded-xl border border-white/10">
-                      <p className="text-[10px] text-white/60 font-black uppercase tracking-widest leading-relaxed">
-                        {SCAN_PRESETS[activePreset].description}
-                      </p>
-                    </div>
-                  )}
-                </div>
               </section>
 
               <section className="border-t border-white/10 pt-10">
