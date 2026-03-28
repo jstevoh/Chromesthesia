@@ -19,11 +19,9 @@ import {
   Activity,
   Info,
   Sparkles,
-  Loader2,
   Music,
   Video,
   Camera,
-  Key,
   Zap,
   Wind,
   Cloud,
@@ -44,17 +42,6 @@ import {
   Target,
   Clock
 } from 'lucide-react';
-import { GoogleGenAI, Type, ThinkingLevel } from "@google/genai";
-
-declare global {
-  interface Window {
-    aistudio?: {
-      hasSelectedApiKey: () => Promise<boolean>;
-      openSelectKey: () => Promise<void>;
-    };
-  }
-}
-
 // --- Constants & Types ---
 
 const SCAN_SPEED = 0.02; // Time increment per frame
@@ -1412,7 +1399,6 @@ export default function App() {
   const [isSynthMatrixEnabled, setIsSynthMatrixEnabled] = useState(true);
   const [showManual, setShowManual] = useState(false);
   const [isLoaded, setIsLoaded] = useState(false);
-  const [isGenerating, setIsGenerating] = useState(false);
   
   // Visual Settings State
   const [visualColorMode, setVisualColorMode] = useState<'preset' | 'auto'>('preset');
@@ -1440,10 +1426,8 @@ export default function App() {
     }
   };
 
-  const [hasApiKey, setHasApiKey] = useState(!!(process.env.API_KEY || process.env.GEMINI_API_KEY));
   const [enabledVoices, setEnabledVoices] = useState<boolean[]>(new Array(SAMPLE_POINTS).fill(true));
   const [error, setError] = useState<string | null>(null);
-  const [prompt, setPrompt] = useState('');
   const [baseFreq, setBaseFreq] = useState(110);
   const [freqRange, setFreqRange] = useState(880);
   const [freqMod, setFreqMod] = useState(200);
@@ -1469,9 +1453,6 @@ export default function App() {
       release: 0.8
     }))
   );
-
-  const [luckyPromptInstructions, setLuckyPromptInstructions] = useState("Create a vibrant, high-contrast abstract digital artwork optimized for spectral sound synthesis. Use complex geometric patterns, deep textures, and a wide color palette.");
-  const [showLuckyPromptSettings, setShowLuckyPromptSettings] = useState(false);
 
   const initialMapping: Record<SoundParam, ImageTrait> = {
     frequency: 'hue',
@@ -1695,7 +1676,6 @@ export default function App() {
   const lastFrameTimeRef = useRef<number>(performance.now());
   const globalClockRef = useRef<number>(0);
   const droneEvolutionTimeRef = useRef<number>(0);
-  const abortControllerRef = useRef<AbortController | null>(null);
   const visualizerCanvasRef = useRef<HTMLCanvasElement | null>(null);
 
   const applyPatch = useCallback((patchIdx: number) => {
@@ -2147,8 +2127,6 @@ export default function App() {
     setIsDroneEnabled(false);
     setIsDroneSequencerEnabled(false);
     setIsEvolving(false);
-    setIsGenerating(false);
-    
     // Reset Patches
     setActivePatch(null);
     setActiveDronePatch(null);
@@ -2165,11 +2143,6 @@ export default function App() {
     setScanCenterX(0.5);
     setScanCenterY(0.5);
     
-    // Stop any active AI generation
-    if (abortControllerRef.current) {
-      abortControllerRef.current.abort();
-      abortControllerRef.current = null;
-    }
   }, [isWebcamActive, stopAllAudio]);
 
   // Update Chroma Console Effects
@@ -2969,289 +2942,6 @@ export default function App() {
     }
   };
 
-  const stopGeneration = () => {
-    if (abortControllerRef.current) {
-      abortControllerRef.current.abort();
-      abortControllerRef.current = null;
-    }
-    setIsGenerating(false);
-  };
-
-  // Check for API Key
-  useEffect(() => {
-    const checkKey = async () => {
-      if (window.aistudio?.hasSelectedApiKey) {
-        const hasKey = await window.aistudio.hasSelectedApiKey();
-        setHasApiKey(hasKey);
-      }
-    };
-    checkKey();
-  }, []);
-
-  const handleConnectKey = async () => {
-    if (window.aistudio?.openSelectKey) {
-      await window.aistudio.openSelectKey();
-      setHasApiKey(true);
-    }
-  };
-
-  const handleGenerateImage = useCallback(async (useCurrentImage: boolean = false, promptOverride?: string, shouldPlay: boolean = false) => {
-    const currentPrompt = promptOverride || prompt;
-    if (!currentPrompt && !useCurrentImage) return;
-    
-    // Check for API key if using high-end models (optional but good for reliability)
-    const hasKey = (await window.aistudio?.hasSelectedApiKey?.()) || hasApiKey || !!(process.env.API_KEY || process.env.GEMINI_API_KEY);
-    if (!hasKey && window.aistudio?.openSelectKey) {
-      console.log("No API key found, opening selection dialog...");
-      setError("Please connect your Gemini API key in settings to use AI generation.");
-      setShowSettings(true);
-      return;
-    }
-    
-    // Cancel any existing generation
-    if (abortControllerRef.current) {
-      abortControllerRef.current.abort();
-    }
-    
-    const controller = new AbortController();
-    abortControllerRef.current = controller;
-    setIsGenerating(true);
-    setError(null);
-
-    const timeoutId = setTimeout(() => {
-      controller.abort();
-      setError("Generation timed out. Please try again.");
-      console.warn("Generation timed out");
-      // Force stop spinning even if the await is stuck
-      setIsGenerating(false);
-    }, 90000); // Increased to 90 seconds
-
-    try {
-      // Create a new instance right before the call to ensure the latest API key is used
-      const apiKey = process.env.API_KEY || process.env.GEMINI_API_KEY;
-      if (!apiKey) {
-        throw new Error("API Key not found. Please select an API key in the settings.");
-      }
-      console.log("Initializing GoogleGenAI with key:", apiKey.substring(0, 4) + "...");
-      const ai = new GoogleGenAI({ apiKey });
-      
-      if (controller.signal.aborted) throw new Error("Aborted");
-      
-      console.log("Step 1: Interpreting prompt and generating synth settings...");
-      // 1. Use Gemini 3.1 Pro to interpret the prompt and generate synth settings (more reliable)
-      const synthResponse = await ai.models.generateContent({
-        model: 'gemini-3.1-pro-preview',
-        contents: { 
-          parts: [{ 
-            text: `Interpret this musical/visual request: "${currentPrompt || (useCurrentImage ? "A variation of the current visual" : "A musically inspiring scene")}". 
-            Provide a visual prompt for an image generator and a synthesizer configuration.` 
-          }] 
-        },
-        config: {
-          systemInstruction: `You are a synthesizer expert for "Chromesthesia", an app that converts images to sound using 16 scanning oscillators.
-          Translate the user's request into a visual prompt and a technical synth configuration.
-          
-          Synth Parameters:
-          - baseFreq: 50-440 (lower for heavy, higher for ethereal)
-          - scanSpeed: 0.1-5.0 (faster for aggressive, slower for ambient)
-          - voiceWaveShapes: Array of 16. Options: 'sine', 'triangle', 'square', 'sawtooth', 'Organ', 'Brass', 'Strings', 'Electric Piano', 'auto'.
-          - adsr: {attack, decay, sustain, release} (0.0-1.0)
-          - triggerThreshold: 0.0-0.5
-          - scanScale: 0.1-3.0
-          - activePreset: 0-33 (0:Horizontal, 1:Vertical, 2:Circular, 3:Lissajous, 4:Spiral, 5:Interference, 6:Helix, 14:Radial Burst, 20:Heart Shape, 33:Quantum Tunneling)
-          - freqRange: 20-2000 (Frequency spread)
-          - freqMod: 0-1000 (Frequency modulation depth)
-          - ampMod: 0.0-2.0 (Amplitude modulation depth)
-          - cutoffMod: 0-10000 (Filter cutoff modulation)
-          - qMod: 0-30 (Filter resonance modulation)
-          - synthMatrixVolume: 0.0-1.0 (Master volume for the matrix)`,
-          responseMimeType: "application/json",
-          responseSchema: {
-            type: Type.OBJECT,
-            properties: {
-              visualPrompt: { type: Type.STRING, description: "A detailed visual description for an image generator." },
-              synthSettings: {
-                type: Type.OBJECT,
-                properties: {
-                  baseFreq: { type: Type.NUMBER },
-                  scanSpeed: { type: Type.NUMBER },
-                  voiceWaveShapes: { type: Type.ARRAY, items: { type: Type.STRING } },
-                  adsr: {
-                    type: Type.OBJECT,
-                    properties: {
-                      attack: { type: Type.NUMBER },
-                      decay: { type: Type.NUMBER },
-                      sustain: { type: Type.NUMBER },
-                      release: { type: Type.NUMBER }
-                    }
-                  },
-                  triggerThreshold: { type: Type.NUMBER },
-                  scanScale: { type: Type.NUMBER },
-                  activePreset: { type: Type.INTEGER },
-                  freqRange: { type: Type.NUMBER },
-                  freqMod: { type: Type.NUMBER },
-                  ampMod: { type: Type.NUMBER },
-                  cutoffMod: { type: Type.NUMBER },
-                  qMod: { type: Type.NUMBER },
-                  synthMatrixVolume: { type: Type.NUMBER },
-                  autoPalette: { type: Type.ARRAY, items: { type: Type.STRING }, description: "An array of 3-5 hex colors for the visual palette." }
-                }
-              }
-            },
-            required: ["visualPrompt", "synthSettings"]
-          }
-        }
-      });
-
-      if (controller.signal.aborted) throw new Error("Aborted");
-
-      let synthData;
-      try {
-        synthData = JSON.parse(synthResponse.text);
-      } catch (e) {
-        console.error("Failed to parse synth response:", synthResponse.text);
-        throw new Error("AI returned invalid configuration format.");
-      }
-
-      const visualPrompt = synthData.visualPrompt;
-      const settings = synthData.synthSettings;
-
-      // Apply synth settings
-      if (settings) {
-        if (settings.baseFreq) setBaseFreq(settings.baseFreq);
-        if (settings.scanSpeed) setScanSpeed(settings.scanSpeed);
-        if (settings.autoPalette && Array.isArray(settings.autoPalette) && settings.autoPalette.length > 0) {
-          setAutoPalette(settings.autoPalette);
-          setVisualColorMode('auto');
-        }
-        
-        if (settings.voiceWaveShapes && Array.isArray(settings.voiceWaveShapes) && settings.voiceWaveShapes.length > 0) {
-          const newShapes = new Array(SAMPLE_POINTS).fill('auto').map((_, i) => 
-            settings.voiceWaveShapes[i] || settings.voiceWaveShapes[i % settings.voiceWaveShapes.length]
-          );
-          setVoiceWaveShapes(newShapes);
-        }
-
-        if (settings.adsr) {
-          const newAdsr = new Array(SAMPLE_POINTS).fill(null).map(() => ({
-            attack: settings.adsr.attack ?? 0.1,
-            decay: settings.adsr.decay ?? 0.2,
-            sustain: settings.adsr.sustain ?? 0.5,
-            release: settings.adsr.release ?? 0.8
-          }));
-          setAdsr(newAdsr);
-        }
-
-        if (settings.triggerThreshold !== undefined) setTriggerThreshold(settings.triggerThreshold);
-        if (settings.scanScale !== undefined) setScanScale(settings.scanScale);
-        if (settings.freqRange !== undefined) setFreqRange(settings.freqRange);
-        if (settings.freqMod !== undefined) setFreqMod(settings.freqMod);
-        if (settings.ampMod !== undefined) setAmpMod(settings.ampMod);
-        if (settings.cutoffMod !== undefined) setCutoffMod(settings.cutoffMod);
-        if (settings.qMod !== undefined) setQMod(settings.qMod);
-        if (settings.synthMatrixVolume !== undefined) setSynthMatrixVolume(settings.synthMatrixVolume);
-        
-        if (settings.activePreset !== undefined && SCAN_PRESETS[settings.activePreset]) {
-          setActivePreset(settings.activePreset);
-          setFormulaX(SCAN_PRESETS[settings.activePreset].formulaX);
-          setFormulaY(SCAN_PRESETS[settings.activePreset].formulaY);
-        }
-      }
-
-      // 2. Generate the image using gemini-2.5-flash-image (faster than Imagen)
-      const parts: any[] = [];
-      if (useCurrentImage && (image || (mediaType === 'video' && canvasRef.current))) {
-        let base64Data = "";
-        let mimeType = "image/png";
-
-        if (mediaType === 'image' && image) {
-          base64Data = image.split(',')[1];
-          mimeType = image.split(',')[0].split(':')[1].split(';')[0];
-        } else if (mediaType === 'video' && canvasRef.current) {
-          const canvas = canvasRef.current;
-          const dataUrl = canvas.toDataURL('image/png');
-          base64Data = dataUrl.split(',')[1];
-          mimeType = 'image/png';
-        }
-
-        if (base64Data) {
-          parts.push({
-            inlineData: {
-              data: base64Data,
-              mimeType: mimeType
-            }
-          });
-          parts.push({ text: `Modify this image based on: ${visualPrompt}` });
-        } else {
-          parts.push({ text: visualPrompt });
-        }
-      } else {
-        parts.push({ text: visualPrompt });
-      }
-
-      if (controller.signal.aborted) throw new Error("Aborted");
-
-      console.log("Step 2: Generating image with visual prompt:", visualPrompt);
-      const imageResponse = await ai.models.generateContent({
-        model: 'gemini-2.5-flash-image',
-        contents: { parts },
-        config: {
-          imageConfig: {
-            aspectRatio: '1:1'
-          }
-        }
-      });
-
-      if (controller.signal.aborted) throw new Error("Aborted");
-
-      let imageUrl = null;
-      for (const part of imageResponse.candidates?.[0]?.content?.parts || []) {
-        if (part.inlineData) {
-          imageUrl = `data:${part.inlineData.mimeType};base64,${part.inlineData.data}`;
-          break;
-        }
-      }
-
-      if (imageUrl) {
-        console.log("Step 3: Image generated successfully. Applying to synth...");
-        setImage(imageUrl);
-        setVideoUrl(null);
-        setMediaType('image');
-        setScanTime(0);
-        scanTimeRef.current = 0;
-        
-        if (shouldPlay) {
-          await initAudio();
-          setIsPlaying(true);
-          setIsSynthMatrixEnabled(true);
-        } else {
-          setIsPlaying(false);
-        }
-        
-        setIsLoaded(true);
-      } else {
-        throw new Error("AI did not return any images.");
-      }
-    } catch (error: any) {
-      if (error.message?.includes("Requested entity was not found")) {
-        console.error("API Key error: Requested entity not found. Resetting key selection.");
-        setHasApiKey(false);
-        setError("Your API key selection is invalid or expired. Please connect it again in settings.");
-        setShowSettings(true);
-      } else if (error.name === 'AbortError' || error.message === 'Aborted') {
-        console.log("Generation cancelled or timed out");
-      } else {
-        console.error("Image generation failed:", error);
-        setError(error.message || "Failed to generate image. Please try again.");
-      }
-    } finally {
-      clearTimeout(timeoutId);
-      if (abortControllerRef.current === controller) {
-        abortControllerRef.current = null;
-      }
-      setIsGenerating(false);
-    }
-  }, [prompt, hasApiKey, image, mediaType, setError, setShowSettings, setIsGenerating, setBaseFreq, setScanSpeed, setVoiceWaveShapes, setAdsr, setTriggerThreshold, setScanScale, setActivePreset, setFormulaX, setFormulaY, setImage, setVideoUrl, setMediaType, setScanTime, setIsPlaying, setIsLoaded, setFreqRange, setFreqMod, setAmpMod, setCutoffMod, setQMod, setSynthMatrixVolume, setIsSynthMatrixEnabled, initAudio]);
 
   // Generate procedural abstract art on a canvas — no API key or cost required
   const generateProceduralArt = useCallback((size: number = 1024): string => {
@@ -6712,35 +6402,6 @@ export default function App() {
                     </div>
                   </motion.div>
 
-                  {/* AI Synth Image */}
-                  <div className={`bg-white/5 border border-white/10 rounded-2xl space-y-4 ${isPerformanceMode ? 'p-3' : 'p-4'}`}>
-                    <div className="flex items-center gap-4">
-                      <div className={`${isPerformanceMode ? 'w-8 h-8' : 'w-10 h-10'} rounded-xl bg-white/10 flex items-center justify-center text-emerald-400`}>
-                        <Sparkles className={isPerformanceMode ? 'w-4 h-4' : 'w-5 h-5'} />
-                      </div>
-                      <div>
-                        <p className="text-[10px] font-black uppercase tracking-widest text-white">AI Synth Image</p>
-                        <p className="text-[8px] text-white/40 font-bold uppercase tracking-widest">Generative Art</p>
-                      </div>
-                    </div>
-                    <div className="flex gap-2">
-                      <input 
-                        type="text" 
-                        placeholder="Mood/prompt..." 
-                        value={prompt}
-                        onChange={(e) => setPrompt(e.target.value)}
-                        onKeyDown={(e) => e.key === 'Enter' && handleGenerateImage()}
-                        className="flex-1 bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-[9px] text-white outline-none focus:border-emerald-500/50 font-mono"
-                      />
-                      <button 
-                        onClick={() => handleGenerateImage()}
-                        disabled={isGenerating || !prompt}
-                        className="bg-emerald-500 hover:bg-emerald-600 text-white rounded-lg px-3 py-2 font-black text-[9px] uppercase tracking-widest transition-all disabled:opacity-30"
-                      >
-                        {isGenerating ? <Loader2 className="w-3 h-3 animate-spin" /> : 'Gen'}
-                      </button>
-                    </div>
-                  </div>
                 </div>
               </section>
 
@@ -7180,31 +6841,6 @@ export default function App() {
                 </div>
               </section>
 
-              {(image || videoUrl) && (
-                <section className="border-t border-white/10 pt-10">
-                  <label className="text-[11px] text-white/40 uppercase tracking-[0.3em] block mb-6 font-black">AI Media Remix</label>
-                  <div className="space-y-6 bg-white/5 p-8 rounded-3xl border border-white/10">
-                    <div className="flex flex-col gap-4">
-                      <input 
-                        type="text" 
-                        placeholder="Variation prompt (optional)..." 
-                        value={prompt}
-                        onChange={(e) => setPrompt(e.target.value)}
-                        className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-xs text-white outline-none focus:border-emerald-500/50 transition-all font-medium"
-                      />
-                      <button 
-                        onClick={() => handleGenerateImage(true)}
-                        disabled={isGenerating}
-                        className="w-full bg-emerald-500 text-white rounded-xl py-4 font-black text-xs hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-50 flex items-center justify-center gap-2 shadow-lg"
-                      >
-                        {isGenerating ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
-                        Generate Variation
-                      </button>
-                    </div>
-                    <p className="text-[10px] text-white/40 text-center uppercase tracking-widest font-black">Uses current {mediaType} as visual context</p>
-                  </div>
-                </section>
-              )}
 
               <section className="border-t border-white/10 pt-10">
                 <label className="text-[11px] text-white/60 uppercase tracking-[0.3em] block mb-6 font-black">Voice Activity</label>
@@ -7585,16 +7221,6 @@ export default function App() {
               <section className="pt-10 border-t border-white/10 pb-20">
               </section>
               <section className="pt-10 border-t border-white/10 space-y-6">
-                <div className="flex items-center justify-center gap-3 py-2">
-                  <div className={`w-1.5 h-1.5 rounded-full ${hasApiKey ? 'bg-green-500 shadow-[0_0_8px_#22c55e]' : 'bg-white/10'}`} />
-                  <button 
-                    onClick={handleConnectKey}
-                    className="text-[9px] uppercase tracking-[0.2em] font-black text-white/20 hover:text-white transition-colors flex items-center gap-2"
-                  >
-                    <Key className="w-3 h-3" />
-                    {hasApiKey ? 'Gemini API Connected' : 'Connect Gemini API Key'}
-                  </button>
-                </div>
 
                 <button 
                   onClick={resetToDefaults}
