@@ -19,11 +19,11 @@ interface ScanningVisualsProps {
   subtle: number;
 }
 
-const ScanningVisuals: React.FC<ScanningVisualsProps> = ({ 
-  pointsRef, 
-  canvasRef, 
-  width, 
-  height, 
+const ScanningVisuals: React.FC<ScanningVisualsProps> = ({
+  pointsRef,
+  canvasRef,
+  width,
+  height,
   isPlaying,
   transparency,
   colorMode,
@@ -33,6 +33,7 @@ const ScanningVisuals: React.FC<ScanningVisualsProps> = ({
   subtle
 }) => {
   const requestRef = useRef<number>(0);
+  const ctxRef = useRef<CanvasRenderingContext2D | null>(null);
   
   // Use a ref to store the latest props to avoid stale closures in the animation loop
   const propsRef = useRef({
@@ -63,8 +64,13 @@ const ScanningVisuals: React.FC<ScanningVisualsProps> = ({
   const draw = () => {
     const canvas = canvasRef.current;
     if (!canvas) return;
-    const ctx = canvas.getContext('2d');
+    if (!ctxRef.current) {
+      ctxRef.current = canvas.getContext('2d');
+    }
+    const ctx = ctxRef.current;
     if (!ctx) return;
+
+    const frameNow = Date.now();
 
     const { 
       transparency: currentTransparency, 
@@ -158,16 +164,16 @@ const ScanningVisuals: React.FC<ScanningVisualsProps> = ({
 
     // Draw points
     points.forEach((p, i) => {
-      let hue = (Date.now() / 20 + i * 20) % 360;
+      let hue = (frameNow / 20 + i * 20) % 360;
       let pointColor = `hsla(${hue}, 100%, 70%, 0.8)`;
-      
+
       if (currentColorMode === 'manual') {
         pointColor = currentManualColor;
       } else if ((currentColorMode === 'preset' || currentColorMode === 'auto') && currentPalette.length > 0) {
         pointColor = currentPalette[i % currentPalette.length];
       }
 
-      const size = (10 + Math.sin(Date.now() / 200 + i) * 5) * (1 - currentSubtle * 0.5 + currentTrippy);
+      const size = (10 + Math.sin(frameNow / 200 + i) * 5) * (1 - currentSubtle * 0.5 + currentTrippy);
       
       // Simplified glow - faster than radial gradient
       ctx.fillStyle = pointColor;
@@ -187,8 +193,8 @@ const ScanningVisuals: React.FC<ScanningVisualsProps> = ({
       ctx.beginPath();
       ctx.strokeStyle = pointColor;
       ctx.lineWidth = 1 + currentTrippy;
-      const angle = (Date.now() / (300 - currentTrippy * 200)) + (i * Math.PI * 2 / points.length);
-      const length = (20 + Math.sin(Date.now() / 100 + i) * 15) * (1 + currentTrippy * 2);
+      const angle = (frameNow / (300 - currentTrippy * 200)) + (i * Math.PI * 2 / points.length);
+      const length = (20 + Math.sin(frameNow / 100 + i) * 15) * (1 + currentTrippy * 2);
       ctx.moveTo(p.x, p.y);
       ctx.lineTo(p.x + Math.cos(angle) * length, p.y + Math.sin(angle) * length);
       ctx.stroke();
@@ -216,7 +222,7 @@ const ScanningVisuals: React.FC<ScanningVisualsProps> = ({
       // Clear canvas when stopped
       const canvas = canvasRef.current;
       if (canvas) {
-        const ctx = canvas.getContext('2d');
+        const ctx = ctxRef.current ?? canvas.getContext('2d');
         ctx?.clearRect(0, 0, canvas.width, canvas.height);
       }
     }
