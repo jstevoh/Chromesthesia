@@ -1917,7 +1917,7 @@ export default function App() {
   const [recordingQuality, setRecordingQuality] = useState<'lossless' | 'high' | 'medium' | 'low'>('high');
   const [showRecordingSettings, setShowRecordingSettings] = useState(false);
   const [recordingProgress, setRecordingProgress] = useState(0);
-  const [recordingResolution, setRecordingResolution] = useState<'720p' | '1080p' | '1440p' | '4k'>('1080p');
+  const [recordingResolution, setRecordingResolution] = useState<'720p' | '1080p' | '1440p' | '4k' | '1080v' | '1440v'>('1080p');
   const [recordingCapture, setRecordingCapture] = useState<'visualization' | 'full'>('visualization');
   const [recordingElapsed, setRecordingElapsed] = useState(0);
   const [isWebcamActive, setIsWebcamActive] = useState(false);
@@ -3052,46 +3052,34 @@ export default function App() {
 
     const isFullCapture = recordingCapture === 'full';
 
+    // For full-interface capture, getDisplayMedia handles everything — no compositing needed
+    if (isFullCapture) return;
+
     // For visualization-only: composite onto the recording canvas
-    if (!isFullCapture) {
-      if (!canvasRef.current || !visualsCanvasRef.current) return;
-      const recordingCanvas = canvasRef.current;
-      const ctx = recordingCanvas.getContext('2d');
-      if (!ctx) return;
+    if (!canvasRef.current) return;
+    const recordingCanvas = canvasRef.current;
+    const ctx = recordingCanvas.getContext('2d');
+    if (!ctx) return;
 
-      let animationFrameId: number;
-      const draw = () => {
-        ctx.fillStyle = 'black';
-        ctx.fillRect(0, 0, recordingCanvas.width, recordingCanvas.height);
-        if (mediaType === 'image' && imageRef.current) {
-          ctx.drawImage(imageRef.current, 0, 0, recordingCanvas.width, recordingCanvas.height);
-        } else if (mediaType === 'video' && videoRef.current) {
-          ctx.drawImage(videoRef.current, 0, 0, recordingCanvas.width, recordingCanvas.height);
-        }
-        if (visualsCanvasRef.current) {
-          ctx.drawImage(visualsCanvasRef.current, 0, 0, recordingCanvas.width, recordingCanvas.height);
-        }
-        animationFrameId = requestAnimationFrame(draw);
-      };
-      animationFrameId = requestAnimationFrame(draw);
-      return () => cancelAnimationFrame(animationFrameId);
-    }
-
-    // For full-interface capture: use html2canvas-style approach via offscreen canvas
-    if (!appContainerRef.current || !fullCaptureCanvasRef.current) return;
     let animationFrameId: number;
-    const captureCanvas = fullCaptureCanvasRef.current;
-    const captureCtx = captureCanvas.getContext('2d');
-    if (!captureCtx) return;
-
     const draw = () => {
-      // We can't easily render DOM to canvas, so for full capture we rely on
-      // getDisplayMedia which was set up in startRecording
+      ctx.fillStyle = 'black';
+      ctx.fillRect(0, 0, recordingCanvas.width, recordingCanvas.height);
+      if (mediaType === 'image' && imageRef.current) {
+        ctx.drawImage(imageRef.current, 0, 0, recordingCanvas.width, recordingCanvas.height);
+      } else if (mediaType === 'video' && videoRef.current) {
+        ctx.drawImage(videoRef.current, 0, 0, recordingCanvas.width, recordingCanvas.height);
+      } else if (isWebcamActive && webcamVideoRef.current) {
+        ctx.drawImage(webcamVideoRef.current, 0, 0, recordingCanvas.width, recordingCanvas.height);
+      }
+      if (visualsCanvasRef.current) {
+        ctx.drawImage(visualsCanvasRef.current, 0, 0, recordingCanvas.width, recordingCanvas.height);
+      }
       animationFrameId = requestAnimationFrame(draw);
     };
     animationFrameId = requestAnimationFrame(draw);
     return () => cancelAnimationFrame(animationFrameId);
-  }, [isRecording, mediaType, recordingCapture]);
+  }, [isRecording, mediaType, recordingCapture, isWebcamActive]);
 
   // Resolution presets
   const getRecordingDimensions = (res: typeof recordingResolution) => {
@@ -3100,6 +3088,8 @@ export default function App() {
       case '1080p': return { w: 1920, h: 1080 };
       case '1440p': return { w: 2560, h: 1440 };
       case '4k': return { w: 3840, h: 2160 };
+      case '1080v': return { w: 1080, h: 1920 }; // 9:16 vertical
+      case '1440v': return { w: 1440, h: 2560 }; // 9:16 vertical
     }
   };
 
@@ -3268,7 +3258,7 @@ export default function App() {
       if (!isPlaying) setIsPlaying(true);
       setIsRecording(true);
       startTimer();
-      recorder.start();
+      recorder.start(1000); // 1s timeslice for chunked data collection
     } catch (err) {
       console.error("Failed to start recording:", err);
       try {
@@ -3295,7 +3285,7 @@ export default function App() {
         if (!isPlaying) setIsPlaying(true);
         setIsRecording(true);
         startTimer();
-        recorder.start();
+        recorder.start(1000);
       } catch (innerErr) {
         console.error("Absolute failure starting recorder:", innerErr);
       }
@@ -4688,7 +4678,7 @@ export default function App() {
                 }}
               />
             )}
-            <canvas ref={canvasRef} width={1280} height={720} className="hidden" />
+            <canvas ref={canvasRef} width={1280} height={720} style={{ position: 'absolute', left: '-9999px', top: '-9999px', pointerEvents: 'none' }} />
             <canvas ref={samplingCanvasRef} width={640} height={360} className="hidden" />
             
             {/* Scan Points Visualization - Optimized Canvas Component */}
@@ -6960,7 +6950,7 @@ export default function App() {
               {/* Resolution */}
               {(recordingMode === 'video' || recordingMode === 'both') && (
                 <div className="space-y-2">
-                  <label className="text-[10px] font-bold uppercase tracking-widest text-white/40">Resolution</label>
+                  <label className="text-[10px] font-bold uppercase tracking-widest text-white/40">Resolution — Landscape</label>
                   <div className="grid grid-cols-4 gap-1 p-1 bg-white/5 rounded-lg border border-white/10">
                     {[
                       { id: '720p', label: '720p' },
@@ -6978,6 +6968,26 @@ export default function App() {
                         }`}
                       >
                         {res.label}
+                      </button>
+                    ))}
+                  </div>
+                  <label className="text-[10px] font-bold uppercase tracking-widest text-white/40">Resolution — Vertical (9:16)</label>
+                  <div className="grid grid-cols-2 gap-1 p-1 bg-white/5 rounded-lg border border-white/10">
+                    {[
+                      { id: '1080v', label: '1080×1920', desc: 'TikTok / Shorts' },
+                      { id: '1440v', label: '1440×2560', desc: 'High-Res Vertical' }
+                    ].map((res) => (
+                      <button
+                        key={res.id}
+                        onClick={() => setRecordingResolution(res.id as any)}
+                        className={`py-2 rounded-md transition-all ${
+                          recordingResolution === res.id
+                            ? 'bg-emerald-500 text-white shadow-lg'
+                            : 'text-white/40 hover:text-white/60'
+                        }`}
+                      >
+                        <span className="text-[8px] font-bold uppercase block">{res.label}</span>
+                        <span className="text-[7px] opacity-60 block">{res.desc}</span>
                       </button>
                     ))}
                   </div>
