@@ -1550,19 +1550,42 @@ interface PixelData {
 // --- Helper Functions ---
 
 const _distortionCurveCache = new Map<string, Float32Array>();
+// Warm tanh-based distortion curve — naturally bounded to [-1, 1], no clipping
 function makeDistortionCurve(amount: number) {
-  const k = typeof amount === 'number' ? amount : 50;
+  const k = typeof amount === 'number' ? amount : 2;
   const key = k.toFixed(2);
   if (_distortionCurveCache.has(key)) return _distortionCurveCache.get(key)!;
-  const n_samples = 1024;
+  const n_samples = 8192;
   const curve = new Float32Array(n_samples);
-  const deg = Math.PI / 180;
   for (let i = 0; i < n_samples; ++i) {
     const x = (i * 2) / n_samples - 1;
-    curve[i] = ((3 + k) * x * 20 * deg) / (Math.PI + k * Math.abs(x));
+    curve[i] = Math.tanh(k * x);
   }
   _distortionCurveCache.set(key, curve);
   return curve;
+}
+
+// Generate a rich reverb impulse response with frequency-dependent decay
+function generateReverbIR(ctx: AudioContext, duration: number, decay: number, brightness: number = 0.5) {
+  const sampleRate = ctx.sampleRate;
+  const length = Math.floor(sampleRate * duration);
+  const impulse = ctx.createBuffer(2, length, sampleRate);
+  // Pre-compute per-sample decay with high-frequency damping
+  for (let ch = 0; ch < 2; ch++) {
+    const data = impulse.getChannelData(ch);
+    for (let i = 0; i < length; i++) {
+      const t = i / length;
+      // Exponential decay envelope
+      const env = Math.pow(1 - t, decay);
+      // High-frequency damping: reduce brightness over time
+      const noise = Math.random() * 2 - 1;
+      // Simple lowpass: blend current noise with previous sample
+      const damping = 0.3 + (1 - brightness) * 0.6; // 0.3 (bright) to 0.9 (dark)
+      const dampedNoise = i > 0 ? noise * (1 - damping * t) + data[i - 1] * damping * t : noise;
+      data[i] = dampedNoise * env;
+    }
+  }
+  return impulse;
 }
 
 function rgbToHsl(r: number, g: number, b: number) {
@@ -2141,10 +2164,19 @@ export default function App() {
     diffOut.connect(textIn);
     textIn.connect(textOut);
     textOut.connect(masterGain);
+    // Safety limiter — prevents clipping from effects, resonant filters, feedback loops
+    const limiter = ctx.createDynamicsCompressor();
+    limiter.threshold.value = -3;
+    limiter.knee.value = 2;
+    limiter.ratio.value = 20;
+    limiter.attack.value = 0.001;
+    limiter.release.value = 0.1;
+
     masterGain.connect(finalGain);
     finalGain.connect(analyser);
-    analyser.connect(ctx.destination);
-    
+    analyser.connect(limiter);
+    limiter.connect(ctx.destination);
+
     analyser.fftSize = 256;
     masterGain.gain.value = volumeRef.current;
     finalGain.gain.value = isPlaying ? 1 : 0;
@@ -2193,7 +2225,7 @@ export default function App() {
     });
 
     const dest = ctx.createMediaStreamDestination();
-    analyser.connect(dest);
+    limiter.connect(dest);
     audioStreamDestRef.current = dest;
 
     masterGainRef.current = masterGain;
@@ -2558,51 +2590,79 @@ export default function App() {
       try {
         if (type === 'character') {
           if (effect === 'drive') {
+            // Warm tube-like drive with tanh curve — oversampled for clean harmonics
+            const preGain = ctx.createGain();
+            preGain.gain.value = 1 + amount * 5; // drive amount into curve
             const shaper = ctx.createWaveShaper();
-            shaper.curve = makeDistortionCurve(amount * 100);
-            input.connect(shaper);
-            shaper.connect(output);
-            nodes.push(shaper);
+            shaper.curve = makeDistortionCurve(2 + amount * 8); // tanh(2-10)
+            shaper.oversample = '4x';
+            const postGain = ctx.createGain();
+            postGain.gain.value = 0.7 / (1 + amount * 2); // compensate for drive boost
+            input.connect(preGain);
+            preGain.connect(shaper);
+            shaper.connect(postGain);
+            postGain.connect(output);
+            nodes.push(preGain, shaper, postGain);
           } else if (effect === 'sweeten') {
+            // Gentle compression + warmth + low-end presence
             const comp = ctx.createDynamicsCompressor();
-            comp.threshold.value = -24;
-            comp.ratio.value = 2;
+            comp.threshold.value = -20;
+            comp.knee.value = 20;
+            comp.ratio.value = 2.5;
+            comp.attack.value = 0.003;
+            comp.release.value = 0.15;
             const filter = ctx.createBiquadFilter();
             filter.type = 'lowshelf';
-            filter.frequency.value = 200;
-            filter.gain.value = amount * 10;
+            filter.frequency.value = 250;
+            filter.gain.value = amount * 6; // max +6dB low shelf (was 10)
             const shaper = ctx.createWaveShaper();
-            shaper.curve = makeDistortionCurve(amount * 20);
+            shaper.curve = makeDistortionCurve(1 + amount * 3); // subtle warmth
+            shaper.oversample = '4x';
+            const postGain = ctx.createGain();
+            postGain.gain.value = 0.85;
             input.connect(comp);
             comp.connect(filter);
             filter.connect(shaper);
-            shaper.connect(output);
-            nodes.push(comp, filter, shaper);
+            shaper.connect(postGain);
+            postGain.connect(output);
+            nodes.push(comp, filter, shaper, postGain);
           } else if (effect === 'fuzz') {
+            // Heavy fuzz with post-filter to tame harshness
+            const preGain = ctx.createGain();
+            preGain.gain.value = 1 + amount * 3;
             const shaper = ctx.createWaveShaper();
-            shaper.curve = makeDistortionCurve(amount * 400);
+            shaper.curve = makeDistortionCurve(5 + amount * 25); // tanh(5-30) — aggressive but bounded
+            shaper.oversample = '4x';
             const filter = ctx.createBiquadFilter();
             filter.type = 'lowpass';
-            filter.frequency.value = 2000 + (1 - amount) * 8000;
-            input.connect(shaper);
+            filter.frequency.value = 3000 + (1 - amount) * 7000; // darker at higher amounts
+            const postGain = ctx.createGain();
+            postGain.gain.value = 0.5 / (1 + amount); // aggressive compensation
+            input.connect(preGain);
+            preGain.connect(shaper);
             shaper.connect(filter);
-            filter.connect(output);
-            nodes.push(shaper, filter);
+            filter.connect(postGain);
+            postGain.connect(output);
+            nodes.push(preGain, shaper, filter, postGain);
           } else if (effect === 'howl') {
+            // Resonant filter fuzz — musical resonance, not screeching
             const shaper = ctx.createWaveShaper();
-            shaper.curve = makeDistortionCurve(amount * 200);
+            shaper.curve = makeDistortionCurve(3 + amount * 12); // moderate drive
+            shaper.oversample = '4x';
             const filter = ctx.createBiquadFilter();
             filter.type = 'lowpass';
-            filter.frequency.value = 500 + amount * 2000;
-            filter.Q.value = 10 + amount * 20;
+            filter.frequency.value = 400 + amount * 2500;
+            filter.Q.value = 2 + amount * 10; // max Q=12 (was 30!) — sings without screeching
+            const postGain = ctx.createGain();
+            postGain.gain.value = 0.4 / (1 + amount * 0.5); // compensate for resonance boost
             input.connect(shaper);
             shaper.connect(filter);
-            filter.connect(output);
-            nodes.push(shaper, filter);
+            filter.connect(postGain);
+            postGain.connect(output);
+            nodes.push(shaper, filter, postGain);
           } else if (effect === 'swell') {
             const swellGain = ctx.createGain();
             swellGain.gain.value = 0;
-            // Simple auto-swell: ramp up when any voice is active
             const checkSwell = () => {
               const anyActive = voiceStatesRef.current.some(s => s);
               if (anyActive) {
@@ -2616,20 +2676,27 @@ export default function App() {
             swellGain.connect(output);
             nodes.push(swellGain, { disconnect: () => {}, cleanup: () => clearInterval(interval) });
           } else if (effect === 'crush') {
+            // Bitcrusher with controlled gain — no double-waveshaper pileup
             const shaper = ctx.createWaveShaper();
-            const n = Math.floor(2 + (1 - amount) * 4);
-            const curve = new Float32Array(1024);
-            for (let i = 0; i < 1024; i++) {
-              const x = (i * 2) / 1024 - 1;
+            const n = Math.floor(3 + (1 - amount) * 8); // quantization steps
+            const curve = new Float32Array(8192);
+            for (let i = 0; i < 8192; i++) {
+              const x = (i * 2) / 8192 - 1;
               curve[i] = Math.round(x * n) / n;
             }
             shaper.curve = curve;
-            const drive = ctx.createWaveShaper();
-            drive.curve = makeDistortionCurve(amount * 200);
-            input.connect(drive);
-            drive.connect(shaper);
-            shaper.connect(output);
-            nodes.push(shaper, drive);
+            shaper.oversample = '2x';
+            // Light saturation before crush for warmth
+            const sat = ctx.createWaveShaper();
+            sat.curve = makeDistortionCurve(1 + amount * 3);
+            sat.oversample = '2x';
+            const postGain = ctx.createGain();
+            postGain.gain.value = 0.7;
+            input.connect(sat);
+            sat.connect(shaper);
+            shaper.connect(postGain);
+            postGain.connect(output);
+            nodes.push(sat, shaper, postGain);
           }
         } else if (type === 'movement') {
           if (effect === 'doubler') {
@@ -2637,8 +2704,8 @@ export default function App() {
             delay.delayTime.value = 0.01 + amount * 0.04;
             const dry = ctx.createGain();
             const wet = ctx.createGain();
-            dry.gain.value = 0.5;
-            wet.gain.value = 0.5;
+            dry.gain.value = 0.6;
+            wet.gain.value = 0.4;
             input.connect(dry);
             input.connect(delay);
             delay.connect(wet);
@@ -2647,10 +2714,11 @@ export default function App() {
             nodes.push(delay, dry, wet);
           } else if (effect === 'vibrato') {
             const delay = ctx.createDelay();
+            delay.delayTime.value = 0.005; // center delay
             const lfo = ctx.createOscillator();
             const lfoGain = ctx.createGain();
-            lfo.frequency.value = 0.5 + amount * 8;
-            lfoGain.gain.value = 0.002 + amount * 0.005;
+            lfo.frequency.value = 1 + amount * 6; // 1-7 Hz — musical vibrato range
+            lfoGain.gain.value = 0.001 + amount * 0.004; // subtle pitch modulation
             lfo.connect(lfoGain);
             lfoGain.connect(delay.delayTime);
             lfo.start();
@@ -2658,33 +2726,48 @@ export default function App() {
             delay.connect(output);
             nodes.push(delay, lfo, lfoGain);
           } else if (effect === 'phaser') {
-            const allPasses = Array.from({ length: 4 }, () => {
+            // 8-stage phaser for lush, deep sweeps (was 4 stages)
+            const stages = 8;
+            const allPasses = Array.from({ length: stages }, () => {
               const ap = ctx.createBiquadFilter();
               ap.type = 'allpass';
+              ap.Q.value = 0.5 + amount * 2; // moderate Q for resonance
               return ap;
             });
             const lfo = ctx.createOscillator();
             const lfoGain = ctx.createGain();
-            lfo.frequency.value = 0.1 + amount * 2;
-            lfoGain.gain.value = 500 + amount * 1000;
+            lfo.frequency.value = 0.1 + amount * 1.5; // slow hypnotic sweep
+            lfoGain.gain.value = 800 + amount * 2000; // sweep across wider range
             lfo.connect(lfoGain);
+            // Feedback for resonance at notch frequencies
+            const fbGain = ctx.createGain();
+            fbGain.gain.value = amount * 0.5; // max 0.5 feedback — resonant but safe
             allPasses.forEach((ap, i) => {
               lfoGain.connect(ap.frequency);
               if (i === 0) input.connect(ap);
               else allPasses[i-1].connect(ap);
             });
-            allPasses[3].connect(output);
-            input.connect(output);
+            allPasses[stages - 1].connect(fbGain);
+            fbGain.connect(allPasses[0]);
+            // Mix wet (phased) + dry for notch comb effect
+            const dry = ctx.createGain();
+            dry.gain.value = 0.5;
+            const wet = ctx.createGain();
+            wet.gain.value = 0.5;
+            input.connect(dry);
+            dry.connect(output);
+            allPasses[stages - 1].connect(wet);
+            wet.connect(output);
             lfo.start();
-            nodes.push(...allPasses, lfo, lfoGain);
+            nodes.push(...allPasses, lfo, lfoGain, fbGain, dry, wet);
           } else if (effect === 'tremolo') {
             const tremGain = ctx.createGain();
             const lfo = ctx.createOscillator();
             const lfoGain = ctx.createGain();
             lfo.frequency.value = 1 + amount * 10;
-            lfoGain.gain.value = amount;
+            lfoGain.gain.value = amount * 0.8; // slightly less extreme
             const offset = ctx.createConstantSource();
-            offset.offset.value = 1 - amount;
+            offset.offset.value = 1 - amount * 0.8;
             offset.start();
             lfo.connect(lfoGain);
             lfoGain.connect(tremGain.gain);
@@ -2694,114 +2777,199 @@ export default function App() {
             tremGain.connect(output);
             nodes.push(tremGain, lfo, lfoGain, offset);
           } else if (effect === 'pitch') {
+            // Pitch shifting with smoother modulation
             const delay = ctx.createDelay();
             const lfo = ctx.createOscillator();
             lfo.type = 'sawtooth';
-            lfo.frequency.value = 10 + amount * 100;
+            lfo.frequency.value = 5 + amount * 40; // gentler range
             const lfoGain = ctx.createGain();
-            lfoGain.gain.value = 0.01;
+            lfoGain.gain.value = 0.005 + amount * 0.005;
             lfo.connect(lfoGain);
             lfoGain.connect(delay.delayTime);
             lfo.start();
+            const dry = ctx.createGain();
+            dry.gain.value = 0.5;
+            const wet = ctx.createGain();
+            wet.gain.value = 0.5;
+            input.connect(dry);
             input.connect(delay);
-            delay.connect(output);
-            nodes.push(delay, lfo, lfoGain);
+            delay.connect(wet);
+            dry.connect(output);
+            wet.connect(output);
+            nodes.push(delay, lfo, lfoGain, dry, wet);
           } else if (effect === 'vortex') {
+            // Flanger with LP filter in feedback to prevent buildup
             const delay = ctx.createDelay();
-            delay.delayTime.value = 0.005;
+            delay.delayTime.value = 0.003;
             const feedback = ctx.createGain();
-            feedback.gain.value = 0.4 + amount * 0.5;
+            feedback.gain.value = 0.3 + amount * 0.45; // max 0.75 (was 0.9)
+            const fbFilter = ctx.createBiquadFilter();
+            fbFilter.type = 'lowpass';
+            fbFilter.frequency.value = 4000; // tame high-freq feedback
             const lfo = ctx.createOscillator();
             const lfoGain = ctx.createGain();
-            lfo.frequency.value = 0.05 + amount * 0.5;
-            lfoGain.gain.value = 0.004;
+            lfo.frequency.value = 0.08 + amount * 0.4;
+            lfoGain.gain.value = 0.003;
             lfo.connect(lfoGain);
             lfoGain.connect(delay.delayTime);
             lfo.start();
             input.connect(delay);
-            delay.connect(feedback);
+            delay.connect(fbFilter);
+            fbFilter.connect(feedback);
             feedback.connect(delay);
-            delay.connect(output);
-            input.connect(output);
-            nodes.push(delay, feedback, lfo, lfoGain);
+            const dry = ctx.createGain();
+            dry.gain.value = 0.6;
+            const wet = ctx.createGain();
+            wet.gain.value = 0.4;
+            input.connect(dry);
+            delay.connect(wet);
+            dry.connect(output);
+            wet.connect(output);
+            nodes.push(delay, feedback, fbFilter, lfo, lfoGain, dry, wet);
           }
         } else if (type === 'diffusion') {
           if (effect === 'cascade') {
-            const delay = ctx.createDelay();
-            delay.delayTime.value = 0.2 + amount * 0.8;
+            // Delay with HP+LP filtering in feedback loop to prevent muddy buildup
+            const delay = ctx.createDelay(5);
+            delay.delayTime.value = 0.2 + amount * 0.6;
             const feedback = ctx.createGain();
-            feedback.gain.value = 0.3 + amount * 0.4;
+            feedback.gain.value = 0.25 + amount * 0.45; // max 0.7 — safe, long trails
+            const fbLP = ctx.createBiquadFilter();
+            fbLP.type = 'lowpass';
+            fbLP.frequency.value = 5000 - amount * 2000; // darken repeats over time
+            const fbHP = ctx.createBiquadFilter();
+            fbHP.type = 'highpass';
+            fbHP.frequency.value = 80 + amount * 100; // prevent bass buildup
             input.connect(delay);
-            delay.connect(feedback);
+            delay.connect(fbLP);
+            fbLP.connect(fbHP);
+            fbHP.connect(feedback);
             feedback.connect(delay);
-            delay.connect(output);
-            input.connect(output);
-            nodes.push(delay, feedback);
-          } else if (effect === 'reels') {
-            const delay = ctx.createDelay();
-            delay.delayTime.value = 0.1 + amount * 0.3;
-            const lfo = ctx.createOscillator();
-            const lfoGain = ctx.createGain();
-            lfo.frequency.value = 0.5 + amount * 2;
-            lfoGain.gain.value = 0.005;
-            lfo.connect(lfoGain);
-            lfoGain.connect(delay.delayTime);
-            lfo.start();
-            const filter = ctx.createBiquadFilter();
-            filter.type = 'bandpass';
-            filter.frequency.value = 1000;
-            input.connect(delay);
-            delay.connect(filter);
-            filter.connect(output);
-            input.connect(output);
-            nodes.push(delay, lfo, lfoGain, filter);
-          } else if (effect === 'echo') {
-            const delay = ctx.createDelay();
-            delay.delayTime.value = 0.1 + amount * 1.9;
-            const feedback = ctx.createGain();
-            feedback.gain.value = 0.2 + amount * 0.6;
-            const filter = ctx.createBiquadFilter();
-            filter.type = 'bandpass';
-            filter.frequency.value = 400 + amount * 3000;
-            const lfo = ctx.createOscillator();
-            const lfoGain = ctx.createGain();
-            lfo.frequency.value = 0.2 + amount * 1;
-            lfoGain.gain.value = 0.002;
-            lfo.connect(lfoGain);
-            lfoGain.connect(delay.delayTime);
-            lfo.start();
-            input.connect(delay);
-            delay.connect(filter);
-            filter.connect(feedback);
-            feedback.connect(delay);
-            filter.connect(output);
-            input.connect(output);
-            nodes.push(delay, feedback, filter, lfo, lfoGain);
-          } else if (effect === 'space') {
-            const reverb = ctx.createConvolver();
-            const length = Math.floor(ctx.sampleRate * (1 + amount * 4));
-            const impulse = ctx.createBuffer(2, length, ctx.sampleRate);
-            for (let i = 0; i < 2; i++) {
-              const channel = impulse.getChannelData(i);
-              for (let j = 0; j < length; j++) {
-                channel[j] = (Math.random() * 2 - 1) * Math.pow(1 - j / length, 2);
-              }
-            }
-            reverb.buffer = impulse;
+            const dry = ctx.createGain();
+            dry.gain.value = 0.7;
             const wet = ctx.createGain();
-            wet.gain.value = amount;
-            input.connect(reverb);
+            wet.gain.value = 0.5;
+            input.connect(dry);
+            dry.connect(output);
+            delay.connect(wet);
+            wet.connect(output);
+            nodes.push(delay, feedback, fbLP, fbHP, dry, wet);
+          } else if (effect === 'reels') {
+            // Tape delay — LP+HP in feedback, subtle saturation, wow/flutter
+            const delay = ctx.createDelay(5);
+            delay.delayTime.value = 0.15 + amount * 0.35;
+            const feedback = ctx.createGain();
+            feedback.gain.value = 0.3 + amount * 0.4; // max 0.7
+            // Tape-like filtering in feedback loop
+            const fbLP = ctx.createBiquadFilter();
+            fbLP.type = 'lowpass';
+            fbLP.frequency.value = 3500 - amount * 1500; // each repeat loses highs
+            const fbHP = ctx.createBiquadFilter();
+            fbHP.type = 'highpass';
+            fbHP.frequency.value = 100;
+            // Subtle tape saturation in feedback
+            const fbSat = ctx.createWaveShaper();
+            fbSat.curve = makeDistortionCurve(1.5 + amount * 2);
+            fbSat.oversample = '2x';
+            // Wow (slow pitch drift)
+            const lfo = ctx.createOscillator();
+            const lfoGain = ctx.createGain();
+            lfo.frequency.value = 0.4 + amount * 1.2; // 0.4-1.6 Hz wow
+            lfoGain.gain.value = 0.001 + amount * 0.003; // subtle wobble
+            lfo.connect(lfoGain);
+            lfoGain.connect(delay.delayTime);
+            lfo.start();
+            // Flutter (fast subtle warble)
+            const flutter = ctx.createOscillator();
+            const flutterGain = ctx.createGain();
+            flutter.frequency.value = 4 + amount * 3;
+            flutterGain.gain.value = 0.0002 + amount * 0.0003;
+            flutter.connect(flutterGain);
+            flutterGain.connect(delay.delayTime);
+            flutter.start();
+            input.connect(delay);
+            delay.connect(fbLP);
+            fbLP.connect(fbHP);
+            fbHP.connect(fbSat);
+            fbSat.connect(feedback);
+            feedback.connect(delay);
+            const dry = ctx.createGain();
+            dry.gain.value = 0.65;
+            const wet = ctx.createGain();
+            wet.gain.value = 0.5;
+            input.connect(dry);
+            dry.connect(output);
+            delay.connect(wet);
+            wet.connect(output);
+            nodes.push(delay, feedback, fbLP, fbHP, fbSat, lfo, lfoGain, flutter, flutterGain, dry, wet);
+          } else if (effect === 'echo') {
+            // Spacey echo — filtered feedback with slow modulation for psychedelic trails
+            const delay = ctx.createDelay(5);
+            delay.delayTime.value = 0.15 + amount * 0.8;
+            const feedback = ctx.createGain();
+            feedback.gain.value = 0.3 + amount * 0.45; // max 0.75
+            const fbLP = ctx.createBiquadFilter();
+            fbLP.type = 'lowpass';
+            fbLP.frequency.value = 4000 - amount * 1500; // darken echoes
+            const fbHP = ctx.createBiquadFilter();
+            fbHP.type = 'highpass';
+            fbHP.frequency.value = 120;
+            // Slow LFO on delay time for pitch-drifting echoes
+            const lfo = ctx.createOscillator();
+            const lfoGain = ctx.createGain();
+            lfo.frequency.value = 0.1 + amount * 0.4; // very slow modulation
+            lfoGain.gain.value = 0.002 + amount * 0.004;
+            lfo.connect(lfoGain);
+            lfoGain.connect(delay.delayTime);
+            lfo.start();
+            input.connect(delay);
+            delay.connect(fbLP);
+            fbLP.connect(fbHP);
+            fbHP.connect(feedback);
+            feedback.connect(delay);
+            const dry = ctx.createGain();
+            dry.gain.value = 0.65;
+            const wet = ctx.createGain();
+            wet.gain.value = 0.5;
+            input.connect(dry);
+            dry.connect(output);
+            delay.connect(wet);
+            wet.connect(output);
+            nodes.push(delay, feedback, fbLP, fbHP, lfo, lfoGain, dry, wet);
+          } else if (effect === 'space') {
+            // Rich spacey reverb — long, frequency-dependent decay, pre-delay, shimmer
+            const reverbDuration = 2 + amount * 6; // 2-8 seconds
+            const reverbDecay = 1.5 - amount * 0.7; // slower decay at higher amounts
+            const reverb = ctx.createConvolver();
+            reverb.buffer = generateReverbIR(ctx, reverbDuration, reverbDecay, 0.4 + (1 - amount) * 0.3);
+            // Pre-delay for spaciousness (30-80ms)
+            const preDelay = ctx.createDelay();
+            preDelay.delayTime.value = 0.03 + amount * 0.05;
+            // HP filter before reverb to prevent low-end mud
+            const reverbHP = ctx.createBiquadFilter();
+            reverbHP.type = 'highpass';
+            reverbHP.frequency.value = 150 + amount * 100; // cut below 150-250 Hz
+            // Wet/dry mix
+            const dry = ctx.createGain();
+            dry.gain.value = 1 - amount * 0.4; // keep dry strong
+            const wet = ctx.createGain();
+            wet.gain.value = 0.3 + amount * 0.5; // 30-80% wet
+            input.connect(reverbHP);
+            reverbHP.connect(preDelay);
+            preDelay.connect(reverb);
             reverb.connect(wet);
             wet.connect(output);
-            input.connect(output);
-            nodes.push(reverb, wet);
+            input.connect(dry);
+            dry.connect(output);
+            nodes.push(reverb, preDelay, reverbHP, dry, wet);
           } else if (effect === 'collage') {
-            // Multi-tap delay
-            const taps = Array.from({ length: 4 }, (_, i) => {
-              const d = ctx.createDelay();
-              d.delayTime.value = (i + 1) * 0.1 * amount;
+            // Multi-tap delay with Fibonacci-spaced taps for psychedelic diffusion
+            const fibTimes = [0.089, 0.144, 0.233, 0.377, 0.610]; // Fibonacci ratios
+            const taps = fibTimes.map((t, i) => {
+              const d = ctx.createDelay(5);
+              d.delayTime.value = t * (0.5 + amount * 1.5);
               const g = ctx.createGain();
-              g.gain.value = 0.2;
+              g.gain.value = 0.25 / (i + 1); // decreasing volume per tap
               return { d, g };
             });
             taps.forEach(tap => {
@@ -2809,71 +2977,117 @@ export default function App() {
               tap.d.connect(tap.g);
               tap.g.connect(output);
             });
-            input.connect(output);
-            nodes.push(...taps.flatMap(t => [t.d, t.g]));
+            const dry = ctx.createGain();
+            dry.gain.value = 0.6;
+            input.connect(dry);
+            dry.connect(output);
+            nodes.push(...taps.flatMap(t => [t.d, t.g]), dry);
           } else if (effect === 'reverse') {
-            const delay = ctx.createDelay();
-            delay.delayTime.value = 0.5 + amount * 1.5;
-            input.connect(delay);
-            delay.connect(output);
-            input.connect(output);
-            nodes.push(delay);
+            // Reverse swell effect using reversed impulse response
+            const reverb = ctx.createConvolver();
+            const length = Math.floor(ctx.sampleRate * (0.5 + amount * 2));
+            const impulse = ctx.createBuffer(2, length, ctx.sampleRate);
+            for (let ch = 0; ch < 2; ch++) {
+              const data = impulse.getChannelData(ch);
+              for (let i = 0; i < length; i++) {
+                // Reversed envelope — builds up instead of decaying
+                const t = i / length;
+                data[i] = (Math.random() * 2 - 1) * Math.pow(t, 1.5) * 0.8;
+              }
+            }
+            reverb.buffer = impulse;
+            const dry = ctx.createGain();
+            dry.gain.value = 0.6;
+            const wet = ctx.createGain();
+            wet.gain.value = 0.3 + amount * 0.4;
+            input.connect(reverb);
+            reverb.connect(wet);
+            wet.connect(output);
+            input.connect(dry);
+            dry.connect(output);
+            nodes.push(reverb, dry, wet);
           }
         } else if (type === 'texture') {
           if (effect === 'filter') {
+            // Musical multi-mode filter with moderate resonance
             const filter = ctx.createBiquadFilter();
             filter.type = amount < 0.5 ? 'lowpass' : 'highpass';
             filter.frequency.value = amount < 0.5 ? amount * 4000 + 200 : (amount - 0.5) * 8000 + 500;
+            filter.Q.value = 1 + amount * 4; // gentle resonance, max Q=5
             input.connect(filter);
             filter.connect(output);
             nodes.push(filter);
           } else if (effect === 'squash') {
+            // Heavy compression with gentle saturation (no extreme clipping)
             const comp = ctx.createDynamicsCompressor();
-            comp.threshold.value = -50 * amount;
-            comp.ratio.value = 20;
+            comp.threshold.value = -30 - amount * 20; // -30 to -50
+            comp.knee.value = 10;
+            comp.ratio.value = 4 + amount * 12; // 4:1 to 16:1
+            comp.attack.value = 0.001;
+            comp.release.value = 0.05 + amount * 0.15;
             const shaper = ctx.createWaveShaper();
-            shaper.curve = makeDistortionCurve(amount * 50);
+            shaper.curve = makeDistortionCurve(1 + amount * 4); // gentle saturation (was amount*50!)
+            shaper.oversample = '2x';
+            const postGain = ctx.createGain();
+            postGain.gain.value = 0.8;
             input.connect(comp);
             comp.connect(shaper);
-            shaper.connect(output);
-            nodes.push(comp, shaper);
+            shaper.connect(postGain);
+            postGain.connect(output);
+            nodes.push(comp, shaper, postGain);
           } else if (effect === 'cassette') {
-            const filter = ctx.createBiquadFilter();
-            filter.type = 'bandpass';
-            filter.frequency.value = 1500;
-            filter.Q.value = 0.5;
+            // Tape texture with bandwidth limiting and subtle hiss
+            const lpFilter = ctx.createBiquadFilter();
+            lpFilter.type = 'lowpass';
+            lpFilter.frequency.value = 6000 - amount * 3000; // bandwidth narrows with amount
+            const hpFilter = ctx.createBiquadFilter();
+            hpFilter.type = 'highpass';
+            hpFilter.frequency.value = 60 + amount * 100;
+            // Subtle tape hiss
             const noise = ctx.createBufferSource();
             noise.buffer = noiseBufferRef.current;
             noise.loop = true;
+            const noiseFilter = ctx.createBiquadFilter();
+            noiseFilter.type = 'highpass';
+            noiseFilter.frequency.value = 4000; // hiss is high-frequency
             const noiseGain = ctx.createGain();
-            noiseGain.gain.value = 0.02 * amount;
-            noise.connect(noiseGain);
+            noiseGain.gain.value = 0.008 * amount;
+            noise.connect(noiseFilter);
+            noiseFilter.connect(noiseGain);
             noiseGain.connect(output);
             noise.start();
-            input.connect(filter);
-            filter.connect(output);
-            nodes.push(filter, noise, noiseGain);
+            input.connect(hpFilter);
+            hpFilter.connect(lpFilter);
+            lpFilter.connect(output);
+            nodes.push(lpFilter, hpFilter, noise, noiseFilter, noiseGain);
           } else if (effect === 'broken') {
+            // Bitcrusher with oversampling to reduce aliasing
             const shaper = ctx.createWaveShaper();
-            const n = Math.floor(2 + (1 - amount) * 10);
-            const curve = new Float32Array(1024);
-            for (let i = 0; i < 1024; i++) {
-              const x = (i * 2) / 1024 - 1;
+            const n = Math.floor(3 + (1 - amount) * 12);
+            const curve = new Float32Array(8192);
+            for (let i = 0; i < 8192; i++) {
+              const x = (i * 2) / 8192 - 1;
               curve[i] = Math.round(x * n) / n;
             }
             shaper.curve = curve;
+            shaper.oversample = '2x';
+            const postGain = ctx.createGain();
+            postGain.gain.value = 0.8;
             input.connect(shaper);
-            shaper.connect(output);
-            nodes.push(shaper);
+            shaper.connect(postGain);
+            postGain.connect(output);
+            nodes.push(shaper, postGain);
           } else if (effect === 'interference') {
+            // Filtered noise bed — atmospheric static
             const noise = ctx.createBufferSource();
             noise.buffer = noiseBufferRef.current;
             noise.loop = true;
             const noiseGain = ctx.createGain();
-            noiseGain.gain.value = 0.05 * amount;
+            noiseGain.gain.value = 0.03 * amount; // reduced from 0.05
             const filter = ctx.createBiquadFilter();
             filter.type = 'bandpass';
-            filter.frequency.value = 3000;
+            filter.frequency.value = 2000 + amount * 2000;
+            filter.Q.value = 1;
             noise.connect(filter);
             filter.connect(noiseGain);
             noiseGain.connect(output);
@@ -2881,30 +3095,35 @@ export default function App() {
             input.connect(output);
             nodes.push(noise, noiseGain, filter);
           } else if (effect === 'radio') {
+            // Lo-fi AM radio with bandwidth limiting and subtle noise
             const filter = ctx.createBiquadFilter();
             filter.type = 'bandpass';
-            filter.frequency.value = 500 + amount * 4000;
-            filter.Q.value = 5;
+            filter.frequency.value = 800 + amount * 2000;
+            filter.Q.value = 2 + amount * 3; // reduced from 5, prevents resonance spike
             const noise = ctx.createBufferSource();
             noise.buffer = noiseBufferRef.current;
             noise.loop = true;
             const noiseGain = ctx.createGain();
-            noiseGain.gain.value = 0.03 * amount;
+            noiseGain.gain.value = 0.015 * amount; // reduced from 0.03
             noise.connect(noiseGain);
             noiseGain.connect(output);
             noise.start();
             const shaper = ctx.createWaveShaper();
-            const n = Math.floor(2 + (1 - amount) * 10);
-            const curve = new Float32Array(1024);
-            for (let i = 0; i < 1024; i++) {
-              const x = (i * 2) / 1024 - 1;
+            const n = Math.floor(4 + (1 - amount) * 12); // less extreme quantization
+            const curve = new Float32Array(8192);
+            for (let i = 0; i < 8192; i++) {
+              const x = (i * 2) / 8192 - 1;
               curve[i] = Math.round(x * n) / n;
             }
             shaper.curve = curve;
+            shaper.oversample = '2x';
+            const postGain = ctx.createGain();
+            postGain.gain.value = 0.75;
             input.connect(filter);
             filter.connect(shaper);
-            shaper.connect(output);
-            nodes.push(filter, noise, noiseGain, shaper);
+            shaper.connect(postGain);
+            postGain.connect(output);
+            nodes.push(filter, noise, noiseGain, shaper, postGain);
           }
         }
       } catch (e) {
