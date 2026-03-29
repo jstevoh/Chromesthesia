@@ -1917,6 +1917,9 @@ export default function App() {
   const [recordingQuality, setRecordingQuality] = useState<'lossless' | 'high' | 'medium' | 'low'>('high');
   const [showRecordingSettings, setShowRecordingSettings] = useState(false);
   const [recordingProgress, setRecordingProgress] = useState(0);
+  const [recordingResolution, setRecordingResolution] = useState<'720p' | '1080p' | '1440p' | '4k'>('1080p');
+  const [recordingCapture, setRecordingCapture] = useState<'visualization' | 'full'>('visualization');
+  const [recordingElapsed, setRecordingElapsed] = useState(0);
   const [isWebcamActive, setIsWebcamActive] = useState(false);
   const [isVideoAudioRouted, setIsVideoAudioRouted] = useState(false);
 
@@ -1941,6 +1944,10 @@ export default function App() {
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const recordedChunksRef = useRef<Blob[]>([]);
   const audioStreamDestRef = useRef<MediaStreamAudioDestinationNode | null>(null);
+  const recordingStartTimeRef = useRef<number>(0);
+  const recordingTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const appContainerRef = useRef<HTMLDivElement | null>(null);
+  const fullCaptureCanvasRef = useRef<HTMLCanvasElement | null>(null);
   const finalGainRef = useRef<GainNode | null>(null);
   const synthMatrixGainRef = useRef<GainNode | null>(null);
   const videoAudioSourceRef = useRef<MediaElementAudioSourceNode | null>(null);
@@ -3041,55 +3048,116 @@ export default function App() {
 
   // Recording Compositing Loop
   useEffect(() => {
-    if (!isRecording || !canvasRef.current || !visualsCanvasRef.current) return;
-    
-    const recordingCanvas = canvasRef.current;
-    const ctx = recordingCanvas.getContext('2d');
-    if (!ctx) return;
-    
-    let animationFrameId: number;
-    
-    const draw = () => {
-      // Clear background
-      ctx.fillStyle = 'black';
-      ctx.fillRect(0, 0, recordingCanvas.width, recordingCanvas.height);
+    if (!isRecording) return;
 
-      // Draw background (image or video)
-      if (mediaType === 'image' && imageRef.current) {
-        ctx.drawImage(imageRef.current, 0, 0, recordingCanvas.width, recordingCanvas.height);
-      } else if (mediaType === 'video' && videoRef.current) {
-        ctx.drawImage(videoRef.current, 0, 0, recordingCanvas.width, recordingCanvas.height);
-      }
-      
-      // Draw ScanningVisuals canvas
-      if (visualsCanvasRef.current) {
-        ctx.drawImage(visualsCanvasRef.current, 0, 0, recordingCanvas.width, recordingCanvas.height);
-      }
-      
+    const isFullCapture = recordingCapture === 'full';
+
+    // For visualization-only: composite onto the recording canvas
+    if (!isFullCapture) {
+      if (!canvasRef.current || !visualsCanvasRef.current) return;
+      const recordingCanvas = canvasRef.current;
+      const ctx = recordingCanvas.getContext('2d');
+      if (!ctx) return;
+
+      let animationFrameId: number;
+      const draw = () => {
+        ctx.fillStyle = 'black';
+        ctx.fillRect(0, 0, recordingCanvas.width, recordingCanvas.height);
+        if (mediaType === 'image' && imageRef.current) {
+          ctx.drawImage(imageRef.current, 0, 0, recordingCanvas.width, recordingCanvas.height);
+        } else if (mediaType === 'video' && videoRef.current) {
+          ctx.drawImage(videoRef.current, 0, 0, recordingCanvas.width, recordingCanvas.height);
+        }
+        if (visualsCanvasRef.current) {
+          ctx.drawImage(visualsCanvasRef.current, 0, 0, recordingCanvas.width, recordingCanvas.height);
+        }
+        animationFrameId = requestAnimationFrame(draw);
+      };
+      animationFrameId = requestAnimationFrame(draw);
+      return () => cancelAnimationFrame(animationFrameId);
+    }
+
+    // For full-interface capture: use html2canvas-style approach via offscreen canvas
+    if (!appContainerRef.current || !fullCaptureCanvasRef.current) return;
+    let animationFrameId: number;
+    const captureCanvas = fullCaptureCanvasRef.current;
+    const captureCtx = captureCanvas.getContext('2d');
+    if (!captureCtx) return;
+
+    const draw = () => {
+      // We can't easily render DOM to canvas, so for full capture we rely on
+      // getDisplayMedia which was set up in startRecording
       animationFrameId = requestAnimationFrame(draw);
     };
-    
     animationFrameId = requestAnimationFrame(draw);
     return () => cancelAnimationFrame(animationFrameId);
-  }, [isRecording, mediaType]);
+  }, [isRecording, mediaType, recordingCapture]);
 
-  const startRecording = () => {
+  // Resolution presets
+  const getRecordingDimensions = (res: typeof recordingResolution) => {
+    switch (res) {
+      case '720p': return { w: 1280, h: 720 };
+      case '1080p': return { w: 1920, h: 1080 };
+      case '1440p': return { w: 2560, h: 1440 };
+      case '4k': return { w: 3840, h: 2160 };
+    }
+  };
+
+  const formatRecordingTime = (seconds: number) => {
+    const m = Math.floor(seconds / 60);
+    const s = seconds % 60;
+    return `${m}:${s.toString().padStart(2, '0')}`;
+  };
+
+  const startRecording = async () => {
     if (!audioStreamDestRef.current) {
       initAudio();
     }
-    
+
     recordedChunksRef.current = [];
-    
+    setRecordingElapsed(0);
+
     let stream: MediaStream;
     const isVideo = recordingMode === 'video' || recordingMode === 'both';
     const isAudio = recordingMode === 'audio' || recordingMode === 'both';
+    const isFullCapture = recordingCapture === 'full';
+    const { w: recW, h: recH } = getRecordingDimensions(recordingResolution);
 
-    if (isVideo && canvasRef.current) {
-      const canvasStream = canvasRef.current.captureStream(60); // 60fps
-      const audioStream = audioStreamDestRef.current!.stream;
-      const tracks = [...canvasStream.getTracks()];
-      if (isAudio) tracks.push(...audioStream.getTracks());
-      stream = new MediaStream(tracks);
+    if (isVideo) {
+      if (isFullCapture) {
+        // Full interface capture via getDisplayMedia (screen capture)
+        try {
+          const displayStream = await navigator.mediaDevices.getDisplayMedia({
+            video: { width: { ideal: recW }, height: { ideal: recH }, frameRate: { ideal: 60 } },
+            audio: false
+          });
+          const tracks = [...displayStream.getTracks()];
+          // Mix in our audio
+          if (isAudio && audioStreamDestRef.current) {
+            tracks.push(...audioStreamDestRef.current.stream.getTracks());
+          }
+          stream = new MediaStream(tracks);
+          // Stop recording if user cancels the screen share
+          displayStream.getVideoTracks()[0].addEventListener('ended', () => {
+            stopRecording();
+          });
+        } catch (err) {
+          console.error("Screen capture denied:", err);
+          return;
+        }
+      } else if (canvasRef.current) {
+        // Visualization-only: set canvas to chosen resolution
+        canvasRef.current.width = recW;
+        canvasRef.current.height = recH;
+        const canvasStream = canvasRef.current.captureStream(60);
+        const tracks = [...canvasStream.getTracks()];
+        if (isAudio && audioStreamDestRef.current) {
+          tracks.push(...audioStreamDestRef.current.stream.getTracks());
+        }
+        stream = new MediaStream(tracks);
+      } else {
+        stream = audioStreamDestRef.current!.stream;
+      }
     } else {
       stream = audioStreamDestRef.current!.stream;
     }
@@ -3119,7 +3187,7 @@ export default function App() {
 
     const format = isVideo ? videoFormat : audioFormat;
     let mimeType = '';
-    
+
     if (isVideo) {
       const mp4Types = [
         'video/mp4;codecs=avc1,mp4a.40.2',
@@ -3131,7 +3199,7 @@ export default function App() {
       const webmVP9 = 'video/webm;codecs=vp9';
 
       if (videoFormat === 'mp4') {
-        mimeType = mp4Types.find(t => MediaRecorder.isTypeSupported(t)) || 
+        mimeType = mp4Types.find(t => MediaRecorder.isTypeSupported(t)) ||
                    (MediaRecorder.isTypeSupported(webmH264) ? webmH264 : 'video/webm');
       } else {
         mimeType = MediaRecorder.isTypeSupported(webmVP9) ? webmVP9 : 'video/webm';
@@ -3140,7 +3208,7 @@ export default function App() {
       if (audioFormat === 'mp3') {
         mimeType = 'audio/mpeg';
       } else if (audioFormat === 'wav') {
-        mimeType = 'audio/wav'; 
+        mimeType = 'audio/wav';
       } else if (audioFormat === 'flac') {
         mimeType = 'audio/flac';
       } else {
@@ -3159,6 +3227,20 @@ export default function App() {
       videoBitsPerSecond: videoBitrate,
     };
 
+    const startTimer = () => {
+      recordingStartTimeRef.current = Date.now();
+      recordingTimerRef.current = setInterval(() => {
+        setRecordingElapsed(Math.floor((Date.now() - recordingStartTimeRef.current) / 1000));
+      }, 1000);
+    };
+
+    const stopTimer = () => {
+      if (recordingTimerRef.current) {
+        clearInterval(recordingTimerRef.current);
+        recordingTimerRef.current = null;
+      }
+    };
+
     try {
       const recorder = new MediaRecorder(stream, options);
       recorder.ondataavailable = (e) => {
@@ -3167,6 +3249,7 @@ export default function App() {
         }
       };
       recorder.onstop = () => {
+        stopTimer();
         const blob = new Blob(recordedChunksRef.current, { type: options.mimeType });
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
@@ -3176,15 +3259,18 @@ export default function App() {
         a.click();
         URL.revokeObjectURL(url);
         setIsRecording(false);
+        setRecordingElapsed(0);
+        // Stop any display media tracks
+        stream.getTracks().forEach(t => { if (t.readyState === 'live' && t.kind === 'video') t.stop(); });
       };
 
       mediaRecorderRef.current = recorder;
       if (!isPlaying) setIsPlaying(true);
       setIsRecording(true);
+      startTimer();
       recorder.start();
     } catch (err) {
       console.error("Failed to start recording:", err);
-      // Try one more time with absolute defaults
       try {
         const recorder = new MediaRecorder(stream);
         recorder.ondataavailable = (e) => {
@@ -3193,6 +3279,7 @@ export default function App() {
           }
         };
         recorder.onstop = () => {
+          stopTimer();
           const blob = new Blob(recordedChunksRef.current, { type: recorder.mimeType });
           const url = URL.createObjectURL(blob);
           const a = document.createElement('a');
@@ -3201,10 +3288,13 @@ export default function App() {
           a.click();
           URL.revokeObjectURL(url);
           setIsRecording(false);
+          setRecordingElapsed(0);
+          stream.getTracks().forEach(t => { if (t.readyState === 'live' && t.kind === 'video') t.stop(); });
         };
         mediaRecorderRef.current = recorder;
         if (!isPlaying) setIsPlaying(true);
         setIsRecording(true);
+        startTimer();
         recorder.start();
       } catch (innerErr) {
         console.error("Absolute failure starting recorder:", innerErr);
@@ -3215,6 +3305,10 @@ export default function App() {
   const stopRecording = () => {
     if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
       mediaRecorderRef.current.stop();
+    }
+    if (recordingTimerRef.current) {
+      clearInterval(recordingTimerRef.current);
+      recordingTimerRef.current = null;
     }
   };
 
@@ -4402,7 +4496,7 @@ export default function App() {
   }, [showSettings]);
 
   return (
-    <div className="min-h-screen text-white font-sans selection:bg-black selection:text-white overflow-hidden flex flex-col relative">
+    <div ref={appContainerRef} className="min-h-screen text-white font-sans selection:bg-black selection:text-white overflow-hidden flex flex-col relative">
       {/* Dedicated Psychedelic Background Layers */}
       <div className="fixed inset-0 z-0 pointer-events-none overflow-hidden bg-[#020617]">
         <motion.div 
@@ -4671,23 +4765,28 @@ export default function App() {
               </button>
 
               <div className="flex items-center bg-white/5 rounded-full border border-white/10 p-0.5">
-                <button 
+                <button
                   onClick={() => isRecording ? stopRecording() : startRecording()}
                   className={`w-7 h-7 flex items-center justify-center rounded-full transition-all ${
-                    isRecording 
-                      ? 'bg-red-500 text-white shadow-lg animate-pulse' 
+                    isRecording
+                      ? 'bg-red-500 text-white shadow-lg animate-pulse'
                       : 'hover:bg-white/5 text-white/20 hover:text-red-500'
                   }`}
                   title={isRecording ? "Stop Recording" : "Start Recording"}
                 >
                   <Circle className={`w-3.5 h-3.5 ${isRecording ? 'fill-current' : ''}`} />
                 </button>
+                {isRecording && (
+                  <span className="text-[10px] font-mono font-bold text-red-400 px-1.5 tabular-nums min-w-[36px] text-center">
+                    {formatRecordingTime(recordingElapsed)}
+                  </span>
+                )}
                 <div className="w-px h-3 bg-white/10 mx-0.5" />
-                <button 
+                <button
                   onClick={() => setShowRecordingSettings(!showRecordingSettings)}
                   className={`w-7 h-7 flex items-center justify-center rounded-full transition-all ${
-                    showRecordingSettings 
-                      ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-500/20' 
+                    showRecordingSettings
+                      ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-500/20'
                       : 'hover:bg-white/5 text-white/20 hover:text-white'
                   }`}
                   title="Recording Settings"
@@ -6733,7 +6832,7 @@ export default function App() {
             initial={{ opacity: 0, scale: 0.95, y: 10 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 10 }}
-            className="fixed top-20 right-4 w-72 bg-[#0f172a]/95 backdrop-blur-xl rounded-2xl shadow-2xl border border-white/10 z-50 overflow-hidden"
+            className="fixed top-20 right-4 w-72 max-h-[80vh] bg-[#0f172a]/95 backdrop-blur-xl rounded-2xl shadow-2xl border border-white/10 z-50 overflow-hidden flex flex-col"
           >
             <div className="p-4 border-b border-white/10 bg-white/5 flex items-center justify-between">
               <div className="flex items-center gap-2">
@@ -6748,7 +6847,7 @@ export default function App() {
               </button>
             </div>
             
-            <div className="p-4 space-y-4">
+            <div className="p-4 space-y-4 overflow-y-auto flex-1">
               {/* Mode Selection */}
               <div className="space-y-2">
                 <label className="text-[10px] font-bold uppercase tracking-widest text-white/40">Output Mode</label>
@@ -6830,6 +6929,61 @@ export default function App() {
                 </div>
               </div>
 
+              {/* Capture Mode */}
+              {(recordingMode === 'video' || recordingMode === 'both') && (
+                <div className="space-y-2">
+                  <label className="text-[10px] font-bold uppercase tracking-widest text-white/40">Capture</label>
+                  <div className="grid grid-cols-2 gap-1 p-1 bg-white/5 rounded-lg border border-white/10">
+                    {[
+                      { id: 'visualization', label: 'Visuals Only' },
+                      { id: 'full', label: 'Full Interface' }
+                    ].map((mode) => (
+                      <button
+                        key={mode.id}
+                        onClick={() => setRecordingCapture(mode.id as any)}
+                        className={`flex flex-col items-center gap-1 py-2 rounded-md transition-all ${
+                          recordingCapture === mode.id
+                            ? 'bg-emerald-500 text-white shadow-lg'
+                            : 'text-white/40 hover:text-white/60'
+                        }`}
+                      >
+                        <span className="text-[8px] font-bold uppercase">{mode.label}</span>
+                      </button>
+                    ))}
+                  </div>
+                  {recordingCapture === 'full' && (
+                    <p className="text-[8px] text-white/40 italic">Your browser will ask you to select a tab or window to capture.</p>
+                  )}
+                </div>
+              )}
+
+              {/* Resolution */}
+              {(recordingMode === 'video' || recordingMode === 'both') && (
+                <div className="space-y-2">
+                  <label className="text-[10px] font-bold uppercase tracking-widest text-white/40">Resolution</label>
+                  <div className="grid grid-cols-4 gap-1 p-1 bg-white/5 rounded-lg border border-white/10">
+                    {[
+                      { id: '720p', label: '720p' },
+                      { id: '1080p', label: '1080p' },
+                      { id: '1440p', label: '1440p' },
+                      { id: '4k', label: '4K' }
+                    ].map((res) => (
+                      <button
+                        key={res.id}
+                        onClick={() => setRecordingResolution(res.id as any)}
+                        className={`py-2 rounded-md transition-all text-[8px] font-bold uppercase ${
+                          recordingResolution === res.id
+                            ? 'bg-emerald-500 text-white shadow-lg'
+                            : 'text-white/40 hover:text-white/60'
+                        }`}
+                      >
+                        {res.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
               {/* Quality Selection */}
               <div className="space-y-2">
                 <label className="text-[10px] font-bold uppercase tracking-widest text-white/40">Quality Profile</label>
@@ -6844,8 +6998,8 @@ export default function App() {
                       key={q.id}
                       onClick={() => setRecordingQuality(q.id as any)}
                       className={`w-full text-left p-2 rounded-lg border transition-all ${
-                        recordingQuality === q.id 
-                          ? 'bg-emerald-500 border-emerald-500 text-white shadow-lg shadow-emerald-500/20' 
+                        recordingQuality === q.id
+                          ? 'bg-emerald-500 border-emerald-500 text-white shadow-lg shadow-emerald-500/20'
                           : 'border-transparent hover:bg-white/5 text-white/40'
                       }`}
                     >
@@ -6868,7 +7022,7 @@ export default function App() {
                   <span className="text-[9px] font-black uppercase tracking-widest text-emerald-400">Compatibility Tip</span>
                 </div>
                 <p className="text-[8px] text-white/60 leading-relaxed">
-                  For <b>QuickTime Player</b>, <b>TikTok</b>, and <b>Instagram</b>, use <b>MP4 (H.264)</b>. 
+                  For <b>QuickTime Player</b>, <b>TikTok</b>, and <b>Instagram</b>, use <b>MP4 (H.264)</b>.
                   YouTube handles <b>WebM (VP9)</b> perfectly and often processes it faster.
                   <br /><span className="opacity-60 italic">Note: MP4 support depends on your browser (Chrome/Safari recommended). For audio, <b>MP3</b> is most compatible.</span>
                 </p>
