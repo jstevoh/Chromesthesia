@@ -3046,7 +3046,7 @@ export default function App() {
     }
   };
 
-  // Recording Compositing Loop
+  // Recording Compositing Loop — throttled to target FPS to avoid GPU overload
   useEffect(() => {
     if (!isRecording) return;
 
@@ -3061,21 +3061,60 @@ export default function App() {
     const ctx = recordingCanvas.getContext('2d');
     if (!ctx) return;
 
+    // Enable high-quality upscaling and configure context
+    ctx.imageSmoothingEnabled = true;
+    ctx.imageSmoothingQuality = 'high';
+
     let animationFrameId: number;
-    const draw = () => {
-      ctx.fillStyle = 'black';
-      ctx.fillRect(0, 0, recordingCanvas.width, recordingCanvas.height);
-      if (mediaType === 'image' && imageRef.current) {
-        ctx.drawImage(imageRef.current, 0, 0, recordingCanvas.width, recordingCanvas.height);
-      } else if (mediaType === 'video' && videoRef.current) {
-        ctx.drawImage(videoRef.current, 0, 0, recordingCanvas.width, recordingCanvas.height);
-      } else if (isWebcamActive && webcamVideoRef.current) {
-        ctx.drawImage(webcamVideoRef.current, 0, 0, recordingCanvas.width, recordingCanvas.height);
-      }
-      if (visualsCanvasRef.current) {
-        ctx.drawImage(visualsCanvasRef.current, 0, 0, recordingCanvas.width, recordingCanvas.height);
-      }
+    const targetFPS = 30;
+    const frameInterval = 1000 / targetFPS;
+    let lastFrameTime = 0;
+
+    const draw = (timestamp: number) => {
       animationFrameId = requestAnimationFrame(draw);
+
+      // Throttle to target FPS
+      const elapsed = timestamp - lastFrameTime;
+      if (elapsed < frameInterval) return;
+      lastFrameTime = timestamp - (elapsed % frameInterval);
+
+      const cw = recordingCanvas.width;
+      const ch = recordingCanvas.height;
+
+      ctx.fillStyle = 'black';
+      ctx.fillRect(0, 0, cw, ch);
+
+      // Draw media source — use object-fit cover style for vertical recordings
+      let source: CanvasImageSource | null = null;
+      let srcW = 0, srcH = 0;
+      if (mediaType === 'image' && imageRef.current) {
+        source = imageRef.current;
+        srcW = imageRef.current.naturalWidth || imageRef.current.width;
+        srcH = imageRef.current.naturalHeight || imageRef.current.height;
+      } else if (mediaType === 'video' && videoRef.current) {
+        source = videoRef.current;
+        srcW = videoRef.current.videoWidth || videoRef.current.width;
+        srcH = videoRef.current.videoHeight || videoRef.current.height;
+      } else if (isWebcamActive && webcamVideoRef.current) {
+        source = webcamVideoRef.current;
+        srcW = webcamVideoRef.current.videoWidth || webcamVideoRef.current.width;
+        srcH = webcamVideoRef.current.videoHeight || webcamVideoRef.current.height;
+      }
+
+      if (source && srcW > 0 && srcH > 0) {
+        // Cover-fit: fill canvas while maintaining aspect ratio
+        const scale = Math.max(cw / srcW, ch / srcH);
+        const drawW = srcW * scale;
+        const drawH = srcH * scale;
+        const offsetX = (cw - drawW) / 2;
+        const offsetY = (ch - drawH) / 2;
+        ctx.drawImage(source, offsetX, offsetY, drawW, drawH);
+      }
+
+      // Overlay scan visuals
+      if (visualsCanvasRef.current) {
+        ctx.drawImage(visualsCanvasRef.current, 0, 0, cw, ch);
+      }
     };
     animationFrameId = requestAnimationFrame(draw);
     return () => cancelAnimationFrame(animationFrameId);
@@ -3118,7 +3157,7 @@ export default function App() {
         // Full interface capture via getDisplayMedia (screen capture)
         try {
           const displayStream = await navigator.mediaDevices.getDisplayMedia({
-            video: { width: { ideal: recW }, height: { ideal: recH }, frameRate: { ideal: 60 } },
+            video: { width: { ideal: recW }, height: { ideal: recH }, frameRate: { ideal: 30 } },
             audio: false
           });
           const tracks = [...displayStream.getTracks()];
@@ -3139,7 +3178,7 @@ export default function App() {
         // Visualization-only: set canvas to chosen resolution
         canvasRef.current.width = recW;
         canvasRef.current.height = recH;
-        const canvasStream = canvasRef.current.captureStream(60);
+        const canvasStream = canvasRef.current.captureStream(30);
         const tracks = [...canvasStream.getTracks()];
         if (isAudio && audioStreamDestRef.current) {
           tracks.push(...audioStreamDestRef.current.stream.getTracks());
