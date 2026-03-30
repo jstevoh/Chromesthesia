@@ -1656,6 +1656,10 @@ export default function App() {
   const [showDroneModule, setShowDroneModule] = useState(false);
   const [showSequencerModule, setShowSequencerModule] = useState(false);
   const [showMixer, setShowMixer] = useState(false);
+  const [masterReverbSend, setMasterReverbSend] = useState(0);
+  const [masterCompression, setMasterCompression] = useState(0);
+  const [masterSaturation, setMasterSaturation] = useState(0);
+  const [masterFilterCutoff, setMasterFilterCutoff] = useState(1); // 0-1 normalized, 1 = fully open
   const [showVisualsModule, setShowVisualsModule] = useState(false);
   const [isPerformanceMode, setIsPerformanceMode] = useState(() => {
     // Auto-detect weak devices on mount
@@ -1968,6 +1972,13 @@ export default function App() {
   const recordedChunksRef = useRef<Blob[]>([]);
   const audioStreamDestRef = useRef<MediaStreamAudioDestinationNode | null>(null);
   const recordingStartTimeRef = useRef<number>(0);
+  const masterBusReverbRef = useRef<ConvolverNode | null>(null);
+  const masterBusReverbWetRef = useRef<GainNode | null>(null);
+  const masterBusReverbDryRef = useRef<GainNode | null>(null);
+  const masterBusCompRef = useRef<DynamicsCompressorNode | null>(null);
+  const masterBusSatRef = useRef<WaveShaperNode | null>(null);
+  const masterBusSatGainRef = useRef<GainNode | null>(null);
+  const masterBusFilterRef = useRef<BiquadFilterNode | null>(null);
   const recordingTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const appContainerRef = useRef<HTMLDivElement | null>(null);
   const fullCaptureCanvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -2172,7 +2183,58 @@ export default function App() {
     limiter.attack.value = 0.001;
     limiter.release.value = 0.1;
 
-    masterGain.connect(finalGain);
+    // === Master Bus Effects Chain ===
+    // masterGain → busFilter → busSat → busComp → [reverbSend+dry] → finalGain
+
+    // Master bus filter (lowpass, fully open by default)
+    const busFilter = ctx.createBiquadFilter();
+    busFilter.type = 'lowpass';
+    busFilter.frequency.value = 20000; // fully open
+    busFilter.Q.value = 0.7; // gentle slope
+    masterBusFilterRef.current = busFilter;
+
+    // Master bus saturation (bypass by default — tanh(1) = identity)
+    const busSat = ctx.createWaveShaper();
+    busSat.curve = makeDistortionCurve(1);
+    busSat.oversample = '4x';
+    const busSatPostGain = ctx.createGain();
+    busSatPostGain.gain.value = 1;
+    masterBusSatRef.current = busSat;
+    masterBusSatGainRef.current = busSatPostGain;
+
+    // Master bus glue compression (transparent by default)
+    const busComp = ctx.createDynamicsCompressor();
+    busComp.threshold.value = 0; // no compression by default
+    busComp.knee.value = 30;
+    busComp.ratio.value = 1; // 1:1 = no compression
+    busComp.attack.value = 0.003;
+    busComp.release.value = 0.25;
+    masterBusCompRef.current = busComp;
+
+    // Master bus reverb (convolution, silent by default)
+    const busReverb = ctx.createConvolver();
+    busReverb.buffer = generateReverbIR(ctx, 4, 1.2, 0.4); // 4s spacey reverb
+    const busReverbWet = ctx.createGain();
+    busReverbWet.gain.value = 0; // off by default
+    const busReverbDry = ctx.createGain();
+    busReverbDry.gain.value = 1;
+    masterBusReverbRef.current = busReverb;
+    masterBusReverbWetRef.current = busReverbWet;
+    masterBusReverbDryRef.current = busReverbDry;
+
+    // Wire: masterGain → busFilter → busSat → busSatPostGain → busComp → [reverb wet + dry] → finalGain
+    masterGain.connect(busFilter);
+    busFilter.connect(busSat);
+    busSat.connect(busSatPostGain);
+    busSatPostGain.connect(busComp);
+    // Dry path
+    busComp.connect(busReverbDry);
+    busReverbDry.connect(finalGain);
+    // Reverb send (parallel)
+    busComp.connect(busReverb);
+    busReverb.connect(busReverbWet);
+    busReverbWet.connect(finalGain);
+
     finalGain.connect(analyser);
     analyser.connect(limiter);
     limiter.connect(ctx.destination);
@@ -4356,6 +4418,39 @@ export default function App() {
     }
   }, [volume, synthMatrixVolume, isMuted, isPlaying]);
 
+  // Update Master Bus Effects
+  useEffect(() => {
+    if (!audioContextRef.current) return;
+    const now = audioContextRef.current.currentTime;
+
+    // Master Reverb — wet/dry crossfade
+    if (masterBusReverbWetRef.current && masterBusReverbDryRef.current) {
+      masterBusReverbWetRef.current.gain.setTargetAtTime(masterReverbSend * 0.7, now, 0.05);
+      masterBusReverbDryRef.current.gain.setTargetAtTime(1 - masterReverbSend * 0.3, now, 0.05);
+    }
+
+    // Master Compression — from transparent (0) to heavy glue (1)
+    if (masterBusCompRef.current) {
+      masterBusCompRef.current.threshold.value = masterCompression > 0 ? -6 - masterCompression * 24 : 0; // -6 to -30
+      masterBusCompRef.current.ratio.value = 1 + masterCompression * 5; // 1:1 to 6:1
+      masterBusCompRef.current.knee.value = 30 - masterCompression * 20; // soft to hard
+    }
+
+    // Master Saturation — from clean (0) to warm tape (1)
+    if (masterBusSatRef.current && masterBusSatGainRef.current) {
+      masterBusSatRef.current.curve = makeDistortionCurve(1 + masterSaturation * 6); // tanh(1-7)
+      // Compensate for volume boost from saturation
+      masterBusSatGainRef.current.gain.setTargetAtTime(1 / (1 + masterSaturation * 0.5), now, 0.05);
+    }
+
+    // Master Filter — LP sweep from 200Hz to 20kHz
+    if (masterBusFilterRef.current) {
+      // Exponential mapping: 0 = 200Hz, 1 = 20000Hz
+      const freq = 200 * Math.pow(100, masterFilterCutoff);
+      masterBusFilterRef.current.frequency.setTargetAtTime(Math.min(freq, 20000), now, 0.05);
+    }
+  }, [masterReverbSend, masterCompression, masterSaturation, masterFilterCutoff]);
+
   // Update Drone Module Parameters
   useEffect(() => {
     if (!audioContextRef.current || droneOscillatorsRef.current.length === 0) return;
@@ -5546,6 +5641,61 @@ export default function App() {
                       onChange={(e) => setVolume(parseFloat(e.target.value))}
                       className="w-full h-2 bg-white/10 rounded-lg appearance-none cursor-pointer accent-emerald-500"
                     />
+                  </div>
+                </div>
+
+                <div className={`bg-white/5 border border-purple-500/20 space-y-6 ${isPerformanceMode ? 'p-6 rounded-2xl' : 'p-8 rounded-[32px]'}`}>
+                  <div className="flex items-center gap-3 mb-2">
+                    <Waves className="w-4 h-4 text-purple-400" />
+                    <h3 className="text-[11px] font-black uppercase tracking-[0.2em] text-purple-300">Master Bus FX</h3>
+                  </div>
+                  <div className="space-y-4">
+                    <div className="space-y-2">
+                      <div className="flex justify-between text-[9px] uppercase tracking-widest font-black text-white/30">
+                        <span>Reverb</span>
+                        <span className="text-purple-400">{(masterReverbSend * 100).toFixed(0)}%</span>
+                      </div>
+                      <input
+                        type="range" min="0" max="1" step="0.01" value={masterReverbSend}
+                        onChange={(e) => setMasterReverbSend(parseFloat(e.target.value))}
+                        className="w-full accent-purple-500/50"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <div className="flex justify-between text-[9px] uppercase tracking-widest font-black text-white/30">
+                        <span>Glue Compression</span>
+                        <span className="text-purple-400">{(masterCompression * 100).toFixed(0)}%</span>
+                      </div>
+                      <input
+                        type="range" min="0" max="1" step="0.01" value={masterCompression}
+                        onChange={(e) => setMasterCompression(parseFloat(e.target.value))}
+                        className="w-full accent-purple-500/50"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <div className="flex justify-between text-[9px] uppercase tracking-widest font-black text-white/30">
+                        <span>Saturation</span>
+                        <span className="text-purple-400">{(masterSaturation * 100).toFixed(0)}%</span>
+                      </div>
+                      <input
+                        type="range" min="0" max="1" step="0.01" value={masterSaturation}
+                        onChange={(e) => setMasterSaturation(parseFloat(e.target.value))}
+                        className="w-full accent-purple-500/50"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <div className="flex justify-between text-[9px] uppercase tracking-widest font-black text-white/30">
+                        <span>Filter Cutoff</span>
+                        <span className="text-purple-400">
+                          {masterFilterCutoff >= 0.99 ? 'Open' : `${Math.round(200 * Math.pow(100, masterFilterCutoff))}Hz`}
+                        </span>
+                      </div>
+                      <input
+                        type="range" min="0" max="1" step="0.01" value={masterFilterCutoff}
+                        onChange={(e) => setMasterFilterCutoff(parseFloat(e.target.value))}
+                        className="w-full accent-purple-500/50"
+                      />
+                    </div>
                   </div>
                 </div>
 
