@@ -145,6 +145,158 @@ type MovementEffect = typeof MOVEMENT_EFFECTS[number]['id'];
 type DiffusionEffect = typeof DIFFUSION_EFFECTS[number]['id'];
 type TextureEffect = typeof TEXTURE_EFFECTS[number]['id'];
 
+// Per-effect parameter definitions for multi-control UI
+interface EffectParamDef {
+  id: string;
+  label: string;
+  default: number;
+  min?: number;
+  max?: number;
+  step?: number;
+}
+
+type EffectParams = Record<string, number>;
+
+const EFFECT_PARAMS: Record<string, EffectParamDef[]> = {
+  'none': [],
+  // Character Effects
+  'drive': [
+    { id: 'drive', label: 'Drive', default: 0.5 },
+    { id: 'tone', label: 'Tone', default: 0.7 },
+    { id: 'mix', label: 'Mix', default: 1.0 },
+  ],
+  'sweeten': [
+    { id: 'compression', label: 'Compression', default: 0.5 },
+    { id: 'warmth', label: 'Warmth', default: 0.3 },
+    { id: 'bass', label: 'Bass Boost', default: 0.4 },
+  ],
+  'fuzz': [
+    { id: 'fuzz', label: 'Fuzz', default: 0.5 },
+    { id: 'tone', label: 'Tone', default: 0.6 },
+    { id: 'mix', label: 'Mix', default: 0.8 },
+  ],
+  'howl': [
+    { id: 'drive', label: 'Drive', default: 0.5 },
+    { id: 'frequency', label: 'Frequency', default: 0.5 },
+    { id: 'resonance', label: 'Resonance', default: 0.5 },
+  ],
+  'swell': [
+    { id: 'attack', label: 'Attack', default: 0.5 },
+    { id: 'sustain', label: 'Sustain', default: 0.7 },
+  ],
+  'crush': [
+    { id: 'bitDepth', label: 'Bit Depth', default: 0.5 },
+    { id: 'saturation', label: 'Saturation', default: 0.3 },
+    { id: 'mix', label: 'Mix', default: 0.8 },
+  ],
+  // Movement Effects
+  'doubler': [
+    { id: 'delay', label: 'Delay', default: 0.5 },
+    { id: 'mix', label: 'Mix', default: 0.5 },
+    { id: 'detune', label: 'Detune', default: 0.3 },
+  ],
+  'vibrato': [
+    { id: 'rate', label: 'Rate', default: 0.5 },
+    { id: 'depth', label: 'Depth', default: 0.5 },
+  ],
+  'phaser': [
+    { id: 'rate', label: 'Rate', default: 0.5 },
+    { id: 'depth', label: 'Depth', default: 0.5 },
+    { id: 'feedback', label: 'Feedback', default: 0.4 },
+  ],
+  'tremolo': [
+    { id: 'rate', label: 'Rate', default: 0.5 },
+    { id: 'depth', label: 'Depth', default: 0.5 },
+  ],
+  'pitch': [
+    { id: 'shift', label: 'Shift', default: 0.5 },
+    { id: 'mix', label: 'Mix', default: 0.5 },
+  ],
+  'vortex': [
+    { id: 'rate', label: 'Rate', default: 0.5 },
+    { id: 'depth', label: 'Depth', default: 0.5 },
+    { id: 'feedback', label: 'Feedback', default: 0.5 },
+  ],
+  // Diffusion Effects
+  'cascade': [
+    { id: 'time', label: 'Delay Time', default: 0.5 },
+    { id: 'feedback', label: 'Feedback', default: 0.5 },
+    { id: 'tone', label: 'Tone', default: 0.6 },
+  ],
+  'reels': [
+    { id: 'time', label: 'Time', default: 0.5 },
+    { id: 'feedback', label: 'Feedback', default: 0.5 },
+    { id: 'wow', label: 'Wow/Flutter', default: 0.4 },
+    { id: 'tone', label: 'Tone', default: 0.6 },
+  ],
+  'space': [
+    { id: 'size', label: 'Size', default: 0.5 },
+    { id: 'decay', label: 'Decay', default: 0.5 },
+    { id: 'brightness', label: 'Brightness', default: 0.5 },
+    { id: 'mix', label: 'Mix', default: 0.5 },
+    { id: 'predelay', label: 'Pre-Delay', default: 0.3 },
+  ],
+  'collage': [
+    { id: 'density', label: 'Density', default: 0.5 },
+    { id: 'spread', label: 'Spread', default: 0.5 },
+    { id: 'mix', label: 'Mix', default: 0.5 },
+  ],
+  'reverse': [
+    { id: 'time', label: 'Time', default: 0.5 },
+    { id: 'mix', label: 'Mix', default: 0.5 },
+  ],
+  'echo': [
+    { id: 'time', label: 'Delay Time', default: 0.5 },
+    { id: 'feedback', label: 'Feedback', default: 0.5 },
+    { id: 'tone', label: 'Tone', default: 0.6 },
+    { id: 'modulation', label: 'Modulation', default: 0.3 },
+  ],
+  // Texture Effects
+  'filter': [
+    { id: 'cutoff', label: 'Cutoff', default: 0.5 },
+    { id: 'resonance', label: 'Resonance', default: 0.3 },
+    { id: 'mode', label: 'LP → HP', default: 0.0 },
+  ],
+  'squash': [
+    { id: 'threshold', label: 'Threshold', default: 0.5 },
+    { id: 'ratio', label: 'Ratio', default: 0.5 },
+    { id: 'attack', label: 'Attack', default: 0.3 },
+    { id: 'release', label: 'Release', default: 0.5 },
+  ],
+  'cassette': [
+    { id: 'bandwidth', label: 'Bandwidth', default: 0.5 },
+    { id: 'noise', label: 'Noise', default: 0.3 },
+    { id: 'wow', label: 'Wow', default: 0.3 },
+  ],
+  'broken': [
+    { id: 'bitDepth', label: 'Bit Depth', default: 0.5 },
+    { id: 'mix', label: 'Mix', default: 0.8 },
+  ],
+  'interference': [
+    { id: 'frequency', label: 'Frequency', default: 0.5 },
+    { id: 'amount', label: 'Amount', default: 0.3 },
+  ],
+  'radio': [
+    { id: 'bandwidth', label: 'Bandwidth', default: 0.5 },
+    { id: 'noise', label: 'Noise', default: 0.3 },
+    { id: 'crunch', label: 'Crunch', default: 0.4 },
+  ],
+};
+
+const getDefaultParams = (effectId: string): EffectParams => {
+  const defs = EFFECT_PARAMS[effectId] || [];
+  return Object.fromEntries(defs.map(p => [p.id, p.default]));
+};
+
+// Convert a single amount value to multi-params (primary param gets the amount, rest use defaults)
+const amountToParams = (effectId: string, amount: number): EffectParams => {
+  const defs = EFFECT_PARAMS[effectId] || [];
+  if (defs.length === 0) return {};
+  const params = getDefaultParams(effectId);
+  params[defs[0].id] = amount; // primary param takes the amount
+  return params;
+};
+
 interface ScanPreset {
   name: string;
   formulaX: string;
@@ -1874,30 +2026,57 @@ export default function App() {
   const [diffusionEffect, setDiffusionEffect] = useState<DiffusionEffect>('none');
   const [textureEffect, setTextureEffect] = useState<TextureEffect>('none');
 
-  const [characterAmount, setCharacterAmount] = useState(0.5);
-  const [movementAmount, setMovementAmount] = useState(0.5);
-  const [diffusionAmount, setDiffusionAmount] = useState(0.5);
-  const [textureAmount, setTextureAmount] = useState(0.5);
+  const [characterParams, setCharacterParams] = useState<EffectParams>({});
+  const [movementParams, setMovementParams] = useState<EffectParams>({});
+  const [diffusionParams, setDiffusionParams] = useState<EffectParams>({});
+  const [textureParams, setTextureParams] = useState<EffectParams>({});
 
   // Drone Effects State
   const [droneCharacterEffect, setDroneCharacterEffect] = useState<CharacterEffect>('none');
   const [droneMovementEffect, setDroneMovementEffect] = useState<MovementEffect>('none');
   const [droneDiffusionEffect, setDroneDiffusionEffect] = useState<DiffusionEffect>('none');
   const [droneTextureEffect, setDroneTextureEffect] = useState<TextureEffect>('none');
-  const [droneCharacterAmount, setDroneCharacterAmount] = useState(0.5);
-  const [droneMovementAmount, setDroneMovementAmount] = useState(0.5);
-  const [droneDiffusionAmount, setDroneDiffusionAmount] = useState(0.5);
-  const [droneTextureAmount, setDroneTextureAmount] = useState(0.5);
+  const [droneCharacterParams, setDroneCharacterParams] = useState<EffectParams>({});
+  const [droneMovementParams, setDroneMovementParams] = useState<EffectParams>({});
+  const [droneDiffusionParams, setDroneDiffusionParams] = useState<EffectParams>({});
+  const [droneTextureParams, setDroneTextureParams] = useState<EffectParams>({});
 
   // Sequencer Effects State
   const [seqCharacterEffect, setSeqCharacterEffect] = useState<CharacterEffect>('none');
   const [seqMovementEffect, setSeqMovementEffect] = useState<MovementEffect>('none');
   const [seqDiffusionEffect, setSeqDiffusionEffect] = useState<DiffusionEffect>('none');
   const [seqTextureEffect, setSeqTextureEffect] = useState<TextureEffect>('none');
-  const [seqCharacterAmount, setSeqCharacterAmount] = useState(0.5);
-  const [seqMovementAmount, setSeqMovementAmount] = useState(0.5);
-  const [seqDiffusionAmount, setSeqDiffusionAmount] = useState(0.5);
-  const [seqTextureAmount, setSeqTextureAmount] = useState(0.5);
+  const [seqCharacterParams, setSeqCharacterParams] = useState<EffectParams>({});
+  const [seqMovementParams, setSeqMovementParams] = useState<EffectParams>({});
+  const [seqDiffusionParams, setSeqDiffusionParams] = useState<EffectParams>({});
+  const [seqTextureParams, setSeqTextureParams] = useState<EffectParams>({});
+
+  // Initialize params when effect changes
+  const prevEffectsRef = useRef<Record<string, string>>({});
+  useEffect(() => {
+    const effects: [string, string, (p: EffectParams) => void][] = [
+      ['character', characterEffect, setCharacterParams],
+      ['movement', movementEffect, setMovementParams],
+      ['diffusion', diffusionEffect, setDiffusionParams],
+      ['texture', textureEffect, setTextureParams],
+      ['droneCharacter', droneCharacterEffect, setDroneCharacterParams],
+      ['droneMovement', droneMovementEffect, setDroneMovementParams],
+      ['droneDiffusion', droneDiffusionEffect, setDroneDiffusionParams],
+      ['droneTexture', droneTextureEffect, setDroneTextureParams],
+      ['seqCharacter', seqCharacterEffect, setSeqCharacterParams],
+      ['seqMovement', seqMovementEffect, setSeqMovementParams],
+      ['seqDiffusion', seqDiffusionEffect, setSeqDiffusionParams],
+      ['seqTexture', seqTextureEffect, setSeqTextureParams],
+    ];
+    effects.forEach(([key, effect, setter]) => {
+      if (prevEffectsRef.current[key] !== effect) {
+        prevEffectsRef.current[key] = effect;
+        setter(getDefaultParams(effect));
+      }
+    });
+  }, [characterEffect, movementEffect, diffusionEffect, textureEffect,
+      droneCharacterEffect, droneMovementEffect, droneDiffusionEffect, droneTextureEffect,
+      seqCharacterEffect, seqMovementEffect, seqDiffusionEffect, seqTextureEffect]);
 
   const resetToDefaults = () => {
     setBaseFreq(110);
@@ -1927,10 +2106,10 @@ export default function App() {
     setMovementEffect('none');
     setDiffusionEffect('none');
     setTextureEffect('none');
-    setCharacterAmount(0.5);
-    setMovementAmount(0.5);
-    setDiffusionAmount(0.5);
-    setTextureAmount(0.5);
+    setCharacterParams({});
+    setMovementParams({});
+    setDiffusionParams({});
+    setTextureParams({});
   };
 
   const [videoDuration, setVideoDuration] = useState(0);
@@ -2024,16 +2203,16 @@ export default function App() {
     setMovementEffect(s.movementEffect);
     setDiffusionEffect(s.diffusionEffect);
     setTextureEffect(s.textureEffect);
-    setCharacterAmount(s.characterAmount);
-    setMovementAmount(s.movementAmount);
-    setDiffusionAmount(s.diffusionAmount);
-    setTextureAmount(s.textureAmount);
+    setCharacterParams(amountToParams(s.characterEffect, s.characterAmount));
+    setMovementParams(amountToParams(s.movementEffect, s.movementAmount));
+    setDiffusionParams(amountToParams(s.diffusionEffect, s.diffusionAmount));
+    setTextureParams(amountToParams(s.textureEffect, s.textureAmount));
     if (s.adsr) {
       setAdsr(new Array(SAMPLE_POINTS).fill(null).map(() => ({ ...s.adsr })));
     }
     setVoiceMappings(new Array(SAMPLE_POINTS).fill(null).map(() => ({ ...initialMapping })));
     setActivePatch(patchIdx);
-  }, [setBaseFreq, setFreqRange, setFreqMod, setAmpMod, setCutoffMod, setQMod, setScanSpeed, setScanScale, setScanCenterX, setScanCenterY, setFormulaX, setFormulaY, setActivePreset, setEnabledVoices, setIsSequencerEnabled, setBpm, setScaleName, setRootNoteIndex, setIsEvolving, setMutationAmount, setSequenceLength, setQuantizeAmount, setCharacterEffect, setMovementEffect, setDiffusionEffect, setTextureEffect, setCharacterAmount, setMovementAmount, setDiffusionAmount, setTextureAmount, setAdsr, setVoiceMappings, setActivePatch]);
+  }, [setBaseFreq, setFreqRange, setFreqMod, setAmpMod, setCutoffMod, setQMod, setScanSpeed, setScanScale, setScanCenterX, setScanCenterY, setFormulaX, setFormulaY, setActivePreset, setEnabledVoices, setIsSequencerEnabled, setBpm, setScaleName, setRootNoteIndex, setIsEvolving, setMutationAmount, setSequenceLength, setQuantizeAmount, setCharacterEffect, setMovementEffect, setDiffusionEffect, setTextureEffect, setCharacterParams, setMovementParams, setDiffusionParams, setTextureParams, setAdsr, setVoiceMappings, setActivePatch]);
 
   const applyDronePatch = (patchIdx: number) => {
     const patch = DRONE_PATCHES[patchIdx];
@@ -2530,9 +2709,10 @@ export default function App() {
     const updateModule = (
       moduleRef: MutableRefObject<{ input: GainNode, output: GainNode, effectNodes: any[], currentEffect: string } | null>,
       effect: string,
-      amount: number,
+      params: EffectParams,
       type: 'character' | 'movement' | 'diffusion' | 'texture'
     ) => {
+      const amount = Object.values(params)[0] ?? 0.5; // primary param for backward compat
       if (!moduleRef.current) return;
       const { input, output, effectNodes, currentEffect } = moduleRef.current;
 
@@ -2542,40 +2722,59 @@ export default function App() {
           try {
             if (node instanceof BiquadFilterNode) {
               if (type === 'character') {
-                if (effect === 'fuzz') node.frequency.setTargetAtTime(2000 + (1 - amount) * 8000, ctx.currentTime, 0.1);
-                if (effect === 'howl') {
-                  node.frequency.setTargetAtTime(500 + amount * 2000, ctx.currentTime, 0.1);
-                  node.Q.setTargetAtTime(10 + amount * 20, ctx.currentTime, 0.1);
+                if (effect === 'drive') {
+                  const toneVal = params.tone ?? 0.7;
+                  node.frequency.setTargetAtTime(1000 + toneVal * 10000, ctx.currentTime, 0.1);
                 }
-                if (effect === 'crush') {
-                  // No filter for crush by default
+                if (effect === 'fuzz') {
+                  const toneVal = params.tone ?? 0.6;
+                  node.frequency.setTargetAtTime(1000 + toneVal * 9000, ctx.currentTime, 0.1);
+                }
+                if (effect === 'howl') {
+                  const freqVal = params.frequency ?? 0.5;
+                  const resVal = params.resonance ?? 0.5;
+                  node.frequency.setTargetAtTime(400 + freqVal * 2500, ctx.currentTime, 0.1);
+                  node.Q.setTargetAtTime(2 + resVal * 10, ctx.currentTime, 0.1);
                 }
               } else if (type === 'texture') {
                 if (effect === 'filter') {
-                  node.type = amount < 0.5 ? 'lowpass' : 'highpass';
-                  node.frequency.setTargetAtTime(amount < 0.5 ? amount * 4000 + 200 : (amount - 0.5) * 8000 + 500, ctx.currentTime, 0.1);
+                  const cutoff = params.cutoff ?? amount;
+                  const res = params.resonance ?? 0.3;
+                  const mode = params.mode ?? 0.0;
+                  node.type = mode < 0.33 ? 'lowpass' : mode < 0.66 ? 'bandpass' : 'highpass';
+                  node.frequency.setTargetAtTime(cutoff < 0.5 ? cutoff * 4000 + 200 : (cutoff - 0.5) * 8000 + 500, ctx.currentTime, 0.1);
+                  node.Q.setTargetAtTime(1 + res * 4, ctx.currentTime, 0.1);
                 } else if (effect === 'cassette') {
-                  node.frequency.setTargetAtTime(1000 + amount * 1000, ctx.currentTime, 0.1);
+                  const bw = params.bandwidth ?? amount;
+                  node.frequency.setTargetAtTime(6000 - bw * 3000, ctx.currentTime, 0.1);
                 } else if (effect === 'interference') {
-                  node.frequency.setTargetAtTime(2000 + amount * 2000, ctx.currentTime, 0.1);
+                  const freq = params.frequency ?? amount;
+                  node.frequency.setTargetAtTime(2000 + freq * 2000, ctx.currentTime, 0.1);
                 } else if (effect === 'radio') {
-                  node.frequency.setTargetAtTime(500 + amount * 4000, ctx.currentTime, 0.1);
+                  const bw = params.bandwidth ?? amount;
+                  node.frequency.setTargetAtTime(800 + bw * 2000, ctx.currentTime, 0.1);
                 }
               } else if (type === 'diffusion') {
                 if (effect === 'reels') {
-                  node.frequency.setTargetAtTime(500 + amount * 2000, ctx.currentTime, 0.1);
+                  const toneVal = params.tone ?? 0.6;
+                  node.frequency.setTargetAtTime(3500 - toneVal * 1500, ctx.currentTime, 0.1);
                 } else if (effect === 'echo') {
-                  node.frequency.setTargetAtTime(400 + amount * 3000, ctx.currentTime, 0.1);
+                  const toneVal = params.tone ?? 0.6;
+                  node.frequency.setTargetAtTime(4000 - toneVal * 1500, ctx.currentTime, 0.1);
+                } else if (effect === 'cascade') {
+                  const toneVal = params.tone ?? 0.6;
+                  node.frequency.setTargetAtTime(5000 - toneVal * 2000, ctx.currentTime, 0.1);
                 }
               }
             } else if (node instanceof WaveShaperNode) {
-              if (effect === 'drive') node.curve = makeDistortionCurve(amount * 100);
-              if (effect === 'sweeten') node.curve = makeDistortionCurve(amount * 20);
-              if (effect === 'fuzz') node.curve = makeDistortionCurve(amount * 400);
-              if (effect === 'howl') node.curve = makeDistortionCurve(amount * 200);
-              if (effect === 'squash') node.curve = makeDistortionCurve(amount * 50);
+              if (effect === 'drive') { const d = params.drive ?? amount; node.curve = makeDistortionCurve(2 + d * 8); }
+              if (effect === 'sweeten') { const w = params.warmth ?? 0.3; node.curve = makeDistortionCurve(1 + w * 4); }
+              if (effect === 'fuzz') { const f = params.fuzz ?? amount; node.curve = makeDistortionCurve(5 + f * 25); }
+              if (effect === 'howl') { const d = params.drive ?? amount; node.curve = makeDistortionCurve(3 + d * 12); }
+              if (effect === 'squash') node.curve = makeDistortionCurve(1 + amount * 4);
               if (effect === 'broken' || effect === 'crush' || effect === 'radio') {
-                const n = effect === 'crush' ? Math.floor(2 + (1 - amount) * 4) : Math.floor(2 + (1 - amount) * 10);
+                const bd = params.bitDepth ?? amount;
+                const n = effect === 'crush' ? Math.floor(3 + (1 - bd) * 8) : Math.floor(3 + (1 - bd) * 12);
                 const curve = new Float32Array(1024);
                 for (let i = 0; i < 1024; i++) {
                   const x = (i * 2) / 1024 - 1;
@@ -2584,33 +2783,35 @@ export default function App() {
                 node.curve = curve;
               }
             } else if (node instanceof GainNode) {
-              if (effect === 'cassette') node.gain.setTargetAtTime(0.02 * amount, ctx.currentTime, 0.1);
-              if (effect === 'interference') node.gain.setTargetAtTime(0.05 * amount, ctx.currentTime, 0.1);
-              if (effect === 'radio') node.gain.setTargetAtTime(0.03 * amount, ctx.currentTime, 0.1);
-              if (effect === 'cascade') node.gain.setTargetAtTime(0.3 + amount * 0.4, ctx.currentTime, 0.1);
-              if (effect === 'echo') node.gain.setTargetAtTime(0.2 + amount * 0.6, ctx.currentTime, 0.1);
-              if (effect === 'vortex') node.gain.setTargetAtTime(0.4 + amount * 0.5, ctx.currentTime, 0.1);
-              if (effect === 'doubler') node.gain.setTargetAtTime(0.3 + amount * 0.4, ctx.currentTime, 0.1);
-              if (effect === 'space') node.gain.setTargetAtTime(amount, ctx.currentTime, 0.1);
+              if (effect === 'cassette') { const n = params.noise ?? 0.3; node.gain.setTargetAtTime(0.008 * n, ctx.currentTime, 0.1); }
+              if (effect === 'interference') { const a = params.amount ?? 0.3; node.gain.setTargetAtTime(0.03 * a, ctx.currentTime, 0.1); }
+              if (effect === 'radio') { const n = params.noise ?? 0.3; node.gain.setTargetAtTime(0.015 * n, ctx.currentTime, 0.1); }
+              if (effect === 'cascade') { const fb = params.feedback ?? 0.5; node.gain.setTargetAtTime(0.25 + fb * 0.45, ctx.currentTime, 0.1); }
+              if (effect === 'echo') { const fb = params.feedback ?? 0.5; node.gain.setTargetAtTime(0.3 + fb * 0.45, ctx.currentTime, 0.1); }
+              if (effect === 'vortex') { const fb = params.feedback ?? 0.5; node.gain.setTargetAtTime(0.3 + fb * 0.45, ctx.currentTime, 0.1); }
+              if (effect === 'doubler') { const mix = params.mix ?? 0.5; node.gain.setTargetAtTime(mix, ctx.currentTime, 0.1); }
+              if (effect === 'space') { const mix = params.mix ?? 0.5; node.gain.setTargetAtTime(0.3 + mix * 0.5, ctx.currentTime, 0.1); }
+              if (effect === 'drive') { const mix = params.mix ?? 1.0; node.gain.setTargetAtTime(mix, ctx.currentTime, 0.1); }
+              if (effect === 'fuzz') { const mix = params.mix ?? 0.8; node.gain.setTargetAtTime(mix, ctx.currentTime, 0.1); }
             } else if (node instanceof OscillatorNode) {
-              if (effect === 'vibrato') node.frequency.setTargetAtTime(0.5 + amount * 8, ctx.currentTime, 0.1);
-              if (effect === 'phaser') node.frequency.setTargetAtTime(0.1 + amount * 2, ctx.currentTime, 0.1);
-              if (effect === 'tremolo') node.frequency.setTargetAtTime(1 + amount * 10, ctx.currentTime, 0.1);
-              if (effect === 'pitch') node.frequency.setTargetAtTime(10 + amount * 100, ctx.currentTime, 0.1);
-              if (effect === 'vortex') node.frequency.setTargetAtTime(0.05 + amount * 0.5, ctx.currentTime, 0.1);
-              if (effect === 'reels') node.frequency.setTargetAtTime(0.5 + amount * 2, ctx.currentTime, 0.1);
-              if (effect === 'echo') node.frequency.setTargetAtTime(0.2 + amount * 1, ctx.currentTime, 0.1);
+              if (effect === 'vibrato') { const r = params.rate ?? amount; node.frequency.setTargetAtTime(1 + r * 6, ctx.currentTime, 0.1); }
+              if (effect === 'phaser') { const r = params.rate ?? amount; node.frequency.setTargetAtTime(0.1 + r * 1.5, ctx.currentTime, 0.1); }
+              if (effect === 'tremolo') { const r = params.rate ?? amount; node.frequency.setTargetAtTime(1 + r * 10, ctx.currentTime, 0.1); }
+              if (effect === 'pitch') { const s = params.shift ?? amount; node.frequency.setTargetAtTime(5 + s * 40, ctx.currentTime, 0.1); }
+              if (effect === 'vortex') { const r = params.rate ?? amount; node.frequency.setTargetAtTime(0.08 + r * 0.4, ctx.currentTime, 0.1); }
+              if (effect === 'reels') { const w = params.wow ?? 0.4; node.frequency.setTargetAtTime(0.4 + w * 1.2, ctx.currentTime, 0.1); }
+              if (effect === 'echo') { const mod = params.modulation ?? 0.3; node.frequency.setTargetAtTime(0.1 + mod * 0.4, ctx.currentTime, 0.1); }
             } else if (node instanceof DelayNode) {
-              if (effect === 'doubler') node.delayTime.setTargetAtTime(0.01 + amount * 0.04, ctx.currentTime, 0.1);
-              if (effect === 'cascade') node.delayTime.setTargetAtTime(0.2 + amount * 0.8, ctx.currentTime, 0.1);
-              if (effect === 'echo') node.delayTime.setTargetAtTime(0.1 + amount * 1.9, ctx.currentTime, 0.1);
-              if (effect === 'reels') node.delayTime.setTargetAtTime(0.1 + amount * 0.3, ctx.currentTime, 0.1);
-              if (effect === 'reverse') node.delayTime.setTargetAtTime(0.5 + amount * 1.5, ctx.currentTime, 0.1);
-              if (effect === 'collage') node.delayTime.setTargetAtTime(0.05 + amount * 0.4, ctx.currentTime, 0.1);
-              if (effect === 'vortex') node.delayTime.setTargetAtTime(0.001 + amount * 0.01, ctx.currentTime, 0.1);
+              if (effect === 'doubler') { const d = params.delay ?? amount; node.delayTime.setTargetAtTime(0.01 + d * 0.04, ctx.currentTime, 0.1); }
+              if (effect === 'cascade') { const t = params.time ?? amount; node.delayTime.setTargetAtTime(0.2 + t * 0.6, ctx.currentTime, 0.1); }
+              if (effect === 'echo') { const t = params.time ?? amount; node.delayTime.setTargetAtTime(0.15 + t * 0.8, ctx.currentTime, 0.1); }
+              if (effect === 'reels') { const t = params.time ?? amount; node.delayTime.setTargetAtTime(0.15 + t * 0.35, ctx.currentTime, 0.1); }
+              if (effect === 'reverse') { const t = params.time ?? amount; node.delayTime.setTargetAtTime(0.5 + t * 1.5, ctx.currentTime, 0.1); }
+              if (effect === 'collage') { const d = params.density ?? amount; node.delayTime.setTargetAtTime(0.05 + d * 0.4, ctx.currentTime, 0.1); }
+              if (effect === 'vortex') { const r = params.rate ?? amount; node.delayTime.setTargetAtTime(0.001 + r * 0.01, ctx.currentTime, 0.1); }
             } else if (node instanceof DynamicsCompressorNode) {
-              if (effect === 'squash') node.threshold.setTargetAtTime(-50 * amount, ctx.currentTime, 0.1);
-              if (effect === 'sweeten') node.threshold.setTargetAtTime(-10 - amount * 30, ctx.currentTime, 0.1);
+              if (effect === 'squash') { const t = params.threshold ?? amount; node.threshold.setTargetAtTime(-30 - t * 20, ctx.currentTime, 0.1); }
+              if (effect === 'sweeten') { const c = params.compression ?? amount; node.threshold.setTargetAtTime(-10 - c * 20, ctx.currentTime, 0.1); }
             }
           } catch (e) {
             console.warn("Error updating node parameter:", e);
@@ -2653,32 +2854,46 @@ export default function App() {
         if (type === 'character') {
           if (effect === 'drive') {
             // Warm tube-like drive with tanh curve — oversampled for clean harmonics
+            const driveAmt = params.drive ?? amount;
+            const toneVal = params.tone ?? 0.7;
+            const mixVal = params.mix ?? 1.0;
             const preGain = ctx.createGain();
-            preGain.gain.value = 1 + amount * 5; // drive amount into curve
+            preGain.gain.value = 1 + driveAmt * 5;
             const shaper = ctx.createWaveShaper();
-            shaper.curve = makeDistortionCurve(2 + amount * 8); // tanh(2-10)
+            shaper.curve = makeDistortionCurve(2 + driveAmt * 8);
             shaper.oversample = '4x';
             const postGain = ctx.createGain();
-            postGain.gain.value = 0.7 / (1 + amount * 2); // compensate for drive boost
-            input.connect(preGain);
-            preGain.connect(shaper);
-            shaper.connect(postGain);
-            postGain.connect(output);
-            nodes.push(preGain, shaper, postGain);
+            postGain.gain.value = 0.7 / (1 + driveAmt * 2);
+            // Add tone control (LP filter)
+            const toneFilter = ctx.createBiquadFilter();
+            toneFilter.type = 'lowpass';
+            toneFilter.frequency.value = 1000 + toneVal * 10000;
+            toneFilter.Q.value = 0.7;
+            // Mix control
+            const dry = ctx.createGain();
+            dry.gain.value = 1 - mixVal;
+            const wet = ctx.createGain();
+            wet.gain.value = mixVal;
+            input.connect(preGain); preGain.connect(shaper); shaper.connect(toneFilter); toneFilter.connect(postGain); postGain.connect(wet); wet.connect(output);
+            input.connect(dry); dry.connect(output);
+            nodes.push(preGain, shaper, toneFilter, postGain, dry, wet);
           } else if (effect === 'sweeten') {
             // Gentle compression + warmth + low-end presence
+            const compAmt = params.compression ?? amount;
+            const warmthVal = params.warmth ?? 0.3;
+            const bassVal = params.bass ?? 0.4;
             const comp = ctx.createDynamicsCompressor();
-            comp.threshold.value = -20;
+            comp.threshold.value = -10 - compAmt * 20;
             comp.knee.value = 20;
-            comp.ratio.value = 2.5;
+            comp.ratio.value = 1.5 + compAmt * 3;
             comp.attack.value = 0.003;
             comp.release.value = 0.15;
             const filter = ctx.createBiquadFilter();
             filter.type = 'lowshelf';
             filter.frequency.value = 250;
-            filter.gain.value = amount * 6; // max +6dB low shelf (was 10)
+            filter.gain.value = bassVal * 8;
             const shaper = ctx.createWaveShaper();
-            shaper.curve = makeDistortionCurve(1 + amount * 3); // subtle warmth
+            shaper.curve = makeDistortionCurve(1 + warmthVal * 4);
             shaper.oversample = '4x';
             const postGain = ctx.createGain();
             postGain.gain.value = 0.85;
@@ -2690,45 +2905,56 @@ export default function App() {
             nodes.push(comp, filter, shaper, postGain);
           } else if (effect === 'fuzz') {
             // Heavy fuzz with post-filter to tame harshness
+            const fuzzAmt = params.fuzz ?? amount;
+            const toneVal = params.tone ?? 0.6;
+            const mixVal = params.mix ?? 0.8;
             const preGain = ctx.createGain();
-            preGain.gain.value = 1 + amount * 3;
+            preGain.gain.value = 1 + fuzzAmt * 3;
             const shaper = ctx.createWaveShaper();
-            shaper.curve = makeDistortionCurve(5 + amount * 25); // tanh(5-30) — aggressive but bounded
+            shaper.curve = makeDistortionCurve(5 + fuzzAmt * 25);
             shaper.oversample = '4x';
             const filter = ctx.createBiquadFilter();
             filter.type = 'lowpass';
-            filter.frequency.value = 3000 + (1 - amount) * 7000; // darker at higher amounts
+            filter.frequency.value = 1000 + toneVal * 9000;
             const postGain = ctx.createGain();
-            postGain.gain.value = 0.5 / (1 + amount); // aggressive compensation
+            postGain.gain.value = 0.5 / (1 + fuzzAmt);
+            // Add mix
+            const dry = ctx.createGain(); dry.gain.value = 1 - mixVal;
+            const wetG = ctx.createGain(); wetG.gain.value = mixVal;
             input.connect(preGain);
             preGain.connect(shaper);
             shaper.connect(filter);
             filter.connect(postGain);
-            postGain.connect(output);
-            nodes.push(preGain, shaper, filter, postGain);
+            postGain.connect(wetG); wetG.connect(output); input.connect(dry); dry.connect(output);
+            nodes.push(preGain, shaper, filter, postGain, dry, wetG);
           } else if (effect === 'howl') {
             // Resonant filter fuzz — musical resonance, not screeching
+            const driveAmt = params.drive ?? amount;
+            const freqVal = params.frequency ?? 0.5;
+            const resVal = params.resonance ?? 0.5;
             const shaper = ctx.createWaveShaper();
-            shaper.curve = makeDistortionCurve(3 + amount * 12); // moderate drive
+            shaper.curve = makeDistortionCurve(3 + driveAmt * 12);
             shaper.oversample = '4x';
             const filter = ctx.createBiquadFilter();
             filter.type = 'lowpass';
-            filter.frequency.value = 400 + amount * 2500;
-            filter.Q.value = 2 + amount * 10; // max Q=12 (was 30!) — sings without screeching
+            filter.frequency.value = 400 + freqVal * 2500;
+            filter.Q.value = 2 + resVal * 10;
             const postGain = ctx.createGain();
-            postGain.gain.value = 0.4 / (1 + amount * 0.5); // compensate for resonance boost
+            postGain.gain.value = 0.4 / (1 + resVal * 0.5);
             input.connect(shaper);
             shaper.connect(filter);
             filter.connect(postGain);
             postGain.connect(output);
             nodes.push(shaper, filter, postGain);
           } else if (effect === 'swell') {
+            const attackVal = params.attack ?? amount;
+            const sustainVal = params.sustain ?? 0.7;
             const swellGain = ctx.createGain();
             swellGain.gain.value = 0;
             const checkSwell = () => {
               const anyActive = voiceStatesRef.current.some(s => s);
               if (anyActive) {
-                swellGain.gain.setTargetAtTime(1, ctx.currentTime, 0.5 + (1 - amount) * 2);
+                swellGain.gain.setTargetAtTime(sustainVal, ctx.currentTime, 0.5 + (1 - attackVal) * 2);
               } else {
                 swellGain.gain.setTargetAtTime(0, ctx.currentTime, 0.1);
               }
@@ -2739,8 +2965,11 @@ export default function App() {
             nodes.push(swellGain, { disconnect: () => {}, cleanup: () => clearInterval(interval) });
           } else if (effect === 'crush') {
             // Bitcrusher with controlled gain — no double-waveshaper pileup
+            const bitVal = params.bitDepth ?? amount;
+            const satVal = params.saturation ?? 0.3;
+            const mixVal = params.mix ?? 0.8;
             const shaper = ctx.createWaveShaper();
-            const n = Math.floor(3 + (1 - amount) * 8); // quantization steps
+            const n = Math.floor(3 + (1 - bitVal) * 8);
             const curve = new Float32Array(8192);
             for (let i = 0; i < 8192; i++) {
               const x = (i * 2) / 8192 - 1;
@@ -2750,24 +2979,31 @@ export default function App() {
             shaper.oversample = '2x';
             // Light saturation before crush for warmth
             const sat = ctx.createWaveShaper();
-            sat.curve = makeDistortionCurve(1 + amount * 3);
+            sat.curve = makeDistortionCurve(1 + satVal * 5);
             sat.oversample = '2x';
             const postGain = ctx.createGain();
             postGain.gain.value = 0.7;
+            // Add mix
+            const dry = ctx.createGain(); dry.gain.value = 1 - mixVal;
+            const wetG = ctx.createGain(); wetG.gain.value = mixVal;
             input.connect(sat);
             sat.connect(shaper);
             shaper.connect(postGain);
-            postGain.connect(output);
-            nodes.push(sat, shaper, postGain);
+            postGain.connect(wetG); wetG.connect(output);
+            input.connect(dry); dry.connect(output);
+            nodes.push(sat, shaper, postGain, dry, wetG);
           }
         } else if (type === 'movement') {
           if (effect === 'doubler') {
+            const delayAmt = params.delay ?? amount;
+            const mixVal = params.mix ?? 0.5;
+            const detuneVal = params.detune ?? 0.3;
             const delay = ctx.createDelay();
-            delay.delayTime.value = 0.01 + amount * 0.04;
+            delay.delayTime.value = 0.01 + delayAmt * 0.04;
             const dry = ctx.createGain();
             const wet = ctx.createGain();
-            dry.gain.value = 0.6;
-            wet.gain.value = 0.4;
+            dry.gain.value = 1 - mixVal;
+            wet.gain.value = mixVal;
             input.connect(dry);
             input.connect(delay);
             delay.connect(wet);
@@ -2775,12 +3011,14 @@ export default function App() {
             wet.connect(output);
             nodes.push(delay, dry, wet);
           } else if (effect === 'vibrato') {
+            const rateVal = params.rate ?? amount;
+            const depthVal = params.depth ?? 0.5;
             const delay = ctx.createDelay();
             delay.delayTime.value = 0.005; // center delay
             const lfo = ctx.createOscillator();
             const lfoGain = ctx.createGain();
-            lfo.frequency.value = 1 + amount * 6; // 1-7 Hz — musical vibrato range
-            lfoGain.gain.value = 0.001 + amount * 0.004; // subtle pitch modulation
+            lfo.frequency.value = 1 + rateVal * 6;
+            lfoGain.gain.value = 0.001 + depthVal * 0.004;
             lfo.connect(lfoGain);
             lfoGain.connect(delay.delayTime);
             lfo.start();
@@ -2789,21 +3027,24 @@ export default function App() {
             nodes.push(delay, lfo, lfoGain);
           } else if (effect === 'phaser') {
             // 8-stage phaser for lush, deep sweeps (was 4 stages)
+            const rateVal = params.rate ?? amount;
+            const depthVal = params.depth ?? 0.5;
+            const fbVal = params.feedback ?? 0.4;
             const stages = 8;
             const allPasses = Array.from({ length: stages }, () => {
               const ap = ctx.createBiquadFilter();
               ap.type = 'allpass';
-              ap.Q.value = 0.5 + amount * 2; // moderate Q for resonance
+              ap.Q.value = 0.5 + depthVal * 2;
               return ap;
             });
             const lfo = ctx.createOscillator();
             const lfoGain = ctx.createGain();
-            lfo.frequency.value = 0.1 + amount * 1.5; // slow hypnotic sweep
-            lfoGain.gain.value = 800 + amount * 2000; // sweep across wider range
+            lfo.frequency.value = 0.1 + rateVal * 1.5;
+            lfoGain.gain.value = 800 + depthVal * 2000;
             lfo.connect(lfoGain);
             // Feedback for resonance at notch frequencies
             const fbGain = ctx.createGain();
-            fbGain.gain.value = amount * 0.5; // max 0.5 feedback — resonant but safe
+            fbGain.gain.value = fbVal * 0.5;
             allPasses.forEach((ap, i) => {
               lfoGain.connect(ap.frequency);
               if (i === 0) input.connect(ap);
@@ -2823,13 +3064,15 @@ export default function App() {
             lfo.start();
             nodes.push(...allPasses, lfo, lfoGain, fbGain, dry, wet);
           } else if (effect === 'tremolo') {
+            const rateVal = params.rate ?? amount;
+            const depthVal = params.depth ?? 0.5;
             const tremGain = ctx.createGain();
             const lfo = ctx.createOscillator();
             const lfoGain = ctx.createGain();
-            lfo.frequency.value = 1 + amount * 10;
-            lfoGain.gain.value = amount * 0.8; // slightly less extreme
+            lfo.frequency.value = 1 + rateVal * 10;
+            lfoGain.gain.value = depthVal * 0.8;
             const offset = ctx.createConstantSource();
-            offset.offset.value = 1 - amount * 0.8;
+            offset.offset.value = 1 - depthVal * 0.8;
             offset.start();
             lfo.connect(lfoGain);
             lfoGain.connect(tremGain.gain);
@@ -2840,19 +3083,21 @@ export default function App() {
             nodes.push(tremGain, lfo, lfoGain, offset);
           } else if (effect === 'pitch') {
             // Pitch shifting with smoother modulation
+            const shiftVal = params.shift ?? amount;
+            const mixVal = params.mix ?? 0.5;
             const delay = ctx.createDelay();
             const lfo = ctx.createOscillator();
             lfo.type = 'sawtooth';
-            lfo.frequency.value = 5 + amount * 40; // gentler range
+            lfo.frequency.value = 5 + shiftVal * 40;
             const lfoGain = ctx.createGain();
-            lfoGain.gain.value = 0.005 + amount * 0.005;
+            lfoGain.gain.value = 0.005 + shiftVal * 0.005;
             lfo.connect(lfoGain);
             lfoGain.connect(delay.delayTime);
             lfo.start();
             const dry = ctx.createGain();
-            dry.gain.value = 0.5;
+            dry.gain.value = 1 - mixVal;
             const wet = ctx.createGain();
-            wet.gain.value = 0.5;
+            wet.gain.value = mixVal;
             input.connect(dry);
             input.connect(delay);
             delay.connect(wet);
@@ -2861,17 +3106,20 @@ export default function App() {
             nodes.push(delay, lfo, lfoGain, dry, wet);
           } else if (effect === 'vortex') {
             // Flanger with LP filter in feedback to prevent buildup
+            const rateVal = params.rate ?? amount;
+            const depthVal = params.depth ?? 0.5;
+            const fbVal = params.feedback ?? 0.5;
             const delay = ctx.createDelay();
             delay.delayTime.value = 0.003;
             const feedback = ctx.createGain();
-            feedback.gain.value = 0.3 + amount * 0.45; // max 0.75 (was 0.9)
+            feedback.gain.value = 0.3 + fbVal * 0.45;
             const fbFilter = ctx.createBiquadFilter();
             fbFilter.type = 'lowpass';
-            fbFilter.frequency.value = 4000; // tame high-freq feedback
+            fbFilter.frequency.value = 4000;
             const lfo = ctx.createOscillator();
             const lfoGain = ctx.createGain();
-            lfo.frequency.value = 0.08 + amount * 0.4;
-            lfoGain.gain.value = 0.003;
+            lfo.frequency.value = 0.08 + rateVal * 0.4;
+            lfoGain.gain.value = 0.001 + depthVal * 0.004;
             lfo.connect(lfoGain);
             lfoGain.connect(delay.delayTime);
             lfo.start();
@@ -2892,16 +3140,19 @@ export default function App() {
         } else if (type === 'diffusion') {
           if (effect === 'cascade') {
             // Delay with HP+LP filtering in feedback loop to prevent muddy buildup
+            const timeVal = params.time ?? amount;
+            const fbAmt = params.feedback ?? 0.5;
+            const toneVal = params.tone ?? 0.6;
             const delay = ctx.createDelay(5);
-            delay.delayTime.value = 0.2 + amount * 0.6;
+            delay.delayTime.value = 0.2 + timeVal * 0.6;
             const feedback = ctx.createGain();
-            feedback.gain.value = 0.25 + amount * 0.45; // max 0.7 — safe, long trails
+            feedback.gain.value = 0.25 + fbAmt * 0.45;
             const fbLP = ctx.createBiquadFilter();
             fbLP.type = 'lowpass';
-            fbLP.frequency.value = 5000 - amount * 2000; // darken repeats over time
+            fbLP.frequency.value = 5000 - toneVal * 2000;
             const fbHP = ctx.createBiquadFilter();
             fbHP.type = 'highpass';
-            fbHP.frequency.value = 80 + amount * 100; // prevent bass buildup
+            fbHP.frequency.value = 80 + toneVal * 100;
             input.connect(delay);
             delay.connect(fbLP);
             fbLP.connect(fbHP);
@@ -2918,34 +3169,38 @@ export default function App() {
             nodes.push(delay, feedback, fbLP, fbHP, dry, wet);
           } else if (effect === 'reels') {
             // Tape delay — LP+HP in feedback, subtle saturation, wow/flutter
+            const timeVal = params.time ?? amount;
+            const fbAmt = params.feedback ?? 0.5;
+            const wowVal = params.wow ?? 0.4;
+            const toneVal = params.tone ?? 0.6;
             const delay = ctx.createDelay(5);
-            delay.delayTime.value = 0.15 + amount * 0.35;
+            delay.delayTime.value = 0.15 + timeVal * 0.35;
             const feedback = ctx.createGain();
-            feedback.gain.value = 0.3 + amount * 0.4; // max 0.7
+            feedback.gain.value = 0.3 + fbAmt * 0.4;
             // Tape-like filtering in feedback loop
             const fbLP = ctx.createBiquadFilter();
             fbLP.type = 'lowpass';
-            fbLP.frequency.value = 3500 - amount * 1500; // each repeat loses highs
+            fbLP.frequency.value = 3500 - toneVal * 1500;
             const fbHP = ctx.createBiquadFilter();
             fbHP.type = 'highpass';
             fbHP.frequency.value = 100;
             // Subtle tape saturation in feedback
             const fbSat = ctx.createWaveShaper();
-            fbSat.curve = makeDistortionCurve(1.5 + amount * 2);
+            fbSat.curve = makeDistortionCurve(1.5 + toneVal * 2);
             fbSat.oversample = '2x';
             // Wow (slow pitch drift)
             const lfo = ctx.createOscillator();
             const lfoGain = ctx.createGain();
-            lfo.frequency.value = 0.4 + amount * 1.2; // 0.4-1.6 Hz wow
-            lfoGain.gain.value = 0.001 + amount * 0.003; // subtle wobble
+            lfo.frequency.value = 0.4 + wowVal * 1.2;
+            lfoGain.gain.value = 0.001 + wowVal * 0.003;
             lfo.connect(lfoGain);
             lfoGain.connect(delay.delayTime);
             lfo.start();
             // Flutter (fast subtle warble)
             const flutter = ctx.createOscillator();
             const flutterGain = ctx.createGain();
-            flutter.frequency.value = 4 + amount * 3;
-            flutterGain.gain.value = 0.0002 + amount * 0.0003;
+            flutter.frequency.value = 4 + wowVal * 3;
+            flutterGain.gain.value = 0.0002 + wowVal * 0.0003;
             flutter.connect(flutterGain);
             flutterGain.connect(delay.delayTime);
             flutter.start();
@@ -2966,21 +3221,25 @@ export default function App() {
             nodes.push(delay, feedback, fbLP, fbHP, fbSat, lfo, lfoGain, flutter, flutterGain, dry, wet);
           } else if (effect === 'echo') {
             // Spacey echo — filtered feedback with slow modulation for psychedelic trails
+            const timeVal = params.time ?? amount;
+            const fbAmt = params.feedback ?? 0.5;
+            const toneVal = params.tone ?? 0.6;
+            const modVal = params.modulation ?? 0.3;
             const delay = ctx.createDelay(5);
-            delay.delayTime.value = 0.15 + amount * 0.8;
+            delay.delayTime.value = 0.15 + timeVal * 0.8;
             const feedback = ctx.createGain();
-            feedback.gain.value = 0.3 + amount * 0.45; // max 0.75
+            feedback.gain.value = 0.3 + fbAmt * 0.45;
             const fbLP = ctx.createBiquadFilter();
             fbLP.type = 'lowpass';
-            fbLP.frequency.value = 4000 - amount * 1500; // darken echoes
+            fbLP.frequency.value = 4000 - toneVal * 1500;
             const fbHP = ctx.createBiquadFilter();
             fbHP.type = 'highpass';
             fbHP.frequency.value = 120;
             // Slow LFO on delay time for pitch-drifting echoes
             const lfo = ctx.createOscillator();
             const lfoGain = ctx.createGain();
-            lfo.frequency.value = 0.1 + amount * 0.4; // very slow modulation
-            lfoGain.gain.value = 0.002 + amount * 0.004;
+            lfo.frequency.value = 0.1 + modVal * 0.4;
+            lfoGain.gain.value = 0.002 + modVal * 0.004;
             lfo.connect(lfoGain);
             lfoGain.connect(delay.delayTime);
             lfo.start();
@@ -3000,22 +3259,27 @@ export default function App() {
             nodes.push(delay, feedback, fbLP, fbHP, lfo, lfoGain, dry, wet);
           } else if (effect === 'space') {
             // Rich spacey reverb — long, frequency-dependent decay, pre-delay, shimmer
-            const reverbDuration = 2 + amount * 6; // 2-8 seconds
-            const reverbDecay = 1.5 - amount * 0.7; // slower decay at higher amounts
+            const sizeVal = params.size ?? amount;
+            const decayVal = params.decay ?? 0.5;
+            const brightnessVal = params.brightness ?? 0.5;
+            const mixVal = params.mix ?? 0.5;
+            const predelayVal = params.predelay ?? 0.3;
+            const reverbDuration = 2 + sizeVal * 6;
+            const reverbDecay = 1.5 - decayVal * 0.7;
             const reverb = ctx.createConvolver();
-            reverb.buffer = generateReverbIR(ctx, reverbDuration, reverbDecay, 0.4 + (1 - amount) * 0.3);
-            // Pre-delay for spaciousness (30-80ms)
+            reverb.buffer = generateReverbIR(ctx, reverbDuration, reverbDecay, 0.4 + (1 - brightnessVal) * 0.3);
+            // Pre-delay for spaciousness
             const preDelay = ctx.createDelay();
-            preDelay.delayTime.value = 0.03 + amount * 0.05;
+            preDelay.delayTime.value = 0.03 + predelayVal * 0.05;
             // HP filter before reverb to prevent low-end mud
             const reverbHP = ctx.createBiquadFilter();
             reverbHP.type = 'highpass';
-            reverbHP.frequency.value = 150 + amount * 100; // cut below 150-250 Hz
+            reverbHP.frequency.value = 150 + sizeVal * 100;
             // Wet/dry mix
             const dry = ctx.createGain();
-            dry.gain.value = 1 - amount * 0.4; // keep dry strong
+            dry.gain.value = 1 - mixVal * 0.4;
             const wet = ctx.createGain();
-            wet.gain.value = 0.3 + amount * 0.5; // 30-80% wet
+            wet.gain.value = 0.3 + mixVal * 0.5;
             input.connect(reverbHP);
             reverbHP.connect(preDelay);
             preDelay.connect(reverb);
@@ -3026,12 +3290,15 @@ export default function App() {
             nodes.push(reverb, preDelay, reverbHP, dry, wet);
           } else if (effect === 'collage') {
             // Multi-tap delay with Fibonacci-spaced taps for psychedelic diffusion
+            const densityVal = params.density ?? amount;
+            const spreadVal = params.spread ?? 0.5;
+            const mixVal = params.mix ?? 0.5;
             const fibTimes = [0.089, 0.144, 0.233, 0.377, 0.610]; // Fibonacci ratios
             const taps = fibTimes.map((t, i) => {
               const d = ctx.createDelay(5);
-              d.delayTime.value = t * (0.5 + amount * 1.5);
+              d.delayTime.value = t * (0.5 + spreadVal * 1.5);
               const g = ctx.createGain();
-              g.gain.value = 0.25 / (i + 1); // decreasing volume per tap
+              g.gain.value = (0.25 * mixVal) / (i + 1);
               return { d, g };
             });
             taps.forEach(tap => {
@@ -3046,8 +3313,10 @@ export default function App() {
             nodes.push(...taps.flatMap(t => [t.d, t.g]), dry);
           } else if (effect === 'reverse') {
             // Reverse swell effect using reversed impulse response
+            const timeVal = params.time ?? amount;
+            const mixVal = params.mix ?? 0.5;
             const reverb = ctx.createConvolver();
-            const length = Math.floor(ctx.sampleRate * (0.5 + amount * 2));
+            const length = Math.floor(ctx.sampleRate * (0.5 + timeVal * 2));
             const impulse = ctx.createBuffer(2, length, ctx.sampleRate);
             for (let ch = 0; ch < 2; ch++) {
               const data = impulse.getChannelData(ch);
@@ -3059,9 +3328,9 @@ export default function App() {
             }
             reverb.buffer = impulse;
             const dry = ctx.createGain();
-            dry.gain.value = 0.6;
+            dry.gain.value = 1 - mixVal * 0.4;
             const wet = ctx.createGain();
-            wet.gain.value = 0.3 + amount * 0.4;
+            wet.gain.value = 0.3 + mixVal * 0.4;
             input.connect(reverb);
             reverb.connect(wet);
             wet.connect(output);
@@ -3072,21 +3341,28 @@ export default function App() {
         } else if (type === 'texture') {
           if (effect === 'filter') {
             // Musical multi-mode filter with moderate resonance
+            const cutoff = params.cutoff ?? amount;
+            const res = params.resonance ?? 0.3;
+            const mode = params.mode ?? 0.0;
             const filter = ctx.createBiquadFilter();
-            filter.type = amount < 0.5 ? 'lowpass' : 'highpass';
-            filter.frequency.value = amount < 0.5 ? amount * 4000 + 200 : (amount - 0.5) * 8000 + 500;
-            filter.Q.value = 1 + amount * 4; // gentle resonance, max Q=5
+            filter.type = mode < 0.33 ? 'lowpass' : mode < 0.66 ? 'bandpass' : 'highpass';
+            filter.frequency.value = cutoff < 0.5 ? cutoff * 4000 + 200 : (cutoff - 0.5) * 8000 + 500;
+            filter.Q.value = 1 + res * 4;
             input.connect(filter);
             filter.connect(output);
             nodes.push(filter);
           } else if (effect === 'squash') {
             // Heavy compression with gentle saturation (no extreme clipping)
+            const threshVal = params.threshold ?? amount;
+            const ratioVal = params.ratio ?? 0.5;
+            const attackVal = params.attack ?? 0.3;
+            const releaseVal = params.release ?? 0.5;
             const comp = ctx.createDynamicsCompressor();
-            comp.threshold.value = -30 - amount * 20; // -30 to -50
+            comp.threshold.value = -30 - threshVal * 20;
             comp.knee.value = 10;
-            comp.ratio.value = 4 + amount * 12; // 4:1 to 16:1
-            comp.attack.value = 0.001;
-            comp.release.value = 0.05 + amount * 0.15;
+            comp.ratio.value = 4 + ratioVal * 12;
+            comp.attack.value = 0.001 + attackVal * 0.01;
+            comp.release.value = 0.05 + releaseVal * 0.15;
             const shaper = ctx.createWaveShaper();
             shaper.curve = makeDistortionCurve(1 + amount * 4); // gentle saturation (was amount*50!)
             shaper.oversample = '2x';
@@ -3099,21 +3375,24 @@ export default function App() {
             nodes.push(comp, shaper, postGain);
           } else if (effect === 'cassette') {
             // Tape texture with bandwidth limiting and subtle hiss
+            const bwVal = params.bandwidth ?? amount;
+            const noiseVal = params.noise ?? 0.3;
+            const wowVal = params.wow ?? 0.3;
             const lpFilter = ctx.createBiquadFilter();
             lpFilter.type = 'lowpass';
-            lpFilter.frequency.value = 6000 - amount * 3000; // bandwidth narrows with amount
+            lpFilter.frequency.value = 6000 - bwVal * 3000;
             const hpFilter = ctx.createBiquadFilter();
             hpFilter.type = 'highpass';
-            hpFilter.frequency.value = 60 + amount * 100;
+            hpFilter.frequency.value = 60 + bwVal * 100;
             // Subtle tape hiss
             const noise = ctx.createBufferSource();
             noise.buffer = noiseBufferRef.current;
             noise.loop = true;
             const noiseFilter = ctx.createBiquadFilter();
             noiseFilter.type = 'highpass';
-            noiseFilter.frequency.value = 4000; // hiss is high-frequency
+            noiseFilter.frequency.value = 4000;
             const noiseGain = ctx.createGain();
-            noiseGain.gain.value = 0.008 * amount;
+            noiseGain.gain.value = 0.008 * noiseVal;
             noise.connect(noiseFilter);
             noiseFilter.connect(noiseGain);
             noiseGain.connect(output);
@@ -3124,8 +3403,10 @@ export default function App() {
             nodes.push(lpFilter, hpFilter, noise, noiseFilter, noiseGain);
           } else if (effect === 'broken') {
             // Bitcrusher with oversampling to reduce aliasing
+            const bitVal = params.bitDepth ?? amount;
+            const mixVal = params.mix ?? 0.8;
             const shaper = ctx.createWaveShaper();
-            const n = Math.floor(3 + (1 - amount) * 12);
+            const n = Math.floor(3 + (1 - bitVal) * 12);
             const curve = new Float32Array(8192);
             for (let i = 0; i < 8192; i++) {
               const x = (i * 2) / 8192 - 1;
@@ -3141,14 +3422,16 @@ export default function App() {
             nodes.push(shaper, postGain);
           } else if (effect === 'interference') {
             // Filtered noise bed — atmospheric static
+            const freqVal = params.frequency ?? amount;
+            const amtVal = params.amount ?? 0.3;
             const noise = ctx.createBufferSource();
             noise.buffer = noiseBufferRef.current;
             noise.loop = true;
             const noiseGain = ctx.createGain();
-            noiseGain.gain.value = 0.03 * amount; // reduced from 0.05
+            noiseGain.gain.value = 0.03 * amtVal;
             const filter = ctx.createBiquadFilter();
             filter.type = 'bandpass';
-            filter.frequency.value = 2000 + amount * 2000;
+            filter.frequency.value = 2000 + freqVal * 2000;
             filter.Q.value = 1;
             noise.connect(filter);
             filter.connect(noiseGain);
@@ -3158,20 +3441,23 @@ export default function App() {
             nodes.push(noise, noiseGain, filter);
           } else if (effect === 'radio') {
             // Lo-fi AM radio with bandwidth limiting and subtle noise
+            const bwVal = params.bandwidth ?? amount;
+            const noiseVal = params.noise ?? 0.3;
+            const crunchVal = params.crunch ?? 0.4;
             const filter = ctx.createBiquadFilter();
             filter.type = 'bandpass';
-            filter.frequency.value = 800 + amount * 2000;
-            filter.Q.value = 2 + amount * 3; // reduced from 5, prevents resonance spike
+            filter.frequency.value = 800 + bwVal * 2000;
+            filter.Q.value = 2 + bwVal * 3;
             const noise = ctx.createBufferSource();
             noise.buffer = noiseBufferRef.current;
             noise.loop = true;
             const noiseGain = ctx.createGain();
-            noiseGain.gain.value = 0.015 * amount; // reduced from 0.03
+            noiseGain.gain.value = 0.015 * noiseVal;
             noise.connect(noiseGain);
             noiseGain.connect(output);
             noise.start();
             const shaper = ctx.createWaveShaper();
-            const n = Math.floor(4 + (1 - amount) * 12); // less extreme quantization
+            const n = Math.floor(4 + (1 - crunchVal) * 12); // less extreme quantization
             const curve = new Float32Array(8192);
             for (let i = 0; i < 8192; i++) {
               const x = (i * 2) / 8192 - 1;
@@ -3196,69 +3482,31 @@ export default function App() {
       moduleRef.current.effectNodes = nodes;
     };
 
-    updateModule(characterNodesRef, characterEffect, characterAmount, 'character');
-    updateModule(movementNodesRef, movementEffect, movementAmount, 'movement');
-    updateModule(diffusionNodesRef, diffusionEffect, diffusionAmount, 'diffusion');
-    updateModule(textureNodesRef, textureEffect, textureAmount, 'texture');
+    updateModule(characterNodesRef, characterEffect, characterParams, 'character');
+    updateModule(movementNodesRef, movementEffect, movementParams, 'movement');
+    updateModule(diffusionNodesRef, diffusionEffect, diffusionParams, 'diffusion');
+    updateModule(textureNodesRef, textureEffect, textureParams, 'texture');
 
     // Drone Module Effects
-    updateModule(droneCharacterNodesRef, droneCharacterEffect, droneCharacterAmount, 'character');
-    updateModule(droneMovementNodesRef, droneMovementEffect, droneMovementAmount, 'movement');
-    updateModule(droneDiffusionNodesRef, droneDiffusionEffect, droneDiffusionAmount, 'diffusion');
-    updateModule(droneTextureNodesRef, droneTextureEffect, droneTextureAmount, 'texture');
+    updateModule(droneCharacterNodesRef, droneCharacterEffect, droneCharacterParams, 'character');
+    updateModule(droneMovementNodesRef, droneMovementEffect, droneMovementParams, 'movement');
+    updateModule(droneDiffusionNodesRef, droneDiffusionEffect, droneDiffusionParams, 'diffusion');
+    updateModule(droneTextureNodesRef, droneTextureEffect, droneTextureParams, 'texture');
 
     // Sequencer Module Effects
-    updateModule(seqCharacterNodesRef, seqCharacterEffect, seqCharacterAmount, 'character');
-    updateModule(seqMovementNodesRef, seqMovementEffect, seqMovementAmount, 'movement');
-    updateModule(seqDiffusionNodesRef, seqDiffusionEffect, seqDiffusionAmount, 'diffusion');
-    updateModule(seqTextureNodesRef, seqTextureEffect, seqTextureAmount, 'texture');
+    updateModule(seqCharacterNodesRef, seqCharacterEffect, seqCharacterParams, 'character');
+    updateModule(seqMovementNodesRef, seqMovementEffect, seqMovementParams, 'movement');
+    updateModule(seqDiffusionNodesRef, seqDiffusionEffect, seqDiffusionParams, 'diffusion');
+    updateModule(seqTextureNodesRef, seqTextureEffect, seqTextureParams, 'texture');
 
   }, [
-    characterEffect, characterAmount, movementEffect, movementAmount, diffusionEffect, diffusionAmount, textureEffect, textureAmount,
-    droneCharacterEffect, droneCharacterAmount, droneMovementEffect, droneMovementAmount, droneDiffusionEffect, droneDiffusionAmount, droneTextureEffect, droneTextureAmount,
-    seqCharacterEffect, seqCharacterAmount, seqMovementEffect, seqMovementAmount, seqDiffusionEffect, seqDiffusionAmount, seqTextureEffect, seqTextureAmount,
+    characterEffect, characterParams, movementEffect, movementParams, diffusionEffect, diffusionParams, textureEffect, textureParams,
+    droneCharacterEffect, droneCharacterParams, droneMovementEffect, droneMovementParams, droneDiffusionEffect, droneDiffusionParams, droneTextureEffect, droneTextureParams,
+    seqCharacterEffect, seqCharacterParams, seqMovementEffect, seqMovementParams, seqDiffusionEffect, seqDiffusionParams, seqTextureEffect, seqTextureParams,
     isPlaying
   ]);
 
-  const getAmountLabel = (type: 'character' | 'movement' | 'diffusion' | 'texture', effect: string) => {
-    if (effect === 'none') return 'Amount';
-    switch (type) {
-      case 'character':
-        if (effect === 'drive') return 'Drive';
-        if (effect === 'sweeten') return 'Compression';
-        if (effect === 'fuzz') return 'Fuzz';
-        if (effect === 'howl') return 'Resonance';
-        if (effect === 'swell') return 'Swell Time';
-        if (effect === 'crush') return 'Bit Depth';
-        return 'Amount';
-      case 'movement':
-        if (effect === 'doubler') return 'Delay';
-        if (effect === 'vibrato') return 'Rate';
-        if (effect === 'phaser') return 'Speed';
-        if (effect === 'tremolo') return 'Rate';
-        if (effect === 'pitch') return 'Shift';
-        if (effect === 'vortex') return 'Feedback';
-        return 'Rate / Depth';
-      case 'diffusion':
-        if (effect === 'cascade') return 'Feedback';
-        if (effect === 'reels') return 'Wow/Flutter';
-        if (effect === 'space') return 'Size';
-        if (effect === 'collage') return 'Density';
-        if (effect === 'reverse') return 'Time';
-        if (effect === 'echo') return 'Feedback';
-        return 'Decay / Mix';
-      case 'texture':
-        if (effect === 'filter') return 'Cutoff';
-        if (effect === 'squash') return 'Threshold';
-        if (effect === 'cassette') return 'Noise';
-        if (effect === 'broken') return 'Bit Depth';
-        if (effect === 'interference') return 'Static';
-        if (effect === 'radio') return 'Tuning';
-        return 'Grit / Filter';
-      default:
-        return 'Amount';
-    }
-  };
+  // getAmountLabel removed — replaced by per-param labels from EFFECT_PARAMS
 
   const toggleWebcam = async () => {
     if (isWebcamActive) {
@@ -6201,7 +6449,7 @@ export default function App() {
               {/* Drone Effects Chain */}
               <section className="border-t border-white/10 pt-10">
                 <label className="text-[11px] text-white/40 uppercase tracking-[0.3em] block mb-4 font-black">Drone Effects Chain</label>
-                
+
                 <div className="grid grid-cols-1 gap-8">
                   {/* Character Module */}
                   <div className="bg-white/5 p-6 rounded-3xl border border-white/10 space-y-6">
@@ -6214,15 +6462,15 @@ export default function App() {
                         <p className="text-[9px] text-white/40 uppercase tracking-tighter font-bold leading-none">Drive & Saturation</p>
                       </div>
                     </div>
-                    
+
                     <div className="grid grid-cols-3 gap-2">
                       {CHARACTER_EFFECTS.map((eff) => (
                         <button
                           key={eff.id}
                           onClick={() => setDroneCharacterEffect(eff.id as any)}
                           className={`px-2 py-3 rounded-xl text-[9px] font-black uppercase tracking-tighter transition-all border ${
-                            droneCharacterEffect === eff.id 
-                              ? 'bg-emerald-500 text-white border-emerald-500 shadow-lg' 
+                            droneCharacterEffect === eff.id
+                              ? 'bg-emerald-500 text-white border-emerald-500 shadow-lg'
                               : 'bg-white/5 text-white/40 border-transparent hover:border-white/10'
                           }`}
                         >
@@ -6231,18 +6479,20 @@ export default function App() {
                       ))}
                     </div>
 
-                    <div className="space-y-3 pt-2">
-                      <div className="flex justify-between items-baseline">
-                        <span className="text-[9px] text-white/40 uppercase font-black tracking-widest">{getAmountLabel('character', droneCharacterEffect)}</span>
-                        <span className="font-mono text-[10px] font-black text-white">{Math.round(droneCharacterAmount * 100)}%</span>
+                    {droneCharacterEffect !== 'none' && (EFFECT_PARAMS[droneCharacterEffect] || []).map(paramDef => (
+                      <div key={paramDef.id} className="space-y-2">
+                        <div className="flex justify-between items-baseline">
+                          <span className="text-[9px] text-white/40 uppercase font-black tracking-widest">{paramDef.label}</span>
+                          <span className="font-mono text-[10px] font-black text-white">{Math.round((droneCharacterParams[paramDef.id] ?? paramDef.default) * 100)}%</span>
+                        </div>
+                        <input
+                          type="range" min={paramDef.min ?? 0} max={paramDef.max ?? 1} step={paramDef.step ?? 0.01}
+                          value={droneCharacterParams[paramDef.id] ?? paramDef.default}
+                          onChange={(e) => setDroneCharacterParams(prev => ({ ...prev, [paramDef.id]: parseFloat(e.target.value) }))}
+                          className="w-full accent-emerald-500 h-1 bg-white/10 rounded-lg appearance-none cursor-pointer"
+                        />
                       </div>
-                      <input 
-                        type="range" min="0" max="1" step="0.01"
-                        value={droneCharacterAmount} 
-                        onChange={(e) => setDroneCharacterAmount(parseFloat(e.target.value))}
-                        className="w-full accent-emerald-500 h-1 bg-white/10 rounded-lg appearance-none cursor-pointer" 
-                      />
-                    </div>
+                    ))}
                   </div>
 
                   {/* Movement Module */}
@@ -6256,15 +6506,15 @@ export default function App() {
                         <p className="text-[9px] text-white/40 uppercase tracking-tighter font-bold leading-none">Modulation & Warp</p>
                       </div>
                     </div>
-                    
+
                     <div className="grid grid-cols-3 gap-2">
                       {MOVEMENT_EFFECTS.map((eff) => (
                         <button
                           key={eff.id}
                           onClick={() => setDroneMovementEffect(eff.id as any)}
                           className={`px-2 py-3 rounded-xl text-[9px] font-black uppercase tracking-tighter transition-all border ${
-                            droneMovementEffect === eff.id 
-                              ? 'bg-emerald-500 text-white border-emerald-500 shadow-lg' 
+                            droneMovementEffect === eff.id
+                              ? 'bg-emerald-500 text-white border-emerald-500 shadow-lg'
                               : 'bg-white/5 text-white/40 border-transparent hover:border-white/10'
                           }`}
                         >
@@ -6273,18 +6523,20 @@ export default function App() {
                       ))}
                     </div>
 
-                    <div className="space-y-3 pt-2">
-                      <div className="flex justify-between items-baseline">
-                        <span className="text-[9px] text-white/40 uppercase font-black tracking-widest">{getAmountLabel('movement', droneMovementEffect)}</span>
-                        <span className="font-mono text-[10px] font-black text-white">{Math.round(droneMovementAmount * 100)}%</span>
+                    {droneMovementEffect !== 'none' && (EFFECT_PARAMS[droneMovementEffect] || []).map(paramDef => (
+                      <div key={paramDef.id} className="space-y-2">
+                        <div className="flex justify-between items-baseline">
+                          <span className="text-[9px] text-white/40 uppercase font-black tracking-widest">{paramDef.label}</span>
+                          <span className="font-mono text-[10px] font-black text-white">{Math.round((droneMovementParams[paramDef.id] ?? paramDef.default) * 100)}%</span>
+                        </div>
+                        <input
+                          type="range" min={paramDef.min ?? 0} max={paramDef.max ?? 1} step={paramDef.step ?? 0.01}
+                          value={droneMovementParams[paramDef.id] ?? paramDef.default}
+                          onChange={(e) => setDroneMovementParams(prev => ({ ...prev, [paramDef.id]: parseFloat(e.target.value) }))}
+                          className="w-full accent-emerald-500 h-1 bg-white/10 rounded-lg appearance-none cursor-pointer"
+                        />
                       </div>
-                      <input 
-                        type="range" min="0" max="1" step="0.01"
-                        value={droneMovementAmount} 
-                        onChange={(e) => setDroneMovementAmount(parseFloat(e.target.value))}
-                        className="w-full accent-emerald-500 h-1 bg-white/10 rounded-lg appearance-none cursor-pointer" 
-                      />
-                    </div>
+                    ))}
                   </div>
 
                   {/* Diffusion Module */}
@@ -6298,15 +6550,15 @@ export default function App() {
                         <p className="text-[9px] text-white/40 uppercase tracking-tighter font-bold leading-none">Time & Space</p>
                       </div>
                     </div>
-                    
+
                     <div className="grid grid-cols-3 gap-2">
                       {DIFFUSION_EFFECTS.map((eff) => (
                         <button
                           key={eff.id}
                           onClick={() => setDroneDiffusionEffect(eff.id as any)}
                           className={`px-2 py-3 rounded-xl text-[9px] font-black uppercase tracking-tighter transition-all border ${
-                            droneDiffusionEffect === eff.id 
-                              ? 'bg-emerald-500 text-white border-emerald-500 shadow-lg' 
+                            droneDiffusionEffect === eff.id
+                              ? 'bg-emerald-500 text-white border-emerald-500 shadow-lg'
                               : 'bg-white/5 text-white/40 border-transparent hover:border-white/10'
                           }`}
                         >
@@ -6315,18 +6567,20 @@ export default function App() {
                       ))}
                     </div>
 
-                    <div className="space-y-3 pt-2">
-                      <div className="flex justify-between items-baseline">
-                        <span className="text-[9px] text-white/40 uppercase font-black tracking-widest">{getAmountLabel('diffusion', droneDiffusionEffect)}</span>
-                        <span className="font-mono text-[10px] font-black text-white">{Math.round(droneDiffusionAmount * 100)}%</span>
+                    {droneDiffusionEffect !== 'none' && (EFFECT_PARAMS[droneDiffusionEffect] || []).map(paramDef => (
+                      <div key={paramDef.id} className="space-y-2">
+                        <div className="flex justify-between items-baseline">
+                          <span className="text-[9px] text-white/40 uppercase font-black tracking-widest">{paramDef.label}</span>
+                          <span className="font-mono text-[10px] font-black text-white">{Math.round((droneDiffusionParams[paramDef.id] ?? paramDef.default) * 100)}%</span>
+                        </div>
+                        <input
+                          type="range" min={paramDef.min ?? 0} max={paramDef.max ?? 1} step={paramDef.step ?? 0.01}
+                          value={droneDiffusionParams[paramDef.id] ?? paramDef.default}
+                          onChange={(e) => setDroneDiffusionParams(prev => ({ ...prev, [paramDef.id]: parseFloat(e.target.value) }))}
+                          className="w-full accent-emerald-500 h-1 bg-white/10 rounded-lg appearance-none cursor-pointer"
+                        />
                       </div>
-                      <input 
-                        type="range" min="0" max="1" step="0.01"
-                        value={droneDiffusionAmount} 
-                        onChange={(e) => setDroneDiffusionAmount(parseFloat(e.target.value))}
-                        className="w-full accent-emerald-500 h-1 bg-white/10 rounded-lg appearance-none cursor-pointer" 
-                      />
-                    </div>
+                    ))}
                   </div>
 
                   {/* Texture Module */}
@@ -6340,15 +6594,15 @@ export default function App() {
                         <p className="text-[9px] text-white/40 uppercase tracking-tighter font-bold leading-none">Grit & Noise</p>
                       </div>
                     </div>
-                    
+
                     <div className="grid grid-cols-3 gap-2">
                       {TEXTURE_EFFECTS.map((eff) => (
                         <button
                           key={eff.id}
                           onClick={() => setDroneTextureEffect(eff.id as any)}
                           className={`px-2 py-3 rounded-xl text-[9px] font-black uppercase tracking-tighter transition-all border ${
-                            droneTextureEffect === eff.id 
-                              ? 'bg-emerald-500 text-white border-emerald-500 shadow-lg' 
+                            droneTextureEffect === eff.id
+                              ? 'bg-emerald-500 text-white border-emerald-500 shadow-lg'
                               : 'bg-white/5 text-white/40 border-transparent hover:border-white/10'
                           }`}
                         >
@@ -6357,18 +6611,20 @@ export default function App() {
                       ))}
                     </div>
 
-                    <div className="space-y-3 pt-2">
-                      <div className="flex justify-between items-baseline">
-                        <span className="text-[9px] text-white/40 uppercase font-black tracking-widest">{getAmountLabel('texture', droneTextureEffect)}</span>
-                        <span className="font-mono text-[10px] font-black text-white">{Math.round(droneTextureAmount * 100)}%</span>
+                    {droneTextureEffect !== 'none' && (EFFECT_PARAMS[droneTextureEffect] || []).map(paramDef => (
+                      <div key={paramDef.id} className="space-y-2">
+                        <div className="flex justify-between items-baseline">
+                          <span className="text-[9px] text-white/40 uppercase font-black tracking-widest">{paramDef.label}</span>
+                          <span className="font-mono text-[10px] font-black text-white">{Math.round((droneTextureParams[paramDef.id] ?? paramDef.default) * 100)}%</span>
+                        </div>
+                        <input
+                          type="range" min={paramDef.min ?? 0} max={paramDef.max ?? 1} step={paramDef.step ?? 0.01}
+                          value={droneTextureParams[paramDef.id] ?? paramDef.default}
+                          onChange={(e) => setDroneTextureParams(prev => ({ ...prev, [paramDef.id]: parseFloat(e.target.value) }))}
+                          className="w-full accent-emerald-500 h-1 bg-white/10 rounded-lg appearance-none cursor-pointer"
+                        />
                       </div>
-                      <input 
-                        type="range" min="0" max="1" step="0.01"
-                        value={droneTextureAmount} 
-                        onChange={(e) => setDroneTextureAmount(parseFloat(e.target.value))}
-                        className="w-full accent-emerald-500 h-1 bg-white/10 rounded-lg appearance-none cursor-pointer" 
-                      />
-                    </div>
+                    ))}
                   </div>
                 </div>
               </section>
@@ -6849,7 +7105,7 @@ export default function App() {
                 {/* Sequencer Effects Chain */}
                 <section className="border-t border-white/10 pt-10">
                   <label className="text-[11px] text-white/40 uppercase tracking-[0.3em] block mb-4 font-black">Sequencer Effects Chain</label>
-                  
+
                   <div className="grid grid-cols-1 gap-8">
                     {/* Character Module */}
                     <div className="bg-white/5 p-6 rounded-3xl border border-white/10 space-y-6">
@@ -6862,15 +7118,15 @@ export default function App() {
                           <p className="text-[9px] text-white/40 uppercase tracking-tighter font-bold leading-none">Drive & Saturation</p>
                         </div>
                       </div>
-                      
+
                       <div className="grid grid-cols-3 gap-2">
                         {CHARACTER_EFFECTS.map((eff) => (
                           <button
                             key={eff.id}
                             onClick={() => setSeqCharacterEffect(eff.id as any)}
                             className={`px-2 py-3 rounded-xl text-[9px] font-black uppercase tracking-tighter transition-all border ${
-                              seqCharacterEffect === eff.id 
-                                ? 'bg-emerald-500 text-white border-emerald-500 shadow-lg shadow-emerald-500/20' 
+                              seqCharacterEffect === eff.id
+                                ? 'bg-emerald-500 text-white border-emerald-500 shadow-lg shadow-emerald-500/20'
                                 : 'bg-white/5 text-white/40 border-transparent hover:border-white/10'
                             }`}
                           >
@@ -6879,18 +7135,20 @@ export default function App() {
                         ))}
                       </div>
 
-                      <div className="space-y-3 pt-2">
-                        <div className="flex justify-between items-baseline">
-                          <span className="text-[9px] text-white/40 uppercase font-black tracking-widest">{getAmountLabel('character', seqCharacterEffect)}</span>
-                          <span className="font-mono text-[10px] font-black text-emerald-400">{Math.round(seqCharacterAmount * 100)}%</span>
+                      {seqCharacterEffect !== 'none' && (EFFECT_PARAMS[seqCharacterEffect] || []).map(paramDef => (
+                        <div key={paramDef.id} className="space-y-2">
+                          <div className="flex justify-between items-baseline">
+                            <span className="text-[9px] text-white/40 uppercase font-black tracking-widest">{paramDef.label}</span>
+                            <span className="font-mono text-[10px] font-black text-emerald-400">{Math.round((seqCharacterParams[paramDef.id] ?? paramDef.default) * 100)}%</span>
+                          </div>
+                          <input
+                            type="range" min={paramDef.min ?? 0} max={paramDef.max ?? 1} step={paramDef.step ?? 0.01}
+                            value={seqCharacterParams[paramDef.id] ?? paramDef.default}
+                            onChange={(e) => setSeqCharacterParams(prev => ({ ...prev, [paramDef.id]: parseFloat(e.target.value) }))}
+                            className="w-full accent-emerald-500 h-1 bg-white/10 rounded-lg appearance-none cursor-pointer"
+                          />
                         </div>
-                        <input 
-                          type="range" min="0" max="1" step="0.01"
-                          value={seqCharacterAmount} 
-                          onChange={(e) => setSeqCharacterAmount(parseFloat(e.target.value))}
-                          className="w-full accent-emerald-500 h-1 bg-white/10 rounded-lg appearance-none cursor-pointer" 
-                        />
-                      </div>
+                      ))}
                     </div>
 
                     {/* Movement Module */}
@@ -6904,15 +7162,15 @@ export default function App() {
                           <p className="text-[9px] text-white/40 uppercase tracking-tighter font-bold leading-none">Modulation & Warp</p>
                         </div>
                       </div>
-                      
+
                       <div className="grid grid-cols-3 gap-2">
                         {MOVEMENT_EFFECTS.map((eff) => (
                           <button
                             key={eff.id}
                             onClick={() => setSeqMovementEffect(eff.id as any)}
                             className={`px-2 py-3 rounded-xl text-[9px] font-black uppercase tracking-tighter transition-all border ${
-                              seqMovementEffect === eff.id 
-                                ? 'bg-emerald-500 text-white border-emerald-500 shadow-lg shadow-emerald-500/20' 
+                              seqMovementEffect === eff.id
+                                ? 'bg-emerald-500 text-white border-emerald-500 shadow-lg shadow-emerald-500/20'
                                 : 'bg-white/5 text-white/40 border-transparent hover:border-white/10'
                             }`}
                           >
@@ -6921,18 +7179,20 @@ export default function App() {
                         ))}
                       </div>
 
-                      <div className="space-y-3 pt-2">
-                        <div className="flex justify-between items-baseline">
-                          <span className="text-[9px] text-white/40 uppercase font-black tracking-widest">{getAmountLabel('movement', seqMovementEffect)}</span>
-                          <span className="font-mono text-[10px] font-black text-emerald-400">{Math.round(seqMovementAmount * 100)}%</span>
+                      {seqMovementEffect !== 'none' && (EFFECT_PARAMS[seqMovementEffect] || []).map(paramDef => (
+                        <div key={paramDef.id} className="space-y-2">
+                          <div className="flex justify-between items-baseline">
+                            <span className="text-[9px] text-white/40 uppercase font-black tracking-widest">{paramDef.label}</span>
+                            <span className="font-mono text-[10px] font-black text-emerald-400">{Math.round((seqMovementParams[paramDef.id] ?? paramDef.default) * 100)}%</span>
+                          </div>
+                          <input
+                            type="range" min={paramDef.min ?? 0} max={paramDef.max ?? 1} step={paramDef.step ?? 0.01}
+                            value={seqMovementParams[paramDef.id] ?? paramDef.default}
+                            onChange={(e) => setSeqMovementParams(prev => ({ ...prev, [paramDef.id]: parseFloat(e.target.value) }))}
+                            className="w-full accent-emerald-500 h-1 bg-white/10 rounded-lg appearance-none cursor-pointer"
+                          />
                         </div>
-                        <input 
-                          type="range" min="0" max="1" step="0.01"
-                          value={seqMovementAmount} 
-                          onChange={(e) => setSeqMovementAmount(parseFloat(e.target.value))}
-                          className="w-full accent-emerald-500 h-1 bg-white/10 rounded-lg appearance-none cursor-pointer" 
-                        />
-                      </div>
+                      ))}
                     </div>
 
                     {/* Diffusion Module */}
@@ -6946,15 +7206,15 @@ export default function App() {
                           <p className="text-[9px] text-white/40 uppercase tracking-tighter font-bold leading-none">Time & Space</p>
                         </div>
                       </div>
-                      
+
                       <div className="grid grid-cols-3 gap-2">
                         {DIFFUSION_EFFECTS.map((eff) => (
                           <button
                             key={eff.id}
                             onClick={() => setSeqDiffusionEffect(eff.id as any)}
                             className={`px-2 py-3 rounded-xl text-[9px] font-black uppercase tracking-tighter transition-all border ${
-                              seqDiffusionEffect === eff.id 
-                                ? 'bg-emerald-500 text-white border-emerald-500 shadow-lg shadow-emerald-500/20' 
+                              seqDiffusionEffect === eff.id
+                                ? 'bg-emerald-500 text-white border-emerald-500 shadow-lg shadow-emerald-500/20'
                                 : 'bg-white/5 text-white/40 border-transparent hover:border-white/10'
                             }`}
                           >
@@ -6963,18 +7223,20 @@ export default function App() {
                         ))}
                       </div>
 
-                      <div className="space-y-3 pt-2">
-                        <div className="flex justify-between items-baseline">
-                          <span className="text-[9px] text-white/40 uppercase font-black tracking-widest">{getAmountLabel('diffusion', seqDiffusionEffect)}</span>
-                          <span className="font-mono text-[10px] font-black text-emerald-400">{Math.round(seqDiffusionAmount * 100)}%</span>
+                      {seqDiffusionEffect !== 'none' && (EFFECT_PARAMS[seqDiffusionEffect] || []).map(paramDef => (
+                        <div key={paramDef.id} className="space-y-2">
+                          <div className="flex justify-between items-baseline">
+                            <span className="text-[9px] text-white/40 uppercase font-black tracking-widest">{paramDef.label}</span>
+                            <span className="font-mono text-[10px] font-black text-emerald-400">{Math.round((seqDiffusionParams[paramDef.id] ?? paramDef.default) * 100)}%</span>
+                          </div>
+                          <input
+                            type="range" min={paramDef.min ?? 0} max={paramDef.max ?? 1} step={paramDef.step ?? 0.01}
+                            value={seqDiffusionParams[paramDef.id] ?? paramDef.default}
+                            onChange={(e) => setSeqDiffusionParams(prev => ({ ...prev, [paramDef.id]: parseFloat(e.target.value) }))}
+                            className="w-full accent-emerald-500 h-1 bg-white/10 rounded-lg appearance-none cursor-pointer"
+                          />
                         </div>
-                        <input 
-                          type="range" min="0" max="1" step="0.01"
-                          value={seqDiffusionAmount} 
-                          onChange={(e) => setSeqDiffusionAmount(parseFloat(e.target.value))}
-                          className="w-full accent-emerald-500 h-1 bg-white/10 rounded-lg appearance-none cursor-pointer" 
-                        />
-                      </div>
+                      ))}
                     </div>
 
                     {/* Texture Module */}
@@ -6988,15 +7250,15 @@ export default function App() {
                           <p className="text-[9px] text-white/40 uppercase tracking-tighter font-bold leading-none">Grit & Noise</p>
                         </div>
                       </div>
-                      
+
                       <div className="grid grid-cols-3 gap-2">
                         {TEXTURE_EFFECTS.map((eff) => (
                           <button
                             key={eff.id}
                             onClick={() => setSeqTextureEffect(eff.id as any)}
                             className={`px-2 py-3 rounded-xl text-[9px] font-black uppercase tracking-tighter transition-all border ${
-                              seqTextureEffect === eff.id 
-                                ? 'bg-emerald-500 text-white border-emerald-500 shadow-lg' 
+                              seqTextureEffect === eff.id
+                                ? 'bg-emerald-500 text-white border-emerald-500 shadow-lg'
                                 : 'bg-white/5 text-white/40 border-transparent hover:border-white/10'
                             }`}
                           >
@@ -7005,18 +7267,20 @@ export default function App() {
                         ))}
                       </div>
 
-                      <div className="space-y-3 pt-2">
-                        <div className="flex justify-between items-baseline">
-                          <span className="text-[9px] text-white/40 uppercase font-black tracking-widest">{getAmountLabel('texture', seqTextureEffect)}</span>
-                          <span className="font-mono text-[10px] font-black text-white">{Math.round(seqTextureAmount * 100)}%</span>
+                      {seqTextureEffect !== 'none' && (EFFECT_PARAMS[seqTextureEffect] || []).map(paramDef => (
+                        <div key={paramDef.id} className="space-y-2">
+                          <div className="flex justify-between items-baseline">
+                            <span className="text-[9px] text-white/40 uppercase font-black tracking-widest">{paramDef.label}</span>
+                            <span className="font-mono text-[10px] font-black text-white">{Math.round((seqTextureParams[paramDef.id] ?? paramDef.default) * 100)}%</span>
+                          </div>
+                          <input
+                            type="range" min={paramDef.min ?? 0} max={paramDef.max ?? 1} step={paramDef.step ?? 0.01}
+                            value={seqTextureParams[paramDef.id] ?? paramDef.default}
+                            onChange={(e) => setSeqTextureParams(prev => ({ ...prev, [paramDef.id]: parseFloat(e.target.value) }))}
+                            className="w-full accent-emerald-500 h-1 bg-white/10 rounded-lg appearance-none cursor-pointer"
+                          />
                         </div>
-                        <input 
-                          type="range" min="0" max="1" step="0.01"
-                          value={seqTextureAmount} 
-                          onChange={(e) => setSeqTextureAmount(parseFloat(e.target.value))}
-                          className="w-full accent-emerald-500 h-1 bg-white/10 rounded-lg appearance-none cursor-pointer" 
-                        />
-                      </div>
+                      ))}
                     </div>
                   </div>
                 </section>
@@ -8200,7 +8464,7 @@ export default function App() {
 
               <section className="border-t border-white/10 pt-10">
                 <label className="text-[11px] text-white/40 uppercase tracking-[0.3em] block mb-4 font-black">Effects Chain</label>
-                
+
                 <div className="grid grid-cols-1 gap-8">
                   {/* Character Module */}
                   <div className="bg-white/5 p-6 rounded-3xl border border-white/10 space-y-6">
@@ -8213,15 +8477,15 @@ export default function App() {
                         <p className="text-[9px] text-white/40 uppercase tracking-tighter font-bold leading-none">Drive & Saturation</p>
                       </div>
                     </div>
-                    
+
                     <div className="grid grid-cols-3 gap-2">
                       {CHARACTER_EFFECTS.map((eff) => (
                         <button
                           key={eff.id}
                           onClick={() => setCharacterEffect(eff.id as any)}
                           className={`px-2 py-3 rounded-xl text-[9px] font-black uppercase tracking-tighter transition-all border ${
-                            characterEffect === eff.id 
-                              ? 'bg-emerald-500 text-white border-emerald-500 shadow-lg shadow-emerald-500/20' 
+                            characterEffect === eff.id
+                              ? 'bg-emerald-500 text-white border-emerald-500 shadow-lg shadow-emerald-500/20'
                               : 'bg-white/5 text-white/40 border-transparent hover:border-white/10'
                           }`}
                         >
@@ -8230,18 +8494,20 @@ export default function App() {
                       ))}
                     </div>
 
-                    <div className="space-y-3 pt-2">
-                      <div className="flex justify-between items-baseline">
-                        <span className="text-[9px] text-white/40 uppercase font-black tracking-widest">{getAmountLabel('character', characterEffect)}</span>
-                        <span className="font-mono text-[10px] font-black text-white">{Math.round(characterAmount * 100)}%</span>
+                    {characterEffect !== 'none' && (EFFECT_PARAMS[characterEffect] || []).map(paramDef => (
+                      <div key={paramDef.id} className="space-y-2">
+                        <div className="flex justify-between items-baseline">
+                          <span className="text-[9px] text-white/40 uppercase font-black tracking-widest">{paramDef.label}</span>
+                          <span className="font-mono text-[10px] font-black text-white">{Math.round((characterParams[paramDef.id] ?? paramDef.default) * 100)}%</span>
+                        </div>
+                        <input
+                          type="range" min={paramDef.min ?? 0} max={paramDef.max ?? 1} step={paramDef.step ?? 0.01}
+                          value={characterParams[paramDef.id] ?? paramDef.default}
+                          onChange={(e) => setCharacterParams(prev => ({ ...prev, [paramDef.id]: parseFloat(e.target.value) }))}
+                          className="w-full accent-emerald-500 h-1 bg-white/10 rounded-lg appearance-none cursor-pointer"
+                        />
                       </div>
-                      <input 
-                        type="range" min="0" max="1" step="0.01"
-                        value={characterAmount} 
-                        onChange={(e) => setCharacterAmount(parseFloat(e.target.value))}
-                        className="w-full accent-emerald-500 h-1 bg-white/10 rounded-lg appearance-none cursor-pointer" 
-                      />
-                    </div>
+                    ))}
                   </div>
 
                   {/* Movement Module */}
@@ -8255,15 +8521,15 @@ export default function App() {
                         <p className="text-[9px] text-white/40 uppercase tracking-tighter font-bold leading-none">Modulation & Warp</p>
                       </div>
                     </div>
-                    
+
                     <div className="grid grid-cols-3 gap-2">
                       {MOVEMENT_EFFECTS.map((eff) => (
                         <button
                           key={eff.id}
                           onClick={() => setMovementEffect(eff.id as any)}
                           className={`px-2 py-3 rounded-xl text-[9px] font-black uppercase tracking-tighter transition-all border ${
-                            movementEffect === eff.id 
-                              ? 'bg-emerald-500 text-white border-emerald-500 shadow-lg shadow-emerald-500/20' 
+                            movementEffect === eff.id
+                              ? 'bg-emerald-500 text-white border-emerald-500 shadow-lg shadow-emerald-500/20'
                               : 'bg-white/5 text-white/40 border-transparent hover:border-white/10'
                           }`}
                         >
@@ -8272,18 +8538,20 @@ export default function App() {
                       ))}
                     </div>
 
-                    <div className="space-y-3 pt-2">
-                      <div className="flex justify-between items-baseline">
-                        <span className="text-[9px] text-white/40 uppercase font-black tracking-widest">{getAmountLabel('movement', movementEffect)}</span>
-                        <span className="font-mono text-[10px] font-black text-white">{Math.round(movementAmount * 100)}%</span>
+                    {movementEffect !== 'none' && (EFFECT_PARAMS[movementEffect] || []).map(paramDef => (
+                      <div key={paramDef.id} className="space-y-2">
+                        <div className="flex justify-between items-baseline">
+                          <span className="text-[9px] text-white/40 uppercase font-black tracking-widest">{paramDef.label}</span>
+                          <span className="font-mono text-[10px] font-black text-white">{Math.round((movementParams[paramDef.id] ?? paramDef.default) * 100)}%</span>
+                        </div>
+                        <input
+                          type="range" min={paramDef.min ?? 0} max={paramDef.max ?? 1} step={paramDef.step ?? 0.01}
+                          value={movementParams[paramDef.id] ?? paramDef.default}
+                          onChange={(e) => setMovementParams(prev => ({ ...prev, [paramDef.id]: parseFloat(e.target.value) }))}
+                          className="w-full accent-emerald-500 h-1 bg-white/10 rounded-lg appearance-none cursor-pointer"
+                        />
                       </div>
-                      <input 
-                        type="range" min="0" max="1" step="0.01"
-                        value={movementAmount} 
-                        onChange={(e) => setMovementAmount(parseFloat(e.target.value))}
-                        className="w-full accent-emerald-500 h-1 bg-white/10 rounded-lg appearance-none cursor-pointer" 
-                      />
-                    </div>
+                    ))}
                   </div>
 
                   {/* Diffusion Module */}
@@ -8297,15 +8565,15 @@ export default function App() {
                         <p className="text-[9px] text-white/40 uppercase tracking-tighter font-bold leading-none">Time & Space</p>
                       </div>
                     </div>
-                    
+
                     <div className="grid grid-cols-3 gap-2">
                       {DIFFUSION_EFFECTS.map((eff) => (
                         <button
                           key={eff.id}
                           onClick={() => setDiffusionEffect(eff.id as any)}
                           className={`px-2 py-3 rounded-xl text-[9px] font-black uppercase tracking-tighter transition-all border ${
-                            diffusionEffect === eff.id 
-                              ? 'bg-emerald-500 text-white border-emerald-500 shadow-lg shadow-emerald-500/20' 
+                            diffusionEffect === eff.id
+                              ? 'bg-emerald-500 text-white border-emerald-500 shadow-lg shadow-emerald-500/20'
                               : 'bg-white/5 text-white/40 border-transparent hover:border-white/10'
                           }`}
                         >
@@ -8314,18 +8582,20 @@ export default function App() {
                       ))}
                     </div>
 
-                    <div className="space-y-3 pt-2">
-                      <div className="flex justify-between items-baseline">
-                        <span className="text-[9px] text-white/40 uppercase font-black tracking-widest">{getAmountLabel('diffusion', diffusionEffect)}</span>
-                        <span className="font-mono text-[10px] font-black text-white">{Math.round(diffusionAmount * 100)}%</span>
+                    {diffusionEffect !== 'none' && (EFFECT_PARAMS[diffusionEffect] || []).map(paramDef => (
+                      <div key={paramDef.id} className="space-y-2">
+                        <div className="flex justify-between items-baseline">
+                          <span className="text-[9px] text-white/40 uppercase font-black tracking-widest">{paramDef.label}</span>
+                          <span className="font-mono text-[10px] font-black text-white">{Math.round((diffusionParams[paramDef.id] ?? paramDef.default) * 100)}%</span>
+                        </div>
+                        <input
+                          type="range" min={paramDef.min ?? 0} max={paramDef.max ?? 1} step={paramDef.step ?? 0.01}
+                          value={diffusionParams[paramDef.id] ?? paramDef.default}
+                          onChange={(e) => setDiffusionParams(prev => ({ ...prev, [paramDef.id]: parseFloat(e.target.value) }))}
+                          className="w-full accent-emerald-500 h-1 bg-white/10 rounded-lg appearance-none cursor-pointer"
+                        />
                       </div>
-                      <input 
-                        type="range" min="0" max="1" step="0.01"
-                        value={diffusionAmount} 
-                        onChange={(e) => setDiffusionAmount(parseFloat(e.target.value))}
-                        className="w-full accent-emerald-500 h-1 bg-white/10 rounded-lg appearance-none cursor-pointer" 
-                      />
-                    </div>
+                    ))}
                   </div>
 
                   {/* Texture Module */}
@@ -8339,15 +8609,15 @@ export default function App() {
                         <p className="text-[9px] text-white/40 uppercase tracking-tighter font-bold leading-none">Filter & Grit</p>
                       </div>
                     </div>
-                    
+
                     <div className="grid grid-cols-3 gap-2">
                       {TEXTURE_EFFECTS.map((eff) => (
                         <button
                           key={eff.id}
                           onClick={() => setTextureEffect(eff.id as any)}
                           className={`px-2 py-3 rounded-xl text-[9px] font-black uppercase tracking-tighter transition-all border ${
-                            textureEffect === eff.id 
-                              ? 'bg-emerald-500 text-white border-emerald-500 shadow-lg shadow-emerald-500/20' 
+                            textureEffect === eff.id
+                              ? 'bg-emerald-500 text-white border-emerald-500 shadow-lg shadow-emerald-500/20'
                               : 'bg-white/5 text-white/40 border-transparent hover:border-white/10'
                           }`}
                         >
@@ -8356,18 +8626,20 @@ export default function App() {
                       ))}
                     </div>
 
-                    <div className="space-y-3 pt-2">
-                      <div className="flex justify-between items-baseline">
-                        <span className="text-[9px] text-white/40 uppercase font-black tracking-widest">{getAmountLabel('texture', textureEffect)}</span>
-                        <span className="font-mono text-[10px] font-black text-white">{Math.round(textureAmount * 100)}%</span>
+                    {textureEffect !== 'none' && (EFFECT_PARAMS[textureEffect] || []).map(paramDef => (
+                      <div key={paramDef.id} className="space-y-2">
+                        <div className="flex justify-between items-baseline">
+                          <span className="text-[9px] text-white/40 uppercase font-black tracking-widest">{paramDef.label}</span>
+                          <span className="font-mono text-[10px] font-black text-white">{Math.round((textureParams[paramDef.id] ?? paramDef.default) * 100)}%</span>
+                        </div>
+                        <input
+                          type="range" min={paramDef.min ?? 0} max={paramDef.max ?? 1} step={paramDef.step ?? 0.01}
+                          value={textureParams[paramDef.id] ?? paramDef.default}
+                          onChange={(e) => setTextureParams(prev => ({ ...prev, [paramDef.id]: parseFloat(e.target.value) }))}
+                          className="w-full accent-emerald-500 h-1 bg-white/10 rounded-lg appearance-none cursor-pointer"
+                        />
                       </div>
-                      <input 
-                        type="range" min="0" max="1" step="0.01"
-                        value={textureAmount} 
-                        onChange={(e) => setTextureAmount(parseFloat(e.target.value))}
-                        className="w-full accent-emerald-500 h-1 bg-white/10 rounded-lg appearance-none cursor-pointer" 
-                      />
-                    </div>
+                    ))}
                   </div>
                 </div>
               </section>
