@@ -1286,19 +1286,19 @@ const PATCHES = [
     description: "Rich, warm tones fading into a soft twilight glow.",
     icon: Clock,
     settings: {
-      baseFreq: 146.83, freqRange: 293.66, freqMod: 90, ampMod: 0.85, cutoffMod: 1800, qMod: 5,
+      baseFreq: 146.83, freqRange: 293.66, freqMod: 90, ampMod: 0.55, cutoffMod: 1800, qMod: 4,
       scanSpeed: 0.4, scanScale: 1.2, scanCenterX: 0.5, scanCenterY: 0.5,
       formulaX: "w/2 + Math.sin(t*0.35 + i*0.35) * w/4", formulaY: "h/2 + Math.cos(t*0.25 + i*0.3) * h/4",
       activePreset: 2, enabledVoices: new Array(16).fill(true), isSequencerEnabled: false, bpm: 68,
       scaleName: 'Dorian' as const, rootNoteIndex: 2, isEvolving: true, mutationAmount: 0.05,
       sequenceLength: 32, quantizeAmount: 1.0,
-      characterEffect: 'drive' as const, movementEffect: 'tremolo' as const,
+      characterEffect: 'sweeten' as const, movementEffect: 'tremolo' as const,
       diffusionEffect: 'reels' as const, textureEffect: 'filter' as const,
-      characterParams: { drive: 0.25, tone: 0.55, mix: 0.7 },
-      movementParams: { rate: 0.2, depth: 0.35 },
-      diffusionParams: { time: 0.55, feedback: 0.5, wow: 0.35, tone: 0.5 },
-      textureParams: { cutoff: 0.4, resonance: 0.2, mode: 0.0 },
-      adsr: { attack: 1.2, decay: 0.7, sustain: 0.65, release: 2.0 }
+      characterParams: { compression: 0.4, warmth: 0.6, bass: 0.55 },
+      movementParams: { rate: 0.15, depth: 0.25 },
+      diffusionParams: { time: 0.45, feedback: 0.25, wow: 0.2, tone: 0.6 },
+      textureParams: { cutoff: 0.45, resonance: 0.15, mode: 0.0 },
+      adsr: { attack: 1.5, decay: 0.8, sustain: 0.6, release: 2.5 }
     }
   },
   {
