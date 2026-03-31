@@ -8,8 +8,7 @@ const firebaseConfig = {
   storageBucket: "chromesthesia-app.firebasestorage.app",
   messagingSenderId: "893760100292",
   appId: "1:893760100292:web:bf7dcd683e011768aaf691",
-  // measurementId will be available after enabling GA4 in Firebase Console
-  // measurementId: "G-XXXXXXXXXX",
+  measurementId: "G-VM9HTQRLCE",
 };
 
 const app = initializeApp(firebaseConfig);
