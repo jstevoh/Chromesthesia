@@ -827,7 +827,7 @@ const PATCHES = [
     description: "Intense, radiating heat with aggressive harmonic distortion.",
     icon: Zap,
     settings: {
-      baseFreq: 110, freqRange: 880, freqMod: 500, ampMod: 2.0, cutoffMod: 8000, qMod: 20,
+      baseFreq: 110, freqRange: 880, freqMod: 500, ampMod: 1.0, cutoffMod: 8000, qMod: 8,
       scanSpeed: 3.0, scanScale: 0.5, scanCenterX: 0.5, scanCenterY: 0.5,
       formulaX: "w/2 + Math.tan(t) * 10", formulaY: "h/2 + Math.sin(t*10) * h/2",
       activePreset: 0, enabledVoices: [true, false, true, false, true, false, true, false, true, false, true, false, true, false, true, false],
@@ -846,7 +846,7 @@ const PATCHES = [
     description: "Pure, geometric tones with precise, mathematical reflections.",
     icon: Layers,
     settings: {
-      baseFreq: 880, freqRange: 1760, freqMod: 100, ampMod: 0.8, cutoffMod: 10000, qMod: 30,
+      baseFreq: 880, freqRange: 1760, freqMod: 100, ampMod: 0.8, cutoffMod: 10000, qMod: 10,
       scanSpeed: 0.5, scanScale: 1.0, scanCenterX: 0.5, scanCenterY: 0.5,
       formulaX: "((i*w/n) + t*100) % w", formulaY: "((i*h/n) + t*50) % h",
       activePreset: 1, enabledVoices: new Array(16).fill(true), isSequencerEnabled: true, bpm: 120,
@@ -922,7 +922,7 @@ const PATCHES = [
     description: "Flickering, distant light patterns with cosmic delay trails.",
     icon: Sparkles,
     settings: {
-      baseFreq: 1320, freqRange: 2640, freqMod: 50, ampMod: 0.7, cutoffMod: 12000, qMod: 40,
+      baseFreq: 1320, freqRange: 2640, freqMod: 50, ampMod: 0.7, cutoffMod: 12000, qMod: 10,
       scanSpeed: 0.3, scanScale: 1.8, scanCenterX: 0.5, scanCenterY: 0.5,
       formulaX: "Math.random() * w", formulaY: "Math.random() * h",
       activePreset: 5, enabledVoices: [true, false, false, true, false, true, true, false, true, false, false, true, false, true, true, false],
@@ -998,7 +998,7 @@ const PATCHES = [
     description: "Cascading, rhythmic pulses inspired by vertical data streams.",
     icon: Cloud,
     settings: {
-      baseFreq: 440, freqRange: 880, freqMod: 250, ampMod: 1.4, cutoffMod: 4500, qMod: 18,
+      baseFreq: 440, freqRange: 880, freqMod: 250, ampMod: 1.4, cutoffMod: 4500, qMod: 8,
       scanSpeed: 1.8, scanScale: 0.6, scanCenterX: 0.5, scanCenterY: 0.5,
       formulaX: "(i * w / n)", formulaY: "(t * 800 + i * 50) % h",
       activePreset: 0, enabledVoices: [true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true],
@@ -1017,7 +1017,7 @@ const PATCHES = [
     description: "Multi-faceted, bright harmonic reflections with rapid shifts.",
     icon: Target,
     settings: {
-      baseFreq: 1760, freqRange: 3520, freqMod: 150, ampMod: 0.9, cutoffMod: 15000, qMod: 50,
+      baseFreq: 1760, freqRange: 3520, freqMod: 150, ampMod: 0.9, cutoffMod: 15000, qMod: 10,
       scanSpeed: 0.9, scanScale: 0.4, scanCenterX: 0.5, scanCenterY: 0.5,
       formulaX: "w/2 + Math.sin(t*5 + i) * w/3", formulaY: "h/2 + Math.cos(t*4 + i) * h/3",
       activePreset: 6, enabledVoices: [true, false, true, false, true, false, true, false, true, false, true, false, true, false, true, false],
@@ -1055,7 +1055,7 @@ const PATCHES = [
     description: "Highly energetic, unstable electrical discharges with rapid modulation.",
     icon: Zap,
     settings: {
-      baseFreq: 220, freqRange: 1760, freqMod: 600, ampMod: 2.5, cutoffMod: 9000, qMod: 25,
+      baseFreq: 220, freqRange: 1760, freqMod: 600, ampMod: 1.2, cutoffMod: 9000, qMod: 10,
       scanSpeed: 4.0, scanScale: 0.3, scanCenterX: 0.5, scanCenterY: 0.5,
       formulaX: "Math.random() * w", formulaY: "(t * 2000) % h",
       activePreset: 0, enabledVoices: [true, true, false, true, true, false, true, true, false, true, true, false, true, true, false, true],
@@ -1093,7 +1093,7 @@ const PATCHES = [
     description: "Glitched, evolving digital consciousness with rhythmic logic.",
     icon: Cpu,
     settings: {
-      baseFreq: 440, freqRange: 880, freqMod: 300, ampMod: 1.6, cutoffMod: 5500, qMod: 20,
+      baseFreq: 440, freqRange: 880, freqMod: 300, ampMod: 1.6, cutoffMod: 5500, qMod: 8,
       scanSpeed: 1.4, scanScale: 0.8, scanCenterX: 0.5, scanCenterY: 0.5,
       formulaX: "(t * 400) % w", formulaY: "(Math.floor(t * 10) % 10) * h / 10",
       activePreset: 0, enabledVoices: [true, false, true, true, false, true, true, false, true, true, false, true, true, false, true, true],
@@ -1150,7 +1150,7 @@ const PATCHES = [
     description: "Blinding, explosive harmonic expansion with massive trails.",
     icon: Sparkles,
     settings: {
-      baseFreq: 440, freqRange: 3520, freqMod: 800, ampMod: 2.2, cutoffMod: 12000, qMod: 15,
+      baseFreq: 440, freqRange: 3520, freqMod: 800, ampMod: 1.1, cutoffMod: 12000, qMod: 10,
       scanSpeed: 5.0, scanScale: 0.2, scanCenterX: 0.5, scanCenterY: 0.5,
       formulaX: "w/2 + Math.tan(t*2) * 5", formulaY: "h/2 + Math.tan(t*3) * 5",
       activePreset: 0, enabledVoices: [true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true],
@@ -2793,12 +2793,13 @@ export default function App() {
     textIn.connect(textOut);
     textOut.connect(masterGain);
     // Safety limiter — prevents clipping from effects, resonant filters, feedback loops
+    // Gentler settings to avoid pumping/breathing that masks tonal content
     const limiter = ctx.createDynamicsCompressor();
-    limiter.threshold.value = -3;
-    limiter.knee.value = 2;
-    limiter.ratio.value = 20;
-    limiter.attack.value = 0.001;
-    limiter.release.value = 0.1;
+    limiter.threshold.value = -6;
+    limiter.knee.value = 6;
+    limiter.ratio.value = 8;
+    limiter.attack.value = 0.01;
+    limiter.release.value = 0.15;
 
     // === Master Bus Effects Chain ===
     // masterGain → busFilter → busSat → busComp → [reverbSend+dry] → finalGain
@@ -4994,7 +4995,13 @@ export default function App() {
           }
 
           const ampTrait = traits[voiceMapping.amplitude];
-          const isTriggered = ampTrait > triggerThreshold;
+          // Hysteresis: require higher brightness to trigger ON, lower to trigger OFF
+          // This prevents rapid chattering at light/dark boundaries
+          const onThreshold = triggerThreshold;
+          const offThreshold = Math.max(0.02, triggerThreshold * 0.6);
+          const isTriggered = voiceStatesRef.current[i]
+            ? ampTrait > offThreshold   // already on: stay on until well below threshold
+            : ampTrait > onThreshold;   // currently off: need to exceed threshold to turn on
 
           // Standard scanning synthesis for all voices
           osc.frequency.setTargetAtTime(freq, audioNow, 0.05);
@@ -5003,29 +5010,39 @@ export default function App() {
           if (isTriggered && !voiceStatesRef.current[i]) {
             // GATE ON: Attack -> Decay -> Sustain
             voiceStatesRef.current[i] = true;
-            const attackTime = Math.max(0.005, voiceAdsr.attack * traits[voiceMapping.attack] * 2);
-            const decayTime = Math.max(0.005, voiceAdsr.decay * traits[voiceMapping.decay] * 2);
-            const sustainLevel = voiceAdsr.sustain * traits[voiceMapping.sustain];
-            const peakLevel = ampTrait * (1 / SAMPLE_POINTS) * ampMod * (isMuted ? 0 : 1);
+            // Minimum 30ms attack to prevent clicks/buzzing from rapid gating
+            const attackTime = Math.max(0.03, voiceAdsr.attack * traits[voiceMapping.attack] * 2);
+            const decayTime = Math.max(0.02, voiceAdsr.decay * traits[voiceMapping.decay] * 2);
+            const sustainLevel = Math.max(0.1, voiceAdsr.sustain * traits[voiceMapping.sustain]);
+            // Increase per-voice gain: 2.5/SAMPLE_POINTS instead of 1/SAMPLE_POINTS
+            // so tonal content is audible above filter resonance
+            const peakLevel = ampTrait * (2.5 / SAMPLE_POINTS) * ampMod * (isMuted ? 0 : 1);
 
             gain.gain.cancelScheduledValues(audioNow);
             gain.gain.setValueAtTime(gain.gain.value, audioNow);
             gain.gain.linearRampToValueAtTime(peakLevel, audioNow + attackTime);
             gain.gain.linearRampToValueAtTime(peakLevel * sustainLevel, audioNow + attackTime + decayTime);
           } else if (!isTriggered && voiceStatesRef.current[i]) {
-            // GATE OFF: Release
+            // GATE OFF: Release — minimum 50ms to avoid clicks
             voiceStatesRef.current[i] = false;
-            const releaseTime = Math.max(0.005, voiceAdsr.release * traits[voiceMapping.release] * 3);
+            const releaseTime = Math.max(0.05, voiceAdsr.release * traits[voiceMapping.release] * 3);
             gain.gain.cancelScheduledValues(audioNow);
             gain.gain.setValueAtTime(gain.gain.value, audioNow);
             gain.gain.linearRampToValueAtTime(0, audioNow + releaseTime);
+          } else if (isTriggered && voiceStatesRef.current[i]) {
+            // SUSTAINING: smoothly track amplitude changes instead of ignoring them
+            const targetLevel = ampTrait * (2.5 / SAMPLE_POINTS) * ampMod * (isMuted ? 0 : 1);
+            const sustainLevel = Math.max(0.1, voiceAdsr.sustain * traits[voiceMapping.sustain]);
+            gain.gain.setTargetAtTime(targetLevel * sustainLevel, audioNow, 0.08);
           }
 
           const cutoffTrait = traits[voiceMapping.cutoff];
-          filter.frequency.setTargetAtTime(500 + cutoffTrait * cutoffMod, audioNow, 0.05);
+          // Raise minimum cutoff to 800Hz so fundamentals aren't buried
+          filter.frequency.setTargetAtTime(800 + cutoffTrait * cutoffMod, audioNow, 0.05);
 
           const qTrait = traits[voiceMapping.q];
-          filter.Q.setTargetAtTime(qTrait * qMod, audioNow, 0.05);
+          // Cap Q at 12 to prevent extreme resonance that creates noise
+          filter.Q.setTargetAtTime(Math.min(12, qTrait * qMod), audioNow, 0.05);
 
           // filter.type is 'lowpass' by default and never changes — no need to set it each frame
 
