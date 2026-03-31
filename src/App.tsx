@@ -2418,7 +2418,7 @@ export default function App() {
   const [droneSequencerSyncToGlobal, setDroneSequencerSyncToGlobal] = useState(false);
   const [isScanSpeedSynced, setIsScanSpeedSynced] = useState(false);
 
-  const [droneSequencerOverallVolume, setDroneSequencerOverallVolume] = useState(0.8);
+  const [droneSequencerOverallVolume, setDroneSequencerOverallVolume] = useState(1.2);
   const droneSequencerOverallVolumeRef = useRef(droneSequencerOverallVolume);
   useEffect(() => {
     droneSequencerOverallVolumeRef.current = droneSequencerOverallVolume;
@@ -2963,7 +2963,7 @@ export default function App() {
     const droneReverbGain = ctx.createGain();
     
     droneUnitGain.gain.value = droneMasterVolume;
-    droneSeqGain.gain.value = 0.8; // Default for sequencer tracks
+    droneSeqGain.gain.value = 1.2; // Sequencer master gain (higher to cut through scanner)
     droneSaturationNode.curve = makeDistortionCurve(droneSaturation * 100);
     droneReverbGain.gain.value = droneReverbSend;
 
@@ -5246,8 +5246,7 @@ export default function App() {
 
   // Drone Sequencer Loop
   useEffect(() => {
-    // Stop sequencer when drone is disabled, sequencer is disabled, or playback stops
-    if (!isPlaying || !isDroneSequencerEnabled || !isDroneEnabled || !audioContextRef.current || droneSequencerVoicesRef.current.length === 0) {
+    if (!isPlaying || !isDroneSequencerEnabled || !audioContextRef.current || droneSequencerVoicesRef.current.length === 0) {
       if (audioContextRef.current) {
         const now = audioContextRef.current.currentTime;
         droneSequencerVoicesRef.current.forEach(v => v.gain.gain.setTargetAtTime(0, now, 0.3));
@@ -5361,7 +5360,7 @@ export default function App() {
 
     animationFrameId = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(animationFrameId);
-  }, [isPlaying, isDroneEnabled, isDroneSequencerEnabled, droneSequencerBpm, droneSequencerLinkToMatrix, scaleName, rootNoteIndex, adjustedScale, droneSequencerSwing, isSequencerGenerative, sequencerMutationRate, droneSequencerSyncToGlobal, bpm]);
+  }, [isPlaying, isDroneSequencerEnabled, droneSequencerBpm, droneSequencerLinkToMatrix, scaleName, rootNoteIndex, adjustedScale, droneSequencerSwing, isSequencerGenerative, sequencerMutationRate, droneSequencerSyncToGlobal, bpm]);
 
   // Optical Synth Evolution Effect
   useEffect(() => {
@@ -5950,6 +5949,8 @@ export default function App() {
                 onClick={async () => {
                   const nextState = !isDroneEnabled;
                   setIsDroneEnabled(nextState);
+                  // When disabling drone, also stop the sequencer
+                  if (!nextState) setIsDroneSequencerEnabled(false);
                   if (nextState && !isPlaying) {
                     await initAudio();
                     setIsPlaying(true);
@@ -6635,7 +6636,11 @@ export default function App() {
               </div>
               <div className="flex items-center gap-3">
                 <button 
-                  onClick={() => setIsDroneEnabled(!isDroneEnabled)}
+                  onClick={() => {
+                    const nextState = !isDroneEnabled;
+                    setIsDroneEnabled(nextState);
+                    if (!nextState) setIsDroneSequencerEnabled(false);
+                  }}
                   className={`w-8 h-4 rounded-full relative transition-colors ${isDroneEnabled ? 'bg-emerald-500' : 'bg-white/10'}`}
                 >
                   <div className={`absolute top-0.5 w-3 h-3 rounded-full bg-white transition-all ${isDroneEnabled ? 'left-4.5' : 'left-0.5'}`} />
@@ -6653,6 +6658,8 @@ export default function App() {
                       onClick={async () => {
                         const nextState = !isDroneEnabled;
                         setIsDroneEnabled(nextState);
+                        // When disabling drone, also stop the sequencer
+                        if (!nextState) setIsDroneSequencerEnabled(false);
                         if (nextState && !isPlaying) {
                           await initAudio();
                           setIsPlaying(true);
