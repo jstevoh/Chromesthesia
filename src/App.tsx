@@ -3545,12 +3545,13 @@ export default function App() {
       try {
         const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
         webcamStreamRef.current = stream;
-        
-        setIsWebcamActive(true);
-        setMediaType('video'); // Treat webcam as video for sampling
-        trackWebcamActivated();
+
+        // Clear existing media BEFORE activating webcam to prevent z-fighting
         setImage(null);
         setVideoUrl(null);
+        setMediaType('video'); // Treat webcam as video for sampling
+        setIsWebcamActive(true);
+        trackWebcamActivated();
         setIsLoaded(true);
         setIsPlaying(true);
         initAudio();
@@ -5208,11 +5209,11 @@ export default function App() {
               <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-20">
               </div>
             )}
-            {mediaType === 'image' && image && (
-              <img 
+            {!isWebcamActive && mediaType === 'image' && image && (
+              <img
                 ref={imageRef}
-                src={image} 
-                alt="Background" 
+                src={image}
+                alt="Background"
                 referrerPolicy="no-referrer"
                 className="w-full h-full object-cover opacity-80 cursor-crosshair"
                 style={{ filter: getBackgroundFilter() }}
@@ -5245,11 +5246,11 @@ export default function App() {
                 }}
               />
             )}
-            {mediaType === 'image' && image && (
+            {!isWebcamActive && mediaType === 'image' && image && (
               <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-20">
               </div>
             )}
-            {mediaType === 'video' && videoUrl && (
+            {!isWebcamActive && mediaType === 'video' && videoUrl && (
               <video
                 ref={videoRef}
                 src={videoUrl}
