@@ -5170,18 +5170,26 @@ export default function App() {
 
       <div className="relative z-10 flex flex-col min-h-screen">
         {/* Background Media - Full Screen */}
-      <AnimatePresence mode="wait">
+      <AnimatePresence mode="sync">
         {(image || videoUrl || isWebcamActive) && (
-          <motion.div 
+          <motion.div
             key={isWebcamActive ? 'webcam' : (videoUrl ? 'video' : 'image')}
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
+            transition={{ duration: 0.3 }}
             className="fixed inset-0 z-[5]"
           >
             {isWebcamActive && (
               <video
-                ref={webcamVideoRef}
+                ref={(el) => {
+                  webcamVideoRef.current = el;
+                  // Assign stream immediately when element mounts
+                  if (el && webcamStreamRef.current && !el.srcObject) {
+                    el.srcObject = webcamStreamRef.current;
+                    el.play().catch(() => {});
+                  }
+                }}
                 autoPlay
                 playsInline
                 muted
