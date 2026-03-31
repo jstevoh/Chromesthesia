@@ -2146,6 +2146,7 @@ export default function App() {
   const [recordingCapture, setRecordingCapture] = useState<'visualization' | 'full'>('visualization');
   const [recordingElapsed, setRecordingElapsed] = useState(0);
   const [isWebcamActive, setIsWebcamActive] = useState(false);
+  const [isWebcamReady, setIsWebcamReady] = useState(false);
   const [isVideoAudioRouted, setIsVideoAudioRouted] = useState(false);
 
   // Refs
@@ -3539,6 +3540,7 @@ export default function App() {
         webcamStreamRef.current = null;
       }
       setIsWebcamActive(false);
+      setIsWebcamReady(false);
       setMediaType('image');
       setIsLoaded(false);
     } else {
@@ -3546,15 +3548,17 @@ export default function App() {
         const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
         webcamStreamRef.current = stream;
 
-        // Clear existing media BEFORE activating webcam to prevent z-fighting
-        setImage(null);
-        setVideoUrl(null);
+        // Don't clear existing media yet — keep it visible as underlay
+        // until the webcam video fires onPlaying, then we clear it
         setMediaType('video'); // Treat webcam as video for sampling
         setIsWebcamActive(true);
+        setIsWebcamReady(false); // Will be set true when video produces frames
         trackWebcamActivated();
         setIsLoaded(true);
         setIsPlaying(true);
         initAudio();
+        // Invalidate cached canvas context since media source is changing
+        samplingCtxRef.current = null;
       } catch (err) {
         console.error("Error accessing webcam:", err);
         alert("Could not access webcam. Please check permissions.");
@@ -5169,17 +5173,9 @@ export default function App() {
       </div>
 
       <div className="relative z-10 flex flex-col min-h-screen">
-        {/* Background Media - Full Screen */}
-      <AnimatePresence mode="sync">
-        {(image || videoUrl || isWebcamActive) && (
-          <motion.div
-            key={isWebcamActive ? 'webcam' : (videoUrl ? 'video' : 'image')}
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.3 }}
-            className="fixed inset-0 z-[5]"
-          >
+        {/* Background Media - Layered (no AnimatePresence to avoid remounting canvases) */}
+        <div className={`fixed inset-0 z-[5] ${!(image || videoUrl || isWebcamActive) ? 'pointer-events-none' : ''}`}>
+            {/* Webcam layer - rendered on top when active */}
             {isWebcamActive && (
               <video
                 ref={(el) => {
@@ -5193,7 +5189,14 @@ export default function App() {
                 autoPlay
                 playsInline
                 muted
-                className="w-full h-full object-cover opacity-90 grayscale-0 brightness-[0.9] cursor-crosshair"
+                className={`absolute inset-0 w-full h-full object-cover opacity-90 grayscale-0 brightness-[0.9] cursor-crosshair transition-opacity duration-300 ${isWebcamReady ? 'opacity-90' : 'opacity-0'}`}
+                style={{ zIndex: 2 }}
+                onPlaying={() => {
+                  // Webcam is producing frames — now safe to show it and clear old media
+                  setIsWebcamReady(true);
+                  setImage(null);
+                  setVideoUrl(null);
+                }}
                 onMouseMove={(e) => {
                   const rect = e.currentTarget.getBoundingClientRect();
                   mousePosRef.current = {
@@ -5213,19 +5216,17 @@ export default function App() {
                 }}
               />
             )}
-            {isWebcamActive && (
-              <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-20">
-              </div>
-            )}
-            {!isWebcamActive && mediaType === 'image' && image && (
+            {/* Image layer - visible when no webcam, or as underlay while webcam loads */}
+            {mediaType === 'image' && image && (
               <img
                 ref={imageRef}
                 src={image}
                 alt="Background"
                 referrerPolicy="no-referrer"
-                className="w-full h-full object-cover opacity-80 cursor-crosshair"
-                style={{ filter: getBackgroundFilter() }}
+                className="absolute inset-0 w-full h-full object-cover opacity-80 cursor-crosshair"
+                style={{ filter: getBackgroundFilter(), zIndex: 1 }}
                 onMouseMove={(e) => {
+                  if (isWebcamReady) return; // Don't handle mouse when webcam is covering
                   const rect = e.currentTarget.getBoundingClientRect();
                   mousePosRef.current = {
                     x: (e.clientX - rect.left) / rect.width,
@@ -5236,6 +5237,7 @@ export default function App() {
                   mousePosRef.current = null;
                 }}
                 onClick={(e) => {
+                  if (isWebcamReady) return;
                   const rect = e.currentTarget.getBoundingClientRect();
                   const x = (e.clientX - rect.left) / rect.width;
                   const y = (e.clientY - rect.top) / rect.height;
@@ -5254,10 +5256,7 @@ export default function App() {
                 }}
               />
             )}
-            {!isWebcamActive && mediaType === 'image' && image && (
-              <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-20">
-              </div>
-            )}
+            {/* Video layer */}
             {!isWebcamActive && mediaType === 'video' && videoUrl && (
               <video
                 ref={videoRef}
@@ -5266,8 +5265,8 @@ export default function App() {
                 playsInline
                 autoPlay
                 crossOrigin="anonymous"
-                className="w-full h-full object-cover opacity-80 cursor-crosshair"
-                style={{ filter: getBackgroundFilter() }}
+                className="absolute inset-0 w-full h-full object-cover opacity-80 cursor-crosshair"
+                style={{ filter: getBackgroundFilter(), zIndex: 1 }}
                 onMouseMove={(e) => {
                   const rect = e.currentTarget.getBoundingClientRect();
                   mousePosRef.current = {
@@ -5284,7 +5283,6 @@ export default function App() {
                     if (video.paused) {
                       video.play().catch(err => {
                         console.warn("Autoplay blocked or failed:", err);
-                        // If blocked, we might need a user interaction to start audio
                       });
                     }
                   }
@@ -5298,7 +5296,7 @@ export default function App() {
                 onTimeUpdate={(e) => {
                   const video = e.currentTarget;
                   setVideoCurrentTime(video.currentTime);
-                  
+
                   // Handle loop range
                   const start = (videoRange[0] / 100) * video.duration;
                   const end = (videoRange[1] / 100) * video.duration;
@@ -5318,9 +5316,10 @@ export default function App() {
                 }}
               />
             )}
+            {/* Canvases and ScanningVisuals persist across media transitions */}
             <canvas ref={canvasRef} width={1280} height={720} style={{ position: 'absolute', left: '-9999px', top: '-9999px', pointerEvents: 'none' }} />
             <canvas ref={samplingCanvasRef} width={640} height={360} className="hidden" />
-            
+
             {/* Scan Points Visualization - Optimized Canvas Component */}
             {isVisualsEnabled && (
               <ScanningVisuals
@@ -5339,9 +5338,7 @@ export default function App() {
                 pointSize={scanPointSize}
               />
             )}
-          </motion.div>
-        )}
-      </AnimatePresence>
+        </div>
 
       {/* Header */}
       <motion.header 
