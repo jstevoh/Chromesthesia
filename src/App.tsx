@@ -2645,9 +2645,13 @@ export default function App() {
       setAdsr(new Array(SAMPLE_POINTS).fill(null).map(() => ({ ...s.adsr })));
     }
     setVoiceMappings(new Array(SAMPLE_POINTS).fill(null).map(() => ({ ...initialMapping })));
+    // Disable drone and sequencer modules when switching scanner patches
+    // so they don't bleed through as background noise
+    setIsDroneEnabled(false);
+    setIsDroneSequencerEnabled(false);
     trackPatchApplied(patchIdx, patch.name);
     setActivePatch(patchIdx);
-  }, [setBaseFreq, setFreqRange, setFreqMod, setAmpMod, setCutoffMod, setQMod, setScanSpeed, setScanScale, setScanCenterX, setScanCenterY, setFormulaX, setFormulaY, setActivePreset, setEnabledVoices, setIsSequencerEnabled, setBpm, setScaleName, setRootNoteIndex, setIsEvolving, setMutationAmount, setSequenceLength, setQuantizeAmount, setCharacterEffect, setMovementEffect, setDiffusionEffect, setTextureEffect, setCharacterParams, setMovementParams, setDiffusionParams, setTextureParams, setAdsr, setVoiceMappings, setActivePatch]);
+  }, [setBaseFreq, setFreqRange, setFreqMod, setAmpMod, setCutoffMod, setQMod, setScanSpeed, setScanScale, setScanCenterX, setScanCenterY, setFormulaX, setFormulaY, setActivePreset, setEnabledVoices, setIsSequencerEnabled, setBpm, setScaleName, setRootNoteIndex, setIsEvolving, setMutationAmount, setSequenceLength, setQuantizeAmount, setCharacterEffect, setMovementEffect, setDiffusionEffect, setTextureEffect, setCharacterParams, setMovementParams, setDiffusionParams, setTextureParams, setAdsr, setVoiceMappings, setActivePatch, setIsDroneEnabled, setIsDroneSequencerEnabled]);
 
   const applyDronePatch = (patchIdx: number) => {
     const patch = DRONE_PATCHES[patchIdx];
@@ -4618,17 +4622,9 @@ export default function App() {
       setScanCenterX(0.5);
       setScanCenterY(0.5);
 
-      // Apply random drone patch
-      const randomDronePatchIdx = Math.floor(Math.random() * DRONE_PATCHES.length);
-      applyDronePatch(randomDronePatchIdx);
-
-      // Apply random sequencer preset
-      const randomSeqPresetIdx = Math.floor(Math.random() * SEQUENCER_PRESETS.length);
-      applySequencerPreset(randomSeqPresetIdx);
-
-      // Enable drone and sequencer
-      setIsDroneEnabled(true);
-      setIsDroneSequencerEnabled(true);
+      // Disable drone and sequencer — "I'm Feeling Lucky" should only enable the optical scanner
+      setIsDroneEnabled(false);
+      setIsDroneSequencerEnabled(false);
 
       // Randomize visual palette
       const randomPaletteIdx = Math.floor(Math.random() * VISUAL_PALETTES.length);
