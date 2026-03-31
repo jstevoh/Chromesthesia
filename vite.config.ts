@@ -32,6 +32,7 @@ export default defineConfig(() => {
             'vendor-react': ['react', 'react-dom'],
             'vendor-motion': ['motion'],
             'vendor-icons': ['lucide-react'],
+            'vendor-firebase': ['firebase/app', 'firebase/analytics'],
           },
         },
       },

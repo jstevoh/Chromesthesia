@@ -7,7 +7,26 @@
 import React, { useState, useRef, useEffect, useCallback, ChangeEvent, useMemo, MutableRefObject, FormEvent } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import ScanningVisuals from './components/ScanningVisuals';
-import { 
+import {
+  trackMediaLoaded,
+  trackFeelingLucky,
+  trackPlaybackStart,
+  trackPlaybackStop,
+  trackEffectChange,
+  trackModuleToggle,
+  trackPanelOpen,
+  trackPatchApplied,
+  trackDronePatchApplied,
+  trackSeqPresetApplied,
+  trackRecordingStart,
+  trackRecordingComplete,
+  trackScanPresetChange,
+  trackScaleChange,
+  trackWebcamActivated,
+  trackSessionConfig,
+  trackWaveTableChange,
+} from './lib/analytics';
+import {
   Upload, 
   Play, 
   Pause, 
@@ -2211,6 +2230,7 @@ export default function App() {
       setAdsr(new Array(SAMPLE_POINTS).fill(null).map(() => ({ ...s.adsr })));
     }
     setVoiceMappings(new Array(SAMPLE_POINTS).fill(null).map(() => ({ ...initialMapping })));
+    trackPatchApplied(patchIdx, patch.name);
     setActivePatch(patchIdx);
   }, [setBaseFreq, setFreqRange, setFreqMod, setAmpMod, setCutoffMod, setQMod, setScanSpeed, setScanScale, setScanCenterX, setScanCenterY, setFormulaX, setFormulaY, setActivePreset, setEnabledVoices, setIsSequencerEnabled, setBpm, setScaleName, setRootNoteIndex, setIsEvolving, setMutationAmount, setSequenceLength, setQuantizeAmount, setCharacterEffect, setMovementEffect, setDiffusionEffect, setTextureEffect, setCharacterParams, setMovementParams, setDiffusionParams, setTextureParams, setAdsr, setVoiceMappings, setActivePatch]);
 
@@ -2245,6 +2265,7 @@ export default function App() {
       duration: v.duration ? [...v.duration] : new Array(16).fill(0.5),
       adsr: { ...v.adsr }
     })));
+    trackDronePatchApplied(patchIdx);
     setActiveDronePatch(patchIdx);
   };
 
@@ -2278,6 +2299,7 @@ export default function App() {
       adsr: { ...v.adsr }
     })));
     setIsDroneSequencerEnabled(true);
+    trackSeqPresetApplied(presetIdx);
     setActiveSequencerPreset(presetIdx);
   };
 
@@ -2326,9 +2348,10 @@ export default function App() {
 
     const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
     const ctx = new AudioContextClass();
-    
+
     // Set ref immediately to prevent multiple initializations
     audioContextRef.current = ctx;
+    trackSessionConfig(isPerformanceMode, SAMPLE_POINTS);
 
     const masterGain = ctx.createGain();
     const synthMatrixGain = ctx.createGain();
@@ -2655,6 +2678,7 @@ export default function App() {
       // Suspend context to be absolutely sure
       audioContextRef.current.suspend();
     }
+    trackPlaybackStop();
     setIsPlaying(false);
   }, []);
 
@@ -3524,6 +3548,7 @@ export default function App() {
         
         setIsWebcamActive(true);
         setMediaType('video'); // Treat webcam as video for sampling
+        trackWebcamActivated();
         setImage(null);
         setVideoUrl(null);
         setIsLoaded(true);
@@ -3569,6 +3594,7 @@ export default function App() {
         scanTimeRef.current = 0;
         setIsPlaying(false);
         setIsLoaded(true);
+        trackMediaLoaded(mediaType === 'video' ? 'video' : 'image', 'upload');
         initAudio();
       };
       reader.readAsDataURL(file);
@@ -3825,6 +3851,7 @@ export default function App() {
       mediaRecorderRef.current = recorder;
       if (!isPlaying) setIsPlaying(true);
       setIsRecording(true);
+      trackRecordingStart(recordingMode, recordingQuality, recordingResolution, recordingCapture);
       startTimer();
       recorder.start(1000); // 1s timeslice for chunked data collection
     } catch (err) {
@@ -3861,6 +3888,7 @@ export default function App() {
   };
 
   const stopRecording = () => {
+    trackRecordingComplete(recordingElapsed, recordingMode);
     if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
       mediaRecorderRef.current.stop();
     }
@@ -4150,6 +4178,7 @@ export default function App() {
 
   const handleFeelingLucky = useCallback(async () => {
     if (isGeneratingArt) return;
+    trackFeelingLucky();
     setIsGeneratingArt(true);
 
     // Start audio first (must be triggered directly from user gesture)
@@ -4193,6 +4222,7 @@ export default function App() {
       setVideoUrl(null);
       setMediaType('image');
       setIsLoaded(true);
+      trackMediaLoaded('procedural', 'generated');
       setIsPlaying(true);
       setIsSynthMatrixEnabled(true);
     } catch (e) {
@@ -5335,6 +5365,11 @@ export default function App() {
               <button 
                 onClick={async () => {
                   await initAudio();
+                  if (!isPlaying) {
+                    trackPlaybackStart({ synthMatrix: true, drone: isDroneEnabled, sequencer: isSequencerEnabled });
+                  } else {
+                    trackPlaybackStop();
+                  }
                   setIsPlaying(!isPlaying);
                 }}
                 className={`w-8 h-8 rounded-full flex items-center justify-center transition-all duration-300 ${
@@ -5374,7 +5409,7 @@ export default function App() {
                 )}
                 <div className="w-px h-3 bg-white/10 mx-0.5" />
                 <button
-                  onClick={() => setShowRecordingSettings(!showRecordingSettings)}
+                  onClick={() => { setShowRecordingSettings(!showRecordingSettings); if (!showRecordingSettings) trackPanelOpen('recording'); }}
                   className={`w-7 h-7 flex items-center justify-center rounded-full transition-all ${
                     showRecordingSettings
                       ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-500/20'
@@ -5450,7 +5485,7 @@ export default function App() {
                 <div className={`w-1.5 h-1.5 rounded-full transition-all duration-500 ${isSynthMatrixEnabled ? 'bg-white animate-pulse' : 'bg-white/20'}`} />
               </button>
               <button 
-                onClick={() => setShowSettings(!showSettings)}
+                onClick={() => { setShowSettings(!showSettings); if (!showSettings) trackPanelOpen('settings'); }}
                 className="px-2.5 py-2 flex items-center gap-1.5 hover:bg-white/10 transition-colors"
                 title="Optical Settings"
               >
@@ -5480,7 +5515,7 @@ export default function App() {
                 <div className={`w-1.5 h-1.5 rounded-full transition-all duration-500 ${isDroneEnabled ? 'bg-white animate-pulse' : 'bg-white/20'}`} />
               </button>
               <button 
-                onClick={() => setShowDroneModule(!showDroneModule)}
+                onClick={() => { setShowDroneModule(!showDroneModule); if (!showDroneModule) trackPanelOpen('drone'); }}
                 className="px-2.5 py-2 flex items-center gap-1.5 hover:bg-white/10 transition-colors"
                 title="Drone Settings"
               >
@@ -5510,7 +5545,7 @@ export default function App() {
                 <div className={`w-1.5 h-1.5 rounded-full transition-all duration-500 ${isDroneSequencerEnabled ? 'bg-white animate-pulse' : 'bg-white/20'}`} />
               </button>
               <button 
-                onClick={() => setShowSequencerModule(!showSequencerModule)}
+                onClick={() => { setShowSequencerModule(!showSequencerModule); if (!showSequencerModule) trackPanelOpen('sequencer'); }}
                 className="px-2.5 py-2 flex items-center gap-1.5 hover:bg-white/10 transition-colors"
                 title="Sequencer Settings"
               >
@@ -5533,7 +5568,7 @@ export default function App() {
                 <Eye className={`w-3 h-3 transition-all duration-300 ${isVisualsEnabled ? 'opacity-100' : 'opacity-30'}`} />
               </button>
               <button
-                onClick={() => setShowVisualsModule(!showVisualsModule)}
+                onClick={() => { setShowVisualsModule(!showVisualsModule); if (!showVisualsModule) trackPanelOpen('visuals'); }}
                 className="px-2.5 py-2 flex items-center gap-1.5 hover:bg-white/10 transition-colors"
                 title="Visual Settings"
               >
@@ -5581,7 +5616,7 @@ export default function App() {
             <motion.button 
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
-              onClick={() => setShowMixer(!showMixer)}
+              onClick={() => { setShowMixer(!showMixer); if (!showMixer) trackPanelOpen('mixer'); }}
               className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition-all duration-300 ${
                 showMixer 
                   ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-500/20' 
@@ -6467,7 +6502,7 @@ export default function App() {
                       {CHARACTER_EFFECTS.map((eff) => (
                         <button
                           key={eff.id}
-                          onClick={() => setDroneCharacterEffect(eff.id as any)}
+                          onClick={() => { setDroneCharacterEffect(eff.id as any); trackEffectChange('drone', 'character', eff.id); }}
                           className={`px-2 py-3 rounded-xl text-[9px] font-black uppercase tracking-tighter transition-all border ${
                             droneCharacterEffect === eff.id
                               ? 'bg-emerald-500 text-white border-emerald-500 shadow-lg'
@@ -6511,7 +6546,7 @@ export default function App() {
                       {MOVEMENT_EFFECTS.map((eff) => (
                         <button
                           key={eff.id}
-                          onClick={() => setDroneMovementEffect(eff.id as any)}
+                          onClick={() => { setDroneMovementEffect(eff.id as any); trackEffectChange('drone', 'movement', eff.id); }}
                           className={`px-2 py-3 rounded-xl text-[9px] font-black uppercase tracking-tighter transition-all border ${
                             droneMovementEffect === eff.id
                               ? 'bg-emerald-500 text-white border-emerald-500 shadow-lg'
@@ -6555,7 +6590,7 @@ export default function App() {
                       {DIFFUSION_EFFECTS.map((eff) => (
                         <button
                           key={eff.id}
-                          onClick={() => setDroneDiffusionEffect(eff.id as any)}
+                          onClick={() => { setDroneDiffusionEffect(eff.id as any); trackEffectChange('drone', 'diffusion', eff.id); }}
                           className={`px-2 py-3 rounded-xl text-[9px] font-black uppercase tracking-tighter transition-all border ${
                             droneDiffusionEffect === eff.id
                               ? 'bg-emerald-500 text-white border-emerald-500 shadow-lg'
@@ -6599,7 +6634,7 @@ export default function App() {
                       {TEXTURE_EFFECTS.map((eff) => (
                         <button
                           key={eff.id}
-                          onClick={() => setDroneTextureEffect(eff.id as any)}
+                          onClick={() => { setDroneTextureEffect(eff.id as any); trackEffectChange('drone', 'texture', eff.id); }}
                           className={`px-2 py-3 rounded-xl text-[9px] font-black uppercase tracking-tighter transition-all border ${
                             droneTextureEffect === eff.id
                               ? 'bg-emerald-500 text-white border-emerald-500 shadow-lg'
@@ -7123,7 +7158,7 @@ export default function App() {
                         {CHARACTER_EFFECTS.map((eff) => (
                           <button
                             key={eff.id}
-                            onClick={() => setSeqCharacterEffect(eff.id as any)}
+                            onClick={() => { setSeqCharacterEffect(eff.id as any); trackEffectChange('sequencer', 'character', eff.id); }}
                             className={`px-2 py-3 rounded-xl text-[9px] font-black uppercase tracking-tighter transition-all border ${
                               seqCharacterEffect === eff.id
                                 ? 'bg-emerald-500 text-white border-emerald-500 shadow-lg shadow-emerald-500/20'
@@ -7167,7 +7202,7 @@ export default function App() {
                         {MOVEMENT_EFFECTS.map((eff) => (
                           <button
                             key={eff.id}
-                            onClick={() => setSeqMovementEffect(eff.id as any)}
+                            onClick={() => { setSeqMovementEffect(eff.id as any); trackEffectChange('sequencer', 'movement', eff.id); }}
                             className={`px-2 py-3 rounded-xl text-[9px] font-black uppercase tracking-tighter transition-all border ${
                               seqMovementEffect === eff.id
                                 ? 'bg-emerald-500 text-white border-emerald-500 shadow-lg shadow-emerald-500/20'
@@ -7211,7 +7246,7 @@ export default function App() {
                         {DIFFUSION_EFFECTS.map((eff) => (
                           <button
                             key={eff.id}
-                            onClick={() => setSeqDiffusionEffect(eff.id as any)}
+                            onClick={() => { setSeqDiffusionEffect(eff.id as any); trackEffectChange('sequencer', 'diffusion', eff.id); }}
                             className={`px-2 py-3 rounded-xl text-[9px] font-black uppercase tracking-tighter transition-all border ${
                               seqDiffusionEffect === eff.id
                                 ? 'bg-emerald-500 text-white border-emerald-500 shadow-lg shadow-emerald-500/20'
@@ -7255,7 +7290,7 @@ export default function App() {
                         {TEXTURE_EFFECTS.map((eff) => (
                           <button
                             key={eff.id}
-                            onClick={() => setSeqTextureEffect(eff.id as any)}
+                            onClick={() => { setSeqTextureEffect(eff.id as any); trackEffectChange('sequencer', 'texture', eff.id); }}
                             className={`px-2 py-3 rounded-xl text-[9px] font-black uppercase tracking-tighter transition-all border ${
                               seqTextureEffect === eff.id
                                 ? 'bg-emerald-500 text-white border-emerald-500 shadow-lg'
@@ -8482,7 +8517,7 @@ export default function App() {
                       {CHARACTER_EFFECTS.map((eff) => (
                         <button
                           key={eff.id}
-                          onClick={() => setCharacterEffect(eff.id as any)}
+                          onClick={() => { setCharacterEffect(eff.id as any); trackEffectChange('main', 'character', eff.id); }}
                           className={`px-2 py-3 rounded-xl text-[9px] font-black uppercase tracking-tighter transition-all border ${
                             characterEffect === eff.id
                               ? 'bg-emerald-500 text-white border-emerald-500 shadow-lg shadow-emerald-500/20'
@@ -8526,7 +8561,7 @@ export default function App() {
                       {MOVEMENT_EFFECTS.map((eff) => (
                         <button
                           key={eff.id}
-                          onClick={() => setMovementEffect(eff.id as any)}
+                          onClick={() => { setMovementEffect(eff.id as any); trackEffectChange('main', 'movement', eff.id); }}
                           className={`px-2 py-3 rounded-xl text-[9px] font-black uppercase tracking-tighter transition-all border ${
                             movementEffect === eff.id
                               ? 'bg-emerald-500 text-white border-emerald-500 shadow-lg shadow-emerald-500/20'
@@ -8570,7 +8605,7 @@ export default function App() {
                       {DIFFUSION_EFFECTS.map((eff) => (
                         <button
                           key={eff.id}
-                          onClick={() => setDiffusionEffect(eff.id as any)}
+                          onClick={() => { setDiffusionEffect(eff.id as any); trackEffectChange('main', 'diffusion', eff.id); }}
                           className={`px-2 py-3 rounded-xl text-[9px] font-black uppercase tracking-tighter transition-all border ${
                             diffusionEffect === eff.id
                               ? 'bg-emerald-500 text-white border-emerald-500 shadow-lg shadow-emerald-500/20'
@@ -8614,7 +8649,7 @@ export default function App() {
                       {TEXTURE_EFFECTS.map((eff) => (
                         <button
                           key={eff.id}
-                          onClick={() => setTextureEffect(eff.id as any)}
+                          onClick={() => { setTextureEffect(eff.id as any); trackEffectChange('main', 'texture', eff.id); }}
                           className={`px-2 py-3 rounded-xl text-[9px] font-black uppercase tracking-tighter transition-all border ${
                             textureEffect === eff.id
                               ? 'bg-emerald-500 text-white border-emerald-500 shadow-lg shadow-emerald-500/20'
