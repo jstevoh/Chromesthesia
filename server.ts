@@ -4,35 +4,108 @@ import path from "path";
 import ytdl from "@distube/ytdl-core";
 import cors from "cors";
 
+// --- Security: URL validation ---
+const YOUTUBE_URL_REGEX = /^https?:\/\/(www\.)?(youtube\.com\/(watch\?|shorts\/|embed\/)|youtu\.be\/)/;
+
+function isValidYouTubeUrl(url: string): boolean {
+  return YOUTUBE_URL_REGEX.test(url);
+}
+
+// --- Security: Simple in-memory rate limiter ---
+const rateLimitMap = new Map<string, { count: number; resetTime: number }>();
+const RATE_LIMIT_WINDOW_MS = 60_000; // 1 minute
+const RATE_LIMIT_MAX = 30; // max requests per window per IP
+
+function rateLimit(req: express.Request, res: express.Response, next: express.NextFunction) {
+  const ip = req.ip || req.socket.remoteAddress || 'unknown';
+  const now = Date.now();
+  const entry = rateLimitMap.get(ip);
+
+  if (!entry || now > entry.resetTime) {
+    rateLimitMap.set(ip, { count: 1, resetTime: now + RATE_LIMIT_WINDOW_MS });
+    return next();
+  }
+
+  entry.count++;
+  if (entry.count > RATE_LIMIT_MAX) {
+    res.status(429).send("Too many requests. Please try again later.");
+    return;
+  }
+  next();
+}
+
+// Clean up stale rate limit entries every 5 minutes
+setInterval(() => {
+  const now = Date.now();
+  for (const [ip, entry] of rateLimitMap) {
+    if (now > entry.resetTime) rateLimitMap.delete(ip);
+  }
+}, 300_000);
+
 async function startServer() {
   const app = express();
   const PORT = 3000;
 
-  app.use(cors());
+  // Security: Restrict CORS to known origins
+  const allowedOrigins = [
+    'https://chromesthesia.web.app',
+    'https://chromesthesia-app.web.app',
+    'https://chromesthesia-app.firebaseapp.com',
+    'http://localhost:5173', // Vite dev server
+    'http://localhost:3000',
+  ];
 
-  // YouTube Stream Proxy
+  app.use(cors({
+    origin: (origin, callback) => {
+      // Allow requests with no origin (same-origin, curl, etc.)
+      if (!origin || allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        callback(new Error('Not allowed by CORS'));
+      }
+    },
+    methods: ['GET', 'OPTIONS'],
+    allowedHeaders: ['Range', 'Content-Type'],
+    exposedHeaders: ['Content-Length', 'Content-Range', 'Accept-Ranges'],
+  }));
+
+  // Apply rate limiting to API routes
+  app.use('/api/', rateLimit);
+
+  // YouTube Info Endpoint
   app.get("/api/youtube/info", async (req, res) => {
     const videoUrl = req.query.url as string;
     if (!videoUrl) return res.status(400).send("URL is required");
+
+    // Security: Validate YouTube URL
+    if (!isValidYouTubeUrl(videoUrl)) {
+      return res.status(400).send("Invalid YouTube URL");
+    }
+
     try {
       const info = await ytdl.getInfo(videoUrl);
       res.json(info.videoDetails);
     } catch (error) {
       console.error("[YouTube Info Error]:", error);
-      res.status(500).send(error instanceof Error ? error.message : 'Unknown error');
+      res.status(500).send("Failed to fetch video info");
     }
   });
 
+  // YouTube Stream Endpoint
   app.get("/api/youtube/stream", async (req, res) => {
     const videoUrl = req.query.url as string;
     if (!videoUrl) {
       return res.status(400).send("Missing YouTube URL");
     }
 
+    // Security: Validate YouTube URL
+    if (!isValidYouTubeUrl(videoUrl)) {
+      return res.status(400).send("Invalid YouTube URL");
+    }
+
     console.log(`[YouTube Proxy] Requesting stream for: ${videoUrl}`);
 
     try {
-      // Use a more robust way to get info
       const info = await ytdl.getInfo(videoUrl, {
         requestOptions: {
           headers: {
@@ -42,19 +115,17 @@ async function startServer() {
           }
         }
       });
-      
+
       console.log(`[YouTube Proxy] Found video: ${info.videoDetails.title}`);
 
-      // Filter for formats that have both audio and video
-      // Prioritize mp4 and higher resolution but within reasonable limits for streaming
-      let format = ytdl.chooseFormat(info.formats, { 
+      let format = ytdl.chooseFormat(info.formats, {
         quality: 'highestvideo',
         filter: (f) => f.container === 'mp4' && f.hasAudio && f.hasVideo && !f.isLive && !f.isHLS
       });
 
       if (!format) {
         console.log(`[YouTube Proxy] No MP4 combined format found, falling back to any audioandvideo`);
-        format = ytdl.chooseFormat(info.formats, { 
+        format = ytdl.chooseFormat(info.formats, {
           quality: 'highest',
           filter: 'audioandvideo'
         });
@@ -65,28 +136,26 @@ async function startServer() {
         return res.status(404).send("No suitable format with audio and video found");
       }
 
-      console.log(`[YouTube Proxy] Selected format: itag=${format.itag}, container=${format.container}, mimeType=${format.mimeType}, quality=${format.qualityLabel}`);
+      console.log(`[YouTube Proxy] Selected format: itag=${format.itag}, container=${format.container}, quality=${format.qualityLabel}`);
 
-      // Handle Range header from browser
       const range = req.headers.range;
       let streamOptions: any = { format };
-
-      // Set CORS headers early
-      res.setHeader("Access-Control-Allow-Origin", "*");
-      res.setHeader("Access-Control-Allow-Methods", "GET, OPTIONS");
-      res.setHeader("Access-Control-Allow-Headers", "Range, Content-Type");
-      res.setHeader("Access-Control-Expose-Headers", "Content-Length, Content-Range, Accept-Ranges");
 
       if (range) {
         const parts = range.replace(/bytes=/, "").split("-");
         const start = parseInt(parts[0], 10);
         const end = parts[1] ? parseInt(parts[1], 10) : undefined;
-        
+
+        // Security: Validate range values
+        if (isNaN(start) || start < 0 || (end !== undefined && (isNaN(end) || end < start))) {
+          return res.status(416).send("Invalid Range");
+        }
+
         if (format.contentLength) {
           const total = parseInt(format.contentLength, 10);
-          const chunkEnd = end || total - 1;
+          const chunkEnd = end !== undefined ? Math.min(end, total - 1) : total - 1;
           const chunksize = (chunkEnd - start) + 1;
-          
+
           console.log(`[YouTube Proxy] Range request: ${start}-${chunkEnd}/${total}`);
 
           res.status(206).set({
@@ -95,7 +164,7 @@ async function startServer() {
             "Content-Length": chunksize,
             "Content-Type": format.mimeType || "video/mp4",
           });
-          
+
           streamOptions.range = { start, end: chunkEnd };
         } else {
           console.log(`[YouTube Proxy] Range request (no total length): ${start}-`);
@@ -110,8 +179,10 @@ async function startServer() {
         res.setHeader("Accept-Ranges", "bytes");
       }
 
-      // Stream the video with a User-Agent and handle errors
-      const stream = ytdl(videoUrl, { 
+      // Set a timeout for the stream to prevent hung connections
+      req.setTimeout(120_000); // 2 minute timeout
+
+      const stream = ytdl(videoUrl, {
         ...streamOptions,
         requestOptions: {
           headers: {
@@ -129,16 +200,20 @@ async function startServer() {
         if (!res.headersSent) {
           res.status(500).send("Stream error");
         } else {
-          // If headers already sent, we can't do much but end the response
           res.end();
         }
+      });
+
+      // Clean up stream if client disconnects
+      req.on('close', () => {
+        stream.destroy();
       });
 
       stream.pipe(res);
     } catch (error) {
       console.error("[YouTube Proxy] Error:", error);
       if (!res.headersSent) {
-        res.status(500).send(`Failed to stream YouTube video: ${error instanceof Error ? error.message : 'Unknown error'}`);
+        res.status(500).send("Failed to stream YouTube video");
       }
     }
   });
@@ -158,7 +233,8 @@ async function startServer() {
     });
   }
 
-  app.listen(PORT, "0.0.0.0", () => {
+  // Security: Bind to localhost only — use a reverse proxy for public access
+  app.listen(PORT, "127.0.0.1", () => {
     console.log(`Server running on http://localhost:${PORT}`);
   });
 }
