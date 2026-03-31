@@ -5208,36 +5208,49 @@ export default function App() {
       if (isDroneEnabled && isPlaying) {
         voice.osc.type = settings.type as OscillatorType;
         voice.osc.frequency.setTargetAtTime(settings.freq, now, 0.1);
-        
+
         if (subVoice) {
           subVoice.osc.frequency.setTargetAtTime(settings.freq / 2, now, 0.1);
-          subVoice.gain.gain.setTargetAtTime(settings.volume * droneMasterVolume * droneSubAmount, now, 0.1);
+          // Fade sub-oscillator in over 0.8s for smooth onset
+          subVoice.gain.gain.setTargetAtTime(settings.volume * droneMasterVolume * droneSubAmount, now, 0.8);
         }
-        
+
         // Apply Spread to detune
         const spreadDetune = (i - 1.5) * droneSpread * 100; // Spread across voices
         voice.osc.detune.setTargetAtTime(settings.detune + spreadDetune, now, 0.1);
-        
-        voice.gain.gain.setTargetAtTime(settings.volume, now, 0.1);
+
+        // Fade voices in over 0.8s to avoid sudden loud onset
+        voice.gain.gain.setTargetAtTime(settings.volume, now, 0.8);
         voice.panner.pan.setTargetAtTime(settings.pan, now, 0.1);
         voice.filter.frequency.setTargetAtTime(droneFilterCutoff, now, 0.1);
         voice.filter.Q.setTargetAtTime(droneFilterResonance, now, 0.1);
       } else {
-        voice.gain.gain.setTargetAtTime(0, now, 0.1);
+        // Fade out over 0.3s for clean stop
+        voice.gain.gain.setTargetAtTime(0, now, 0.3);
+        // Also silence sub-oscillators when drone is disabled
+        if (subVoice) {
+          subVoice.gain.gain.setTargetAtTime(0, now, 0.3);
+        }
       }
     });
 
     if (droneUnitGainRef.current) {
-      droneUnitGainRef.current.gain.setTargetAtTime(droneMasterVolume, now, 0.1);
+      // Only set master gain when drone is enabled; mute it when disabled
+      if (isDroneEnabled && isPlaying) {
+        droneUnitGainRef.current.gain.setTargetAtTime(droneMasterVolume, now, 0.8);
+      } else {
+        droneUnitGainRef.current.gain.setTargetAtTime(0, now, 0.3);
+      }
     }
   }, [isDroneEnabled, droneVoices, droneMasterVolume, droneFilterCutoff, droneFilterResonance, isPlaying, droneSpread, droneLfoFreq, droneLfoAmount, droneLfoTarget, droneSaturation, droneReverbSend, droneSubAmount]);
 
   // Drone Sequencer Loop
   useEffect(() => {
-    if (!isPlaying || !isDroneSequencerEnabled || !audioContextRef.current || droneSequencerVoicesRef.current.length === 0) {
+    // Stop sequencer when drone is disabled, sequencer is disabled, or playback stops
+    if (!isPlaying || !isDroneSequencerEnabled || !isDroneEnabled || !audioContextRef.current || droneSequencerVoicesRef.current.length === 0) {
       if (audioContextRef.current) {
         const now = audioContextRef.current.currentTime;
-        droneSequencerVoicesRef.current.forEach(v => v.gain.gain.setTargetAtTime(0, now, 0.1));
+        droneSequencerVoicesRef.current.forEach(v => v.gain.gain.setTargetAtTime(0, now, 0.3));
       }
       return;
     }
@@ -5348,7 +5361,7 @@ export default function App() {
 
     animationFrameId = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(animationFrameId);
-  }, [isPlaying, isDroneSequencerEnabled, droneSequencerBpm, droneSequencerLinkToMatrix, scaleName, rootNoteIndex, adjustedScale, droneSequencerSwing, isSequencerGenerative, sequencerMutationRate, droneSequencerSyncToGlobal, bpm]);
+  }, [isPlaying, isDroneEnabled, isDroneSequencerEnabled, droneSequencerBpm, droneSequencerLinkToMatrix, scaleName, rootNoteIndex, adjustedScale, droneSequencerSwing, isSequencerGenerative, sequencerMutationRate, droneSequencerSyncToGlobal, bpm]);
 
   // Optical Synth Evolution Effect
   useEffect(() => {
