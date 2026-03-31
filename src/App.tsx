@@ -598,10 +598,10 @@ const PATCHES = [
       movementEffect: 'vibrato' as const,
       diffusionEffect: 'space' as const,
       textureEffect: 'filter' as const,
-      characterAmount: 0.7,
-      movementAmount: 0.3,
-      diffusionAmount: 0.9,
-      textureAmount: 0.4,
+      characterParams: { compression: 0.6, warmth: 0.5, bass: 0.7 },
+      movementParams: { rate: 0.2, depth: 0.4 },
+      diffusionParams: { size: 0.85, decay: 0.9, brightness: 0.6, mix: 0.8, predelay: 0.4 },
+      textureParams: { cutoff: 0.35, resonance: 0.2, mode: 0.0 },
       adsr: { attack: 0.8, decay: 0.4, sustain: 0.7, release: 1.5 }
     },
     droneSettings: {
@@ -657,10 +657,10 @@ const PATCHES = [
       movementEffect: 'tremolo' as const,
       diffusionEffect: 'cascade' as const,
       textureEffect: 'squash' as const,
-      characterAmount: 0.6,
-      movementAmount: 0.8,
-      diffusionAmount: 0.5,
-      textureAmount: 0.7,
+      characterParams: { drive: 0.6, tone: 0.8, mix: 0.9 },
+      movementParams: { rate: 0.7, depth: 0.8 },
+      diffusionParams: { time: 0.3, feedback: 0.5, tone: 0.7 },
+      textureParams: { threshold: 0.6, ratio: 0.7, attack: 0.01, release: 0.2 },
       adsr: { attack: 0.01, decay: 0.2, sustain: 0.4, release: 0.2 }
     },
     droneSettings: {
@@ -716,10 +716,10 @@ const PATCHES = [
       movementEffect: 'doubler' as const,
       diffusionEffect: 'reels' as const,
       textureEffect: 'cassette' as const,
-      characterAmount: 0.5,
-      movementAmount: 0.6,
-      diffusionAmount: 0.7,
-      textureAmount: 0.8,
+      characterParams: { drive: 0.45, tone: 0.6, mix: 0.8 },
+      movementParams: { delay: 0.4, mix: 0.5, detune: 0.6 },
+      diffusionParams: { time: 0.6, feedback: 0.55, wow: 0.5, tone: 0.5 },
+      textureParams: { bandwidth: 0.6, noise: 0.4, wow: 0.5 },
       adsr: { attack: 0.05, decay: 0.3, sustain: 0.5, release: 0.4 }
     },
     droneSettings: {
@@ -775,10 +775,10 @@ const PATCHES = [
       movementEffect: 'vibrato' as const,
       diffusionEffect: 'space' as const,
       textureEffect: 'filter' as const,
-      characterAmount: 0.4,
-      movementAmount: 0.7,
-      diffusionAmount: 0.9,
-      textureAmount: 0.3,
+      characterParams: { compression: 0.3, warmth: 0.4, bass: 0.2 },
+      movementParams: { rate: 0.6, depth: 0.7 },
+      diffusionParams: { size: 0.9, decay: 0.85, brightness: 0.7, mix: 0.85, predelay: 0.3 },
+      textureParams: { cutoff: 0.25, resonance: 0.15, mode: 0.0 },
       adsr: { attack: 0.4, decay: 0.6, sustain: 0.6, release: 1.2 }
     },
     droneSettings: {
@@ -815,7 +815,10 @@ const PATCHES = [
       scaleName: 'Minor' as const, rootNoteIndex: 4, isEvolving: true, mutationAmount: 0.02,
       sequenceLength: 32, quantizeAmount: 1.0, characterEffect: 'howl' as const,
       movementEffect: 'vortex' as const, diffusionEffect: 'space' as const, textureEffect: 'filter' as const,
-      characterAmount: 0.8, movementAmount: 0.4, diffusionAmount: 1.0, textureAmount: 0.6,
+      characterParams: { drive: 0.7, frequency: 0.3, resonance: 0.8 },
+      movementParams: { rate: 0.15, depth: 0.4, feedback: 0.6 },
+      diffusionParams: { size: 1.0, decay: 0.95, brightness: 0.3, mix: 0.9, predelay: 0.5 },
+      textureParams: { cutoff: 0.5, resonance: 0.4, mode: 0.0 },
       adsr: { attack: 2.0, decay: 1.0, sustain: 0.8, release: 4.0 }
     }
   },
@@ -831,7 +834,10 @@ const PATCHES = [
       isSequencerEnabled: true, bpm: 140, scaleName: 'Pentatonic Minor' as const, rootNoteIndex: 9,
       isEvolving: false, mutationAmount: 0.3, sequenceLength: 16, quantizeAmount: 1.0,
       characterEffect: 'fuzz' as const, movementEffect: 'tremolo' as const, diffusionEffect: 'cascade' as const, textureEffect: 'squash' as const,
-      characterAmount: 0.9, movementAmount: 0.7, diffusionAmount: 0.4, textureAmount: 0.8,
+      characterParams: { fuzz: 0.85, tone: 0.7, mix: 0.9 },
+      movementParams: { rate: 0.8, depth: 0.7 },
+      diffusionParams: { time: 0.2, feedback: 0.4, tone: 0.8 },
+      textureParams: { threshold: 0.7, ratio: 0.8, attack: 0.005, release: 0.1 },
       adsr: { attack: 0.01, decay: 0.1, sustain: 0.2, release: 0.1 }
     }
   },
@@ -847,7 +853,10 @@ const PATCHES = [
       scaleName: 'Major' as const, rootNoteIndex: 0, isEvolving: false, mutationAmount: 0.05,
       sequenceLength: 16, quantizeAmount: 1.0, characterEffect: 'sweeten' as const,
       movementEffect: 'doubler' as const, diffusionEffect: 'echo' as const, textureEffect: 'none' as const,
-      characterAmount: 0.5, movementAmount: 0.3, diffusionAmount: 0.6, textureAmount: 0.0,
+      characterParams: { compression: 0.4, warmth: 0.2, bass: 0.1 },
+      movementParams: { delay: 0.2, mix: 0.3, detune: 0.1 },
+      diffusionParams: { time: 0.4, feedback: 0.5, tone: 0.8, modulation: 0.2 },
+      textureParams: {},
       adsr: { attack: 0.05, decay: 0.2, sustain: 0.1, release: 0.2 }
     }
   },
@@ -863,7 +872,10 @@ const PATCHES = [
       isSequencerEnabled: true, bpm: 75, scaleName: 'Minor' as const, rootNoteIndex: 2,
       isEvolving: true, mutationAmount: 0.1, sequenceLength: 32, quantizeAmount: 0.5,
       characterEffect: 'crush' as const, movementEffect: 'vibrato' as const, diffusionEffect: 'reverse' as const, textureEffect: 'broken' as const,
-      characterAmount: 0.6, movementAmount: 0.5, diffusionAmount: 0.8, textureAmount: 0.7,
+      characterParams: { bitDepth: 0.5, saturation: 0.4, mix: 0.7 },
+      movementParams: { rate: 0.4, depth: 0.5 },
+      diffusionParams: { time: 0.6, mix: 0.7 },
+      textureParams: { bitDepth: 0.6, mix: 0.8 },
       adsr: { attack: 0.5, decay: 0.5, sustain: 0.3, release: 1.0 }
     }
   },
@@ -879,7 +891,10 @@ const PATCHES = [
       scaleName: 'Lydian' as const, rootNoteIndex: 5, isEvolving: true, mutationAmount: 0.08,
       sequenceLength: 32, quantizeAmount: 1.0, characterEffect: 'sweeten' as const,
       movementEffect: 'phaser' as const, diffusionEffect: 'space' as const, textureEffect: 'filter' as const,
-      characterAmount: 0.5, movementAmount: 0.6, diffusionAmount: 0.9, textureAmount: 0.4,
+      characterParams: { compression: 0.4, warmth: 0.6, bass: 0.5 },
+      movementParams: { rate: 0.3, depth: 0.5, feedback: 0.4 },
+      diffusionParams: { size: 0.8, decay: 0.85, brightness: 0.55, mix: 0.75, predelay: 0.35 },
+      textureParams: { cutoff: 0.4, resonance: 0.25, mode: 0.0 },
       adsr: { attack: 1.0, decay: 0.8, sustain: 0.6, release: 2.0 }
     }
   },
@@ -895,7 +910,10 @@ const PATCHES = [
       isSequencerEnabled: true, bpm: 110, scaleName: 'Phrygian' as const, rootNoteIndex: 0,
       isEvolving: false, mutationAmount: 0.15, sequenceLength: 16, quantizeAmount: 1.0,
       characterEffect: 'drive' as const, movementEffect: 'tremolo' as const, diffusionEffect: 'cascade' as const, textureEffect: 'squash' as const,
-      characterAmount: 0.7, movementAmount: 0.8, diffusionAmount: 0.5, textureAmount: 0.6,
+      characterParams: { drive: 0.65, tone: 0.5, mix: 0.85 },
+      movementParams: { rate: 0.6, depth: 0.8 },
+      diffusionParams: { time: 0.35, feedback: 0.45, tone: 0.5 },
+      textureParams: { threshold: 0.5, ratio: 0.6, attack: 0.02, release: 0.3 },
       adsr: { attack: 0.1, decay: 0.3, sustain: 0.5, release: 0.4 }
     }
   },
@@ -911,7 +929,10 @@ const PATCHES = [
       isSequencerEnabled: true, bpm: 60, scaleName: 'Mixolydian' as const, rootNoteIndex: 7,
       isEvolving: true, mutationAmount: 0.2, sequenceLength: 64, quantizeAmount: 0.2,
       characterEffect: 'none' as const, movementEffect: 'vibrato' as const, diffusionEffect: 'collage' as const, textureEffect: 'interference' as const,
-      characterAmount: 0.3, movementAmount: 0.9, diffusionAmount: 1.0, textureAmount: 0.5,
+      characterParams: {},
+      movementParams: { rate: 0.8, depth: 0.9 },
+      diffusionParams: { density: 0.7, spread: 0.8, mix: 0.9 },
+      textureParams: { frequency: 0.4, amount: 0.5 },
       adsr: { attack: 0.01, decay: 0.05, sustain: 0.1, release: 0.5 }
     }
   },
@@ -927,7 +948,10 @@ const PATCHES = [
       scaleName: 'Major' as const, rootNoteIndex: 4, isEvolving: true, mutationAmount: 0.05,
       sequenceLength: 32, quantizeAmount: 1.0, characterEffect: 'sweeten' as const,
       movementEffect: 'doubler' as const, diffusionEffect: 'reels' as const, textureEffect: 'cassette' as const,
-      characterAmount: 0.6, movementAmount: 0.4, diffusionAmount: 0.8, textureAmount: 0.7,
+      characterParams: { compression: 0.5, warmth: 0.6, bass: 0.5 },
+      movementParams: { delay: 0.3, mix: 0.4, detune: 0.2 },
+      diffusionParams: { time: 0.5, feedback: 0.6, wow: 0.4, tone: 0.55 },
+      textureParams: { bandwidth: 0.5, noise: 0.3, wow: 0.4 },
       adsr: { attack: 0.5, decay: 0.4, sustain: 0.6, release: 1.0 }
     }
   },
@@ -943,7 +967,10 @@ const PATCHES = [
       isSequencerEnabled: false, bpm: 120, scaleName: 'Aeolian' as const, rootNoteIndex: 0,
       isEvolving: true, mutationAmount: 0.12, sequenceLength: 32, quantizeAmount: 1.0,
       characterEffect: 'howl' as const, movementEffect: 'vortex' as const, diffusionEffect: 'space' as const, textureEffect: 'filter' as const,
-      characterAmount: 0.5, movementAmount: 0.8, diffusionAmount: 0.9, textureAmount: 0.3,
+      characterParams: { drive: 0.4, frequency: 0.7, resonance: 0.6 },
+      movementParams: { rate: 0.5, depth: 0.7, feedback: 0.5 },
+      diffusionParams: { size: 0.9, decay: 0.8, brightness: 0.7, mix: 0.85, predelay: 0.2 },
+      textureParams: { cutoff: 0.3, resonance: 0.2, mode: 0.0 },
       adsr: { attack: 1.5, decay: 1.0, sustain: 0.7, release: 3.0 }
     }
   },
@@ -959,7 +986,10 @@ const PATCHES = [
       isSequencerEnabled: true, bpm: 150, scaleName: 'Locrian' as const, rootNoteIndex: 1,
       isEvolving: false, mutationAmount: 0.25, sequenceLength: 16, quantizeAmount: 1.0,
       characterEffect: 'fuzz' as const, movementEffect: 'tremolo' as const, diffusionEffect: 'cascade' as const, textureEffect: 'broken' as const,
-      characterAmount: 0.8, movementAmount: 0.9, diffusionAmount: 0.3, textureAmount: 0.9,
+      characterParams: { fuzz: 0.75, tone: 0.4, mix: 0.85 },
+      movementParams: { rate: 0.9, depth: 0.8 },
+      diffusionParams: { time: 0.15, feedback: 0.3, tone: 0.4 },
+      textureParams: { bitDepth: 0.8, mix: 0.9 },
       adsr: { attack: 0.005, decay: 0.1, sustain: 0.1, release: 0.05 }
     }
   },
@@ -975,7 +1005,10 @@ const PATCHES = [
       isSequencerEnabled: true, bpm: 135, scaleName: 'Minor' as const, rootNoteIndex: 0,
       isEvolving: false, mutationAmount: 0.1, sequenceLength: 16, quantizeAmount: 1.0,
       characterEffect: 'crush' as const, movementEffect: 'tremolo' as const, diffusionEffect: 'echo' as const, textureEffect: 'interference' as const,
-      characterAmount: 0.6, movementAmount: 0.7, diffusionAmount: 0.5, textureAmount: 0.8,
+      characterParams: { bitDepth: 0.55, saturation: 0.3, mix: 0.75 },
+      movementParams: { rate: 0.65, depth: 0.7 },
+      diffusionParams: { time: 0.3, feedback: 0.45, tone: 0.6, modulation: 0.4 },
+      textureParams: { frequency: 0.6, amount: 0.7 },
       adsr: { attack: 0.01, decay: 0.05, sustain: 0.2, release: 0.1 }
     }
   },
@@ -991,7 +1024,10 @@ const PATCHES = [
       isSequencerEnabled: true, bpm: 160, scaleName: 'Major' as const, rootNoteIndex: 0,
       isEvolving: true, mutationAmount: 0.15, sequenceLength: 32, quantizeAmount: 1.0,
       characterEffect: 'none' as const, movementEffect: 'vibrato' as const, diffusionEffect: 'collage' as const, textureEffect: 'none' as const,
-      characterAmount: 0.2, movementAmount: 0.8, diffusionAmount: 0.7, textureAmount: 0.0,
+      characterParams: {},
+      movementParams: { rate: 0.7, depth: 0.8 },
+      diffusionParams: { density: 0.5, spread: 0.6, mix: 0.7 },
+      textureParams: {},
       adsr: { attack: 0.02, decay: 0.1, sustain: 0.1, release: 0.2 }
     }
   },
@@ -1007,7 +1043,10 @@ const PATCHES = [
       scaleName: 'Minor' as const, rootNoteIndex: 11, isEvolving: true, mutationAmount: 0.01,
       sequenceLength: 32, quantizeAmount: 1.0, characterEffect: 'howl' as const,
       movementEffect: 'vortex' as const, diffusionEffect: 'space' as const, textureEffect: 'filter' as const,
-      characterAmount: 1.0, movementAmount: 0.2, diffusionAmount: 1.0, textureAmount: 0.8,
+      characterParams: { drive: 0.9, frequency: 0.2, resonance: 0.9 },
+      movementParams: { rate: 0.1, depth: 0.2, feedback: 0.7 },
+      diffusionParams: { size: 1.0, decay: 1.0, brightness: 0.2, mix: 0.95, predelay: 0.6 },
+      textureParams: { cutoff: 0.7, resonance: 0.5, mode: 0.0 },
       adsr: { attack: 5.0, decay: 2.0, sustain: 0.9, release: 8.0 }
     }
   },
@@ -1023,7 +1062,10 @@ const PATCHES = [
       isSequencerEnabled: true, bpm: 180, scaleName: 'Diminished' as const, rootNoteIndex: 0,
       isEvolving: false, mutationAmount: 0.4, sequenceLength: 16, quantizeAmount: 1.0,
       characterEffect: 'crush' as const, movementEffect: 'tremolo' as const, diffusionEffect: 'reverse' as const, textureEffect: 'broken' as const,
-      characterAmount: 0.9, movementAmount: 0.7, diffusionAmount: 0.6, textureAmount: 1.0,
+      characterParams: { bitDepth: 0.85, saturation: 0.7, mix: 0.95 },
+      movementParams: { rate: 0.9, depth: 0.7 },
+      diffusionParams: { time: 0.4, mix: 0.6 },
+      textureParams: { bitDepth: 0.9, mix: 1.0 },
       adsr: { attack: 0.001, decay: 0.05, sustain: 0.1, release: 0.01 }
     }
   },
@@ -1039,7 +1081,10 @@ const PATCHES = [
       isSequencerEnabled: true, bpm: 50, scaleName: 'Dorian' as const, rootNoteIndex: 9,
       isEvolving: true, mutationAmount: 0.05, sequenceLength: 32, quantizeAmount: 0.8,
       characterEffect: 'howl' as const, movementEffect: 'phaser' as const, diffusionEffect: 'space' as const, textureEffect: 'cassette' as const,
-      characterAmount: 0.7, movementAmount: 0.3, diffusionAmount: 1.0, textureAmount: 0.8,
+      characterParams: { drive: 0.6, frequency: 0.4, resonance: 0.7 },
+      movementParams: { rate: 0.2, depth: 0.3, feedback: 0.5 },
+      diffusionParams: { size: 0.95, decay: 0.9, brightness: 0.4, mix: 0.9, predelay: 0.5 },
+      textureParams: { bandwidth: 0.4, noise: 0.5, wow: 0.6 },
       adsr: { attack: 1.5, decay: 1.0, sustain: 0.5, release: 2.5 }
     }
   },
@@ -1055,7 +1100,10 @@ const PATCHES = [
       isSequencerEnabled: true, bpm: 124, scaleName: 'Minor' as const, rootNoteIndex: 0,
       isEvolving: true, mutationAmount: 0.2, sequenceLength: 16, quantizeAmount: 1.0,
       characterEffect: 'crush' as const, movementEffect: 'vortex' as const, diffusionEffect: 'cascade' as const, textureEffect: 'broken' as const,
-      characterAmount: 0.6, movementAmount: 0.7, diffusionAmount: 0.5, textureAmount: 0.9,
+      characterParams: { bitDepth: 0.5, saturation: 0.4, mix: 0.7 },
+      movementParams: { rate: 0.6, depth: 0.6, feedback: 0.5 },
+      diffusionParams: { time: 0.25, feedback: 0.5, tone: 0.6 },
+      textureParams: { bitDepth: 0.8, mix: 0.9 },
       adsr: { attack: 0.01, decay: 0.1, sustain: 0.3, release: 0.2 }
     }
   },
@@ -1071,7 +1119,10 @@ const PATCHES = [
       scaleName: 'Major' as const, rootNoteIndex: 7, isEvolving: true, mutationAmount: 0.04,
       sequenceLength: 32, quantizeAmount: 1.0, characterEffect: 'sweeten' as const,
       movementEffect: 'doubler' as const, diffusionEffect: 'reels' as const, textureEffect: 'filter' as const,
-      characterAmount: 0.8, movementAmount: 0.4, diffusionAmount: 0.8, textureAmount: 0.5,
+      characterParams: { compression: 0.7, warmth: 0.8, bass: 0.6 },
+      movementParams: { delay: 0.3, mix: 0.35, detune: 0.2 },
+      diffusionParams: { time: 0.55, feedback: 0.5, wow: 0.3, tone: 0.6 },
+      textureParams: { cutoff: 0.45, resonance: 0.2, mode: 0.0 },
       adsr: { attack: 1.2, decay: 0.6, sustain: 0.7, release: 1.8 }
     }
   },
@@ -1087,7 +1138,10 @@ const PATCHES = [
       isSequencerEnabled: false, bpm: 20, scaleName: 'Minor' as const, rootNoteIndex: 9,
       isEvolving: true, mutationAmount: 0.01, sequenceLength: 64, quantizeAmount: 1.0,
       characterEffect: 'howl' as const, movementEffect: 'none' as const, diffusionEffect: 'space' as const, textureEffect: 'interference' as const,
-      characterAmount: 0.9, movementAmount: 0.1, diffusionAmount: 1.0, textureAmount: 0.7,
+      characterParams: { drive: 0.8, frequency: 0.15, resonance: 0.85 },
+      movementParams: {},
+      diffusionParams: { size: 1.0, decay: 1.0, brightness: 0.15, mix: 0.95, predelay: 0.7 },
+      textureParams: { frequency: 0.3, amount: 0.6 },
       adsr: { attack: 10.0, decay: 5.0, sustain: 0.8, release: 15.0 }
     }
   },
@@ -1103,7 +1157,10 @@ const PATCHES = [
       isSequencerEnabled: true, bpm: 170, scaleName: 'Major' as const, rootNoteIndex: 0,
       isEvolving: false, mutationAmount: 0.5, sequenceLength: 16, quantizeAmount: 1.0,
       characterEffect: 'fuzz' as const, movementEffect: 'vibrato' as const, diffusionEffect: 'space' as const, textureEffect: 'squash' as const,
-      characterAmount: 1.0, movementAmount: 0.9, diffusionAmount: 1.0, textureAmount: 0.9,
+      characterParams: { fuzz: 0.95, tone: 0.6, mix: 1.0 },
+      movementParams: { rate: 0.8, depth: 0.9 },
+      diffusionParams: { size: 0.7, decay: 0.8, brightness: 0.8, mix: 0.9, predelay: 0.1 },
+      textureParams: { threshold: 0.8, ratio: 0.9, attack: 0.001, release: 0.05 },
       adsr: { attack: 0.001, decay: 0.2, sustain: 0.4, release: 0.1 }
     }
   },
@@ -1119,8 +1176,207 @@ const PATCHES = [
       isSequencerEnabled: true, bpm: 85, scaleName: 'Lydian' as const, rootNoteIndex: 0,
       isEvolving: true, mutationAmount: 0.06, sequenceLength: 32, quantizeAmount: 1.0,
       characterEffect: 'sweeten' as const, movementEffect: 'phaser' as const, diffusionEffect: 'space' as const, textureEffect: 'filter' as const,
-      characterAmount: 0.4, movementAmount: 0.5, diffusionAmount: 0.9, textureAmount: 0.3,
+      characterParams: { compression: 0.35, warmth: 0.4, bass: 0.3 },
+      movementParams: { rate: 0.35, depth: 0.45, feedback: 0.3 },
+      diffusionParams: { size: 0.85, decay: 0.9, brightness: 0.6, mix: 0.8, predelay: 0.3 },
+      textureParams: { cutoff: 0.3, resonance: 0.15, mode: 0.0 },
       adsr: { attack: 0.8, decay: 0.6, sustain: 0.5, release: 1.5 }
+    }
+  },
+  {
+    name: "Moonlit Garden",
+    description: "Gentle, luminous tones drifting through a peaceful night garden.",
+    icon: Sparkles,
+    settings: {
+      baseFreq: 261.63, freqRange: 523.25, freqMod: 80, ampMod: 0.7, cutoffMod: 2500, qMod: 4,
+      scanSpeed: 0.35, scanScale: 1.3, scanCenterX: 0.5, scanCenterY: 0.5,
+      formulaX: "w/2 + Math.sin(t*0.3 + i*0.4) * w/4", formulaY: "h/2 + Math.cos(t*0.2 + i*0.3) * h/4",
+      activePreset: 2, enabledVoices: new Array(16).fill(true), isSequencerEnabled: false, bpm: 65,
+      scaleName: 'Lydian' as const, rootNoteIndex: 5, isEvolving: true, mutationAmount: 0.04,
+      sequenceLength: 32, quantizeAmount: 1.0,
+      characterEffect: 'sweeten' as const, movementEffect: 'vibrato' as const,
+      diffusionEffect: 'space' as const, textureEffect: 'filter' as const,
+      characterParams: { compression: 0.5, warmth: 0.7, bass: 0.6 },
+      movementParams: { rate: 0.15, depth: 0.35 },
+      diffusionParams: { size: 0.9, decay: 0.92, brightness: 0.55, mix: 0.85, predelay: 0.4 },
+      textureParams: { cutoff: 0.3, resonance: 0.15, mode: 0.0 },
+      adsr: { attack: 1.5, decay: 0.8, sustain: 0.7, release: 2.5 }
+    },
+    droneSettings: {
+      isDroneEnabled: true, isDroneSequencerEnabled: false,
+      droneMasterVolume: 0.35, droneFilterCutoff: 1200, droneFilterResonance: 2,
+      droneVoices: [
+        { type: 'sine', freq: 130.81, volume: 0.5, detune: 2, pan: -0.4, adsr: { attack: 2.0, decay: 1.0, sustain: 0.8, release: 3.0 } },
+        { type: 'sine', freq: 196.0, volume: 0.4, detune: -2, pan: 0.4, adsr: { attack: 2.5, decay: 1.5, sustain: 0.7, release: 3.5 } },
+        { type: 'sine', freq: 261.63, volume: 0.3, detune: 3, pan: -0.2, adsr: { attack: 3.0, decay: 2.0, sustain: 0.6, release: 4.0 } },
+        { type: 'triangle', freq: 392.0, volume: 0.2, detune: -1, pan: 0.2, adsr: { attack: 3.5, decay: 2.5, sustain: 0.5, release: 4.5 } }
+      ],
+      droneSequencerBpm: 65, droneSequencerLinkToMatrix: true,
+      droneSequencerVoices: [
+        { name: 'Sub', type: 'sine', steps: new Array(16).fill(false), pitch: new Array(16).fill(36), volume: new Array(16).fill(0.3), adsr: { attack: 0.5, decay: 0.3, sustain: 0.5, release: 1.0 } },
+        { name: 'Bass', type: 'sine', steps: new Array(16).fill(false), pitch: new Array(16).fill(48), volume: new Array(16).fill(0.3), adsr: { attack: 0.3, decay: 0.2, sustain: 0.4, release: 0.5 } },
+        { name: 'Pad', type: 'sine', steps: new Array(16).fill(false), pitch: new Array(16).fill(60), volume: new Array(16).fill(0.2), adsr: { attack: 1.0, decay: 0.5, sustain: 0.8, release: 1.5 } },
+        { name: 'Perc', type: 'auto', steps: new Array(16).fill(false), pitch: new Array(16).fill(36), volume: new Array(16).fill(0.1), adsr: { attack: 0.05, decay: 0.1, sustain: 0.1, release: 0.2 } }
+      ]
+    }
+  },
+  {
+    name: "Silk Threads",
+    description: "Warm, woven textures with vintage tape character and gentle motion.",
+    icon: Music,
+    settings: {
+      baseFreq: 196.0, freqRange: 392.0, freqMod: 100, ampMod: 0.8, cutoffMod: 2000, qMod: 3,
+      scanSpeed: 0.45, scanScale: 1.15, scanCenterX: 0.5, scanCenterY: 0.5,
+      formulaX: "w/2 + Math.sin(t*0.4 + i*0.3) * w/5", formulaY: "h/2 + Math.cos(t*0.5 + i*0.25) * h/5",
+      activePreset: 2, enabledVoices: new Array(16).fill(true), isSequencerEnabled: false, bpm: 72,
+      scaleName: 'Major' as const, rootNoteIndex: 7, isEvolving: true, mutationAmount: 0.05,
+      sequenceLength: 32, quantizeAmount: 1.0,
+      characterEffect: 'sweeten' as const, movementEffect: 'phaser' as const,
+      diffusionEffect: 'reels' as const, textureEffect: 'cassette' as const,
+      characterParams: { compression: 0.6, warmth: 0.8, bass: 0.5 },
+      movementParams: { rate: 0.2, depth: 0.4, feedback: 0.3 },
+      diffusionParams: { time: 0.5, feedback: 0.45, wow: 0.35, tone: 0.6 },
+      textureParams: { bandwidth: 0.55, noise: 0.2, wow: 0.3 },
+      adsr: { attack: 1.0, decay: 0.6, sustain: 0.7, release: 2.0 }
+    }
+  },
+  {
+    name: "Aurora Borealis",
+    description: "Shimmering, wide-stereo harmonic waves dancing across the sky.",
+    icon: Sparkles,
+    settings: {
+      baseFreq: 329.63, freqRange: 659.25, freqMod: 120, ampMod: 0.9, cutoffMod: 3500, qMod: 6,
+      scanSpeed: 0.3, scanScale: 1.4, scanCenterX: 0.5, scanCenterY: 0.5,
+      formulaX: "w/2 + Math.sin(t*0.2 + i*0.6) * w/3", formulaY: "h/2 + Math.cos(t*0.15 + i*0.5) * h/3",
+      activePreset: 6, enabledVoices: new Array(16).fill(true), isSequencerEnabled: false, bpm: 55,
+      scaleName: 'Pentatonic Major' as const, rootNoteIndex: 0, isEvolving: true, mutationAmount: 0.06,
+      sequenceLength: 32, quantizeAmount: 1.0,
+      characterEffect: 'sweeten' as const, movementEffect: 'doubler' as const,
+      diffusionEffect: 'space' as const, textureEffect: 'filter' as const,
+      characterParams: { compression: 0.4, warmth: 0.5, bass: 0.4 },
+      movementParams: { delay: 0.4, mix: 0.5, detune: 0.35 },
+      diffusionParams: { size: 0.95, decay: 0.9, brightness: 0.65, mix: 0.9, predelay: 0.35 },
+      textureParams: { cutoff: 0.25, resonance: 0.1, mode: 0.0 },
+      adsr: { attack: 2.0, decay: 1.0, sustain: 0.75, release: 3.5 }
+    }
+  },
+  {
+    name: "Glass Cathedral",
+    description: "Pure, crystalline tones resonating in vast reverberant space.",
+    icon: Layers,
+    settings: {
+      baseFreq: 440.0, freqRange: 880.0, freqMod: 60, ampMod: 0.6, cutoffMod: 4000, qMod: 8,
+      scanSpeed: 0.25, scanScale: 1.5, scanCenterX: 0.5, scanCenterY: 0.5,
+      formulaX: "w/2 + Math.cos(t*0.15 + i*0.5) * w/4", formulaY: "h/2 + Math.sin(t*0.1 + i*0.4) * h/4",
+      activePreset: 2, enabledVoices: [true, true, true, true, false, false, false, false, true, true, true, true, false, false, false, false],
+      isSequencerEnabled: false, bpm: 50,
+      scaleName: 'Lydian' as const, rootNoteIndex: 0, isEvolving: true, mutationAmount: 0.03,
+      sequenceLength: 32, quantizeAmount: 1.0,
+      characterEffect: 'none' as const, movementEffect: 'vibrato' as const,
+      diffusionEffect: 'space' as const, textureEffect: 'none' as const,
+      characterParams: {},
+      movementParams: { rate: 0.1, depth: 0.25 },
+      diffusionParams: { size: 1.0, decay: 0.95, brightness: 0.5, mix: 0.9, predelay: 0.5 },
+      textureParams: {},
+      adsr: { attack: 2.5, decay: 1.5, sustain: 0.8, release: 4.0 }
+    }
+  },
+  {
+    name: "Velvet Dusk",
+    description: "Rich, warm tones fading into a soft twilight glow.",
+    icon: Clock,
+    settings: {
+      baseFreq: 146.83, freqRange: 293.66, freqMod: 90, ampMod: 0.85, cutoffMod: 1800, qMod: 5,
+      scanSpeed: 0.4, scanScale: 1.2, scanCenterX: 0.5, scanCenterY: 0.5,
+      formulaX: "w/2 + Math.sin(t*0.35 + i*0.35) * w/4", formulaY: "h/2 + Math.cos(t*0.25 + i*0.3) * h/4",
+      activePreset: 2, enabledVoices: new Array(16).fill(true), isSequencerEnabled: false, bpm: 68,
+      scaleName: 'Dorian' as const, rootNoteIndex: 2, isEvolving: true, mutationAmount: 0.05,
+      sequenceLength: 32, quantizeAmount: 1.0,
+      characterEffect: 'drive' as const, movementEffect: 'tremolo' as const,
+      diffusionEffect: 'reels' as const, textureEffect: 'filter' as const,
+      characterParams: { drive: 0.25, tone: 0.55, mix: 0.7 },
+      movementParams: { rate: 0.2, depth: 0.35 },
+      diffusionParams: { time: 0.55, feedback: 0.5, wow: 0.35, tone: 0.5 },
+      textureParams: { cutoff: 0.4, resonance: 0.2, mode: 0.0 },
+      adsr: { attack: 1.2, decay: 0.7, sustain: 0.65, release: 2.0 }
+    }
+  },
+  {
+    name: "Cloud Nine",
+    description: "Weightless, floating pads with endless reverb and gentle shimmer.",
+    icon: Cloud,
+    settings: {
+      baseFreq: 293.66, freqRange: 587.33, freqMod: 70, ampMod: 0.65, cutoffMod: 2800, qMod: 3,
+      scanSpeed: 0.2, scanScale: 1.6, scanCenterX: 0.5, scanCenterY: 0.5,
+      formulaX: "w/2 + Math.sin(t*0.1 + i*0.5) * w/3", formulaY: "h/2 + Math.cos(t*0.08 + i*0.4) * h/3",
+      activePreset: 2, enabledVoices: new Array(16).fill(true), isSequencerEnabled: false, bpm: 48,
+      scaleName: 'Pentatonic Major' as const, rootNoteIndex: 0, isEvolving: true, mutationAmount: 0.03,
+      sequenceLength: 32, quantizeAmount: 1.0,
+      characterEffect: 'sweeten' as const, movementEffect: 'phaser' as const,
+      diffusionEffect: 'space' as const, textureEffect: 'filter' as const,
+      characterParams: { compression: 0.55, warmth: 0.65, bass: 0.5 },
+      movementParams: { rate: 0.1, depth: 0.3, feedback: 0.25 },
+      diffusionParams: { size: 1.0, decay: 0.95, brightness: 0.5, mix: 0.92, predelay: 0.5 },
+      textureParams: { cutoff: 0.2, resonance: 0.1, mode: 0.0 },
+      adsr: { attack: 3.0, decay: 1.5, sustain: 0.8, release: 5.0 }
+    }
+  },
+  {
+    name: "Dewdrop Morning",
+    description: "Fresh, bright plucks and gentle pads welcoming a new day.",
+    icon: Wind,
+    settings: {
+      baseFreq: 392.0, freqRange: 784.0, freqMod: 100, ampMod: 0.8, cutoffMod: 3200, qMod: 5,
+      scanSpeed: 0.5, scanScale: 1.1, scanCenterX: 0.5, scanCenterY: 0.5,
+      formulaX: "w/2 + Math.sin(t*0.5 + i*0.4) * w/5", formulaY: "h/2 + Math.cos(t*0.4 + i*0.35) * h/5",
+      activePreset: 2, enabledVoices: new Array(16).fill(true), isSequencerEnabled: true, bpm: 82,
+      scaleName: 'Major' as const, rootNoteIndex: 0, isEvolving: true, mutationAmount: 0.04,
+      sequenceLength: 32, quantizeAmount: 1.0,
+      characterEffect: 'sweeten' as const, movementEffect: 'vibrato' as const,
+      diffusionEffect: 'echo' as const, textureEffect: 'filter' as const,
+      characterParams: { compression: 0.4, warmth: 0.3, bass: 0.3 },
+      movementParams: { rate: 0.35, depth: 0.3 },
+      diffusionParams: { time: 0.35, feedback: 0.35, tone: 0.75, modulation: 0.25 },
+      textureParams: { cutoff: 0.45, resonance: 0.15, mode: 0.0 },
+      adsr: { attack: 0.3, decay: 0.4, sustain: 0.5, release: 1.0 }
+    },
+    droneSettings: {
+      isDroneEnabled: true, isDroneSequencerEnabled: true,
+      droneMasterVolume: 0.3, droneFilterCutoff: 2000, droneFilterResonance: 2,
+      droneVoices: [
+        { type: 'sine', freq: 196.0, volume: 0.4, detune: 1, pan: -0.3, adsr: { attack: 1.5, decay: 0.8, sustain: 0.7, release: 2.5 } },
+        { type: 'sine', freq: 293.66, volume: 0.3, detune: -1, pan: 0.3, adsr: { attack: 2.0, decay: 1.0, sustain: 0.6, release: 3.0 } },
+        { type: 'triangle', freq: 392.0, volume: 0.25, detune: 2, pan: -0.2, adsr: { attack: 2.5, decay: 1.5, sustain: 0.5, release: 3.5 } },
+        { type: 'sine', freq: 523.25, volume: 0.15, detune: 0, pan: 0.2, adsr: { attack: 3.0, decay: 2.0, sustain: 0.4, release: 4.0 } }
+      ],
+      droneSequencerBpm: 82, droneSequencerLinkToMatrix: true,
+      droneSequencerVoices: [
+        { name: 'Sub', type: 'sine', steps: [true, false, false, false, true, false, false, false, true, false, false, false, true, false, false, false], pitch: new Array(16).fill(48), volume: new Array(16).fill(0.4), adsr: { attack: 0.2, decay: 0.3, sustain: 0.5, release: 0.5 } },
+        { name: 'Bass', type: 'sine', steps: [false, false, true, false, false, false, true, false, false, false, true, false, false, false, true, false], pitch: [48, 48, 52, 48, 48, 48, 55, 48, 48, 48, 52, 48, 48, 48, 55, 48], volume: new Array(16).fill(0.3), adsr: { attack: 0.1, decay: 0.2, sustain: 0.4, release: 0.4 } },
+        { name: 'Lead', type: 'sine', steps: [false, true, false, true, false, true, false, true, false, true, false, true, false, true, false, true], pitch: [60, 64, 67, 72, 76, 72, 67, 64, 60, 64, 67, 72, 76, 72, 67, 64], volume: new Array(16).fill(0.2), adsr: { attack: 0.05, decay: 0.2, sustain: 0.3, release: 0.5 } },
+        { name: 'Perc', type: 'auto', steps: [false, false, false, false, true, false, false, false, false, false, false, false, true, false, false, false], pitch: new Array(16).fill(36), volume: new Array(16).fill(0.15), adsr: { attack: 0.02, decay: 0.1, sustain: 0.1, release: 0.2 } }
+      ]
+    }
+  },
+  {
+    name: "Midnight Lullaby",
+    description: "Tender, intimate tones wrapped in soft warmth and gentle motion.",
+    icon: Music,
+    settings: {
+      baseFreq: 174.61, freqRange: 349.23, freqMod: 60, ampMod: 0.6, cutoffMod: 1500, qMod: 3,
+      scanSpeed: 0.25, scanScale: 1.3, scanCenterX: 0.5, scanCenterY: 0.5,
+      formulaX: "w/2 + Math.sin(t*0.15 + i*0.35) * w/4", formulaY: "h/2 + Math.cos(t*0.12 + i*0.3) * h/4",
+      activePreset: 2, enabledVoices: [true, true, true, true, false, false, false, false, true, true, true, true, false, false, false, false],
+      isSequencerEnabled: false, bpm: 55,
+      scaleName: 'Minor' as const, rootNoteIndex: 5, isEvolving: true, mutationAmount: 0.03,
+      sequenceLength: 32, quantizeAmount: 1.0,
+      characterEffect: 'sweeten' as const, movementEffect: 'doubler' as const,
+      diffusionEffect: 'space' as const, textureEffect: 'cassette' as const,
+      characterParams: { compression: 0.6, warmth: 0.75, bass: 0.55 },
+      movementParams: { delay: 0.35, mix: 0.4, detune: 0.15 },
+      diffusionParams: { size: 0.9, decay: 0.88, brightness: 0.4, mix: 0.8, predelay: 0.4 },
+      textureParams: { bandwidth: 0.45, noise: 0.15, wow: 0.25 },
+      adsr: { attack: 2.0, decay: 1.0, sustain: 0.7, release: 3.0 }
     }
   }
 ];
@@ -1455,6 +1711,98 @@ const DRONE_PATCHES = [
         { name: 'Perc', type: 'auto', steps: [false, false, false, true, false, false, false, true, false, false, false, true, false, false, false, true], pitch: [36, 36, 36, 36, 36, 36, 36, 36, 36, 36, 36, 36, 36, 36, 36, 36], volume: [0.15, 0.1, 0.1, 0.2, 0.1, 0.1, 0.1, 0.2, 0.1, 0.1, 0.1, 0.2, 0.1, 0.1, 0.1, 0.25], probability: [0.3, 0.2, 0.2, 0.6, 0.3, 0.2, 0.2, 0.6, 0.3, 0.2, 0.2, 0.6, 0.3, 0.2, 0.2, 0.7], duration: new Array(16).fill(0.15), adsr: { attack: 0.1, decay: 0.2, sustain: 0.1, release: 0.3 } }
       ]
     }
+  },
+  {
+    name: "Warm Embrace",
+    description: "Gentle sine chord with lush harmony and soft LFO movement.",
+    settings: {
+      isDroneEnabled: true, isDroneSequencerEnabled: false,
+      droneMasterVolume: 0.4, droneFilterCutoff: 1500, droneFilterResonance: 1.5,
+      droneSpread: 0.6, droneLfoFreq: 0.08, droneLfoAmount: 200, droneLfoTarget: 'cutoff',
+      droneSaturation: 0.1, droneReverbSend: 0.7, droneSubAmount: 0.2,
+      droneVoices: [
+        { type: 'sine', freq: 130.81, volume: 0.5, detune: 1, pan: -0.3, adsr: { attack: 3.0, decay: 1.5, sustain: 0.85, release: 4.0 } },
+        { type: 'sine', freq: 164.81, volume: 0.4, detune: -1, pan: 0.3, adsr: { attack: 3.5, decay: 2.0, sustain: 0.8, release: 4.5 } },
+        { type: 'sine', freq: 196.0, volume: 0.35, detune: 2, pan: -0.5, adsr: { attack: 4.0, decay: 2.5, sustain: 0.75, release: 5.0 } },
+        { type: 'triangle', freq: 261.63, volume: 0.25, detune: 0, pan: 0.5, adsr: { attack: 4.5, decay: 3.0, sustain: 0.7, release: 5.5 } }
+      ],
+      droneSequencerBpm: 60, droneSequencerSwing: 0, droneSequencerLinkToMatrix: true,
+      droneSequencerVoices: [
+        { name: 'Sub', type: 'sine', steps: new Array(16).fill(false), pitch: new Array(16).fill(36), volume: new Array(16).fill(0.3), probability: new Array(16).fill(1.0), duration: new Array(16).fill(1.0), adsr: { attack: 0.5, decay: 0.3, sustain: 0.5, release: 1.0 } },
+        { name: 'Bass', type: 'sine', steps: new Array(16).fill(false), pitch: new Array(16).fill(48), volume: new Array(16).fill(0.2), probability: new Array(16).fill(1.0), duration: new Array(16).fill(1.0), adsr: { attack: 0.3, decay: 0.2, sustain: 0.4, release: 0.5 } },
+        { name: 'Pad', type: 'sine', steps: new Array(16).fill(false), pitch: new Array(16).fill(60), volume: new Array(16).fill(0.1), probability: new Array(16).fill(1.0), duration: new Array(16).fill(1.0), adsr: { attack: 1.0, decay: 0.5, sustain: 0.8, release: 1.5 } },
+        { name: 'Perc', type: 'auto', steps: new Array(16).fill(false), pitch: new Array(16).fill(36), volume: new Array(16).fill(0.1), probability: new Array(16).fill(1.0), duration: new Array(16).fill(0.5), adsr: { attack: 0.05, decay: 0.1, sustain: 0.1, release: 0.2 } }
+      ]
+    }
+  },
+  {
+    name: "Ocean Lullaby",
+    description: "Gentle wave-like sine oscillations with slow pan LFO and wide stereo.",
+    settings: {
+      isDroneEnabled: true, isDroneSequencerEnabled: true,
+      droneMasterVolume: 0.35, droneFilterCutoff: 1000, droneFilterResonance: 2,
+      droneSpread: 0.9, droneLfoFreq: 0.05, droneLfoAmount: 0.7, droneLfoTarget: 'pan',
+      droneSaturation: 0.05, droneReverbSend: 0.85, droneSubAmount: 0.15,
+      droneVoices: [
+        { type: 'sine', freq: 110, volume: 0.45, detune: 2, pan: -0.6, adsr: { attack: 4.0, decay: 2.0, sustain: 0.8, release: 5.0 } },
+        { type: 'sine', freq: 164.81, volume: 0.35, detune: -2, pan: 0.6, adsr: { attack: 5.0, decay: 2.5, sustain: 0.7, release: 6.0 } },
+        { type: 'triangle', freq: 220, volume: 0.25, detune: 3, pan: -0.3, adsr: { attack: 6.0, decay: 3.0, sustain: 0.6, release: 7.0 } },
+        { type: 'sine', freq: 82.41, volume: 0.55, detune: 0, pan: 0.0, adsr: { attack: 3.0, decay: 1.5, sustain: 0.9, release: 4.0 } }
+      ],
+      droneSequencerBpm: 55, droneSequencerSwing: 0, droneSequencerLinkToMatrix: true,
+      droneSequencerVoices: [
+        { name: 'Sub', type: 'sine', steps: [true, false, false, false, false, false, false, false, true, false, false, false, false, false, false, false], pitch: new Array(16).fill(36), volume: [0.4, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.4, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2], probability: new Array(16).fill(1.0), duration: new Array(16).fill(1.0), adsr: { attack: 1.0, decay: 0.5, sustain: 0.7, release: 2.0 } },
+        { name: 'Wave', type: 'sine', steps: [true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true], pitch: [48, 50, 52, 55, 57, 55, 52, 50, 48, 50, 52, 55, 57, 55, 52, 50], volume: new Array(16).fill(0.15), probability: new Array(16).fill(0.7), duration: new Array(16).fill(0.8), adsr: { attack: 1.5, decay: 1.0, sustain: 0.8, release: 2.5 } },
+        { name: 'Chime', type: 'triangle', steps: [false, false, false, true, false, false, false, true, false, false, false, true, false, false, false, true], pitch: [72, 72, 72, 76, 72, 72, 72, 79, 72, 72, 72, 76, 72, 72, 72, 72], volume: new Array(16).fill(0.1), probability: new Array(16).fill(0.4), duration: new Array(16).fill(0.3), adsr: { attack: 0.05, decay: 0.3, sustain: 0.2, release: 0.8 } },
+        { name: 'Perc', type: 'auto', steps: new Array(16).fill(false), pitch: new Array(16).fill(36), volume: new Array(16).fill(0.1), probability: new Array(16).fill(0.3), duration: new Array(16).fill(0.2), adsr: { attack: 0.1, decay: 0.2, sustain: 0.1, release: 0.3 } }
+      ]
+    }
+  },
+  {
+    name: "Healing Bells",
+    description: "Pure harmonic sine tones with bell-like intervals and gentle reverb.",
+    settings: {
+      isDroneEnabled: true, isDroneSequencerEnabled: true,
+      droneMasterVolume: 0.35, droneFilterCutoff: 3500, droneFilterResonance: 1,
+      droneSpread: 0.7, droneLfoFreq: 0.06, droneLfoAmount: 100, droneLfoTarget: 'cutoff',
+      droneSaturation: 0.05, droneReverbSend: 0.9, droneSubAmount: 0.1,
+      droneVoices: [
+        { type: 'sine', freq: 261.63, volume: 0.4, detune: 0, pan: -0.5, adsr: { attack: 3.0, decay: 2.0, sustain: 0.7, release: 5.0 } },
+        { type: 'sine', freq: 329.63, volume: 0.35, detune: 1, pan: 0.5, adsr: { attack: 3.5, decay: 2.5, sustain: 0.65, release: 5.5 } },
+        { type: 'sine', freq: 392.0, volume: 0.3, detune: -1, pan: -0.3, adsr: { attack: 4.0, decay: 3.0, sustain: 0.6, release: 6.0 } },
+        { type: 'sine', freq: 523.25, volume: 0.2, detune: 0, pan: 0.3, adsr: { attack: 4.5, decay: 3.5, sustain: 0.55, release: 6.5 } }
+      ],
+      droneSequencerBpm: 70, droneSequencerSwing: 0, droneSequencerLinkToMatrix: true,
+      droneSequencerVoices: [
+        { name: 'Root', type: 'sine', steps: [true, false, false, false, false, false, false, false, true, false, false, false, false, false, false, false], pitch: new Array(16).fill(48), volume: [0.5, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.5, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2], probability: new Array(16).fill(1.0), duration: new Array(16).fill(1.0), adsr: { attack: 0.8, decay: 0.5, sustain: 0.7, release: 1.5 } },
+        { name: 'Bell 1', type: 'sine', steps: [false, false, true, false, false, false, true, false, false, false, true, false, false, false, true, false], pitch: [60, 60, 64, 60, 60, 60, 67, 60, 60, 60, 64, 60, 60, 60, 72, 60], volume: new Array(16).fill(0.2), probability: new Array(16).fill(0.7), duration: new Array(16).fill(0.5), adsr: { attack: 0.02, decay: 0.5, sustain: 0.3, release: 1.5 } },
+        { name: 'Bell 2', type: 'sine', steps: [false, false, false, true, false, false, false, true, false, false, false, true, false, false, false, true], pitch: [67, 67, 67, 72, 67, 67, 67, 76, 67, 67, 67, 72, 67, 67, 67, 67], volume: new Array(16).fill(0.15), probability: new Array(16).fill(0.5), duration: new Array(16).fill(0.4), adsr: { attack: 0.01, decay: 0.4, sustain: 0.2, release: 1.2 } },
+        { name: 'Perc', type: 'auto', steps: new Array(16).fill(false), pitch: new Array(16).fill(36), volume: new Array(16).fill(0.1), probability: new Array(16).fill(0.2), duration: new Array(16).fill(0.2), adsr: { attack: 0.05, decay: 0.1, sustain: 0.1, release: 0.3 } }
+      ]
+    }
+  },
+  {
+    name: "Starlit Canopy",
+    description: "Twinkling high-frequency tones beneath a warm low drone blanket.",
+    settings: {
+      isDroneEnabled: true, isDroneSequencerEnabled: true,
+      droneMasterVolume: 0.4, droneFilterCutoff: 2800, droneFilterResonance: 1.5,
+      droneSpread: 0.8, droneLfoFreq: 0.04, droneLfoAmount: 0.5, droneLfoTarget: 'volume',
+      droneSaturation: 0.08, droneReverbSend: 0.8, droneSubAmount: 0.2,
+      droneVoices: [
+        { type: 'sine', freq: 65.41, volume: 0.6, detune: 1, pan: -0.2, adsr: { attack: 3.0, decay: 1.5, sustain: 0.85, release: 4.0 } },
+        { type: 'sine', freq: 130.81, volume: 0.4, detune: -1, pan: 0.2, adsr: { attack: 3.5, decay: 2.0, sustain: 0.8, release: 4.5 } },
+        { type: 'triangle', freq: 196.0, volume: 0.3, detune: 2, pan: -0.4, adsr: { attack: 4.0, decay: 2.5, sustain: 0.7, release: 5.0 } },
+        { type: 'sine', freq: 261.63, volume: 0.2, detune: 0, pan: 0.4, adsr: { attack: 4.5, decay: 3.0, sustain: 0.65, release: 5.5 } }
+      ],
+      droneSequencerBpm: 80, droneSequencerSwing: 0, droneSequencerLinkToMatrix: true,
+      droneSequencerVoices: [
+        { name: 'Bass', type: 'sine', steps: [true, false, false, false, true, false, false, false, true, false, false, false, true, false, false, false], pitch: new Array(16).fill(36), volume: [0.5, 0.3, 0.3, 0.3, 0.5, 0.3, 0.3, 0.3, 0.5, 0.3, 0.3, 0.3, 0.5, 0.3, 0.3, 0.3], probability: new Array(16).fill(1.0), duration: new Array(16).fill(0.8), adsr: { attack: 0.3, decay: 0.3, sustain: 0.5, release: 0.8 } },
+        { name: 'Pad', type: 'sine', steps: [true, false, false, false, false, false, false, false, true, false, false, false, false, false, false, false], pitch: [48, 48, 48, 48, 48, 48, 48, 48, 52, 52, 52, 52, 52, 52, 52, 52], volume: new Array(16).fill(0.2), probability: new Array(16).fill(0.8), duration: new Array(16).fill(1.0), adsr: { attack: 2.0, decay: 1.0, sustain: 0.8, release: 3.0 } },
+        { name: 'Twinkle', type: 'sine', steps: [true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true], pitch: [72, 79, 84, 76, 72, 84, 79, 76, 72, 79, 84, 76, 72, 84, 79, 76], volume: new Array(16).fill(0.1), probability: [0.3, 0.2, 0.4, 0.2, 0.3, 0.4, 0.2, 0.3, 0.3, 0.2, 0.4, 0.2, 0.3, 0.4, 0.2, 0.3], duration: new Array(16).fill(0.2), adsr: { attack: 0.01, decay: 0.2, sustain: 0.1, release: 0.5 } },
+        { name: 'Perc', type: 'auto', steps: [false, false, false, false, false, false, false, false, false, false, false, false, true, false, false, false], pitch: new Array(16).fill(36), volume: new Array(16).fill(0.1), probability: new Array(16).fill(0.3), duration: new Array(16).fill(0.15), adsr: { attack: 0.05, decay: 0.15, sustain: 0.1, release: 0.3 } }
+      ]
+    }
   }
 ];
 
@@ -1704,6 +2052,72 @@ const SEQUENCER_PRESETS = [
       { name: "Clap", type: "auto", steps: [false, false, false, false, true, false, false, false, false, false, false, false, true, false, false, false], pitch: new Array(16).fill(60), volume: new Array(16).fill(0.7), probability: new Array(16).fill(0.8), duration: new Array(16).fill(0.05), adsr: { attack: 0.01, decay: 0.05, sustain: 0, release: 0.05 } },
       { name: "Hat", type: "auto", steps: [false, false, true, false, false, false, true, false, false, false, true, false, false, false, true, false], pitch: new Array(16).fill(84), volume: new Array(16).fill(0.5), probability: new Array(16).fill(0.9), duration: new Array(16).fill(0.02), adsr: { attack: 0.01, decay: 0.02, sustain: 0, release: 0.02 } },
       { name: "Synth", type: "sawtooth", steps: [true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true], pitch: [36, 36, 36, 36, 36, 36, 36, 36, 36, 36, 36, 36, 36, 36, 36, 36].map(p => p + (Math.random() > 0.5 ? 12 : 0)), volume: new Array(16).fill(0.3), probability: new Array(16).fill(0.7), duration: new Array(16).fill(0.1), adsr: { attack: 0.01, decay: 0.05, sustain: 0.2, release: 0.1 } }
+    ]
+  },
+  {
+    name: "Gentle Cascade",
+    description: "Soft descending arpeggios over a warm bass heartbeat.",
+    bpm: 85,
+    voices: [
+      { name: "Bass", type: "sine", steps: [true, false, false, false, false, false, false, false, true, false, false, false, false, false, false, false], pitch: new Array(16).fill(40), volume: new Array(16).fill(0.5), probability: new Array(16).fill(1.0), duration: new Array(16).fill(0.6), adsr: { attack: 0.08, decay: 0.4, sustain: 0.3, release: 0.5 } },
+      { name: "Arp", type: "sine", steps: [true, false, true, false, true, false, true, false, true, false, true, false, true, false, true, false], pitch: [72, 72, 69, 69, 67, 67, 64, 64, 72, 72, 69, 69, 67, 67, 64, 64], volume: [0.4, 0.3, 0.35, 0.3, 0.35, 0.3, 0.3, 0.25, 0.4, 0.3, 0.35, 0.3, 0.35, 0.3, 0.3, 0.25], probability: new Array(16).fill(0.85), duration: new Array(16).fill(0.35), adsr: { attack: 0.05, decay: 0.25, sustain: 0.2, release: 0.4 } },
+      { name: "Chime", type: "triangle", steps: [false, false, false, true, false, false, false, false, false, false, false, true, false, false, false, false], pitch: [84, 84, 84, 84, 84, 84, 84, 84, 88, 88, 88, 88, 88, 88, 88, 88], volume: new Array(16).fill(0.2), probability: new Array(16).fill(0.6), duration: new Array(16).fill(0.5), adsr: { attack: 0.01, decay: 0.4, sustain: 0.1, release: 0.6 } },
+      { name: "Pad", type: "sine", steps: [true, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false], pitch: [60, 60, 60, 60, 60, 60, 60, 60, 64, 64, 64, 64, 64, 64, 64, 64], volume: new Array(16).fill(0.25), probability: new Array(16).fill(1.0), duration: new Array(16).fill(2.0), adsr: { attack: 1.0, decay: 0.8, sustain: 0.6, release: 1.5 } }
+    ]
+  },
+  {
+    name: "Crystalline Arp",
+    description: "Sparkling ascending patterns like light through a prism.",
+    bpm: 100,
+    voices: [
+      { name: "Bass", type: "triangle", steps: [true, false, false, false, false, false, false, false, true, false, false, false, false, false, false, false], pitch: new Array(16).fill(43), volume: new Array(16).fill(0.4), probability: new Array(16).fill(1.0), duration: new Array(16).fill(0.5), adsr: { attack: 0.05, decay: 0.3, sustain: 0.3, release: 0.4 } },
+      { name: "Crystal 1", type: "sine", steps: [true, false, false, true, false, false, true, false, false, true, false, false, true, false, false, true], pitch: [60, 60, 60, 64, 64, 64, 67, 67, 67, 72, 72, 72, 76, 76, 76, 79], volume: [0.35, 0.3, 0.3, 0.35, 0.3, 0.3, 0.35, 0.3, 0.3, 0.35, 0.3, 0.3, 0.35, 0.3, 0.3, 0.35], probability: new Array(16).fill(0.9), duration: new Array(16).fill(0.3), adsr: { attack: 0.01, decay: 0.2, sustain: 0.15, release: 0.4 } },
+      { name: "Crystal 2", type: "sine", steps: [false, false, true, false, false, true, false, false, true, false, false, true, false, false, true, false], pitch: [67, 67, 72, 72, 76, 76, 79, 79, 84, 84, 79, 79, 76, 76, 72, 72], volume: new Array(16).fill(0.25), probability: new Array(16).fill(0.7), duration: new Array(16).fill(0.25), adsr: { attack: 0.01, decay: 0.15, sustain: 0.1, release: 0.35 } },
+      { name: "Shimmer", type: "sine", steps: [false, true, false, false, false, true, false, false, false, true, false, false, false, true, false, false], pitch: new Array(16).fill(96), volume: new Array(16).fill(0.1), probability: new Array(16).fill(0.5), duration: new Array(16).fill(0.15), adsr: { attack: 0.005, decay: 0.1, sustain: 0.0, release: 0.2 } }
+    ]
+  },
+  {
+    name: "Twilight Waltz",
+    description: "A dreamy 3/4 feel with gentle melodic motion.",
+    bpm: 92,
+    voices: [
+      { name: "Bass", type: "sine", steps: [true, false, false, false, false, false, true, false, false, false, false, false, true, false, false, false], pitch: [41, 41, 41, 41, 41, 41, 45, 45, 45, 45, 45, 45, 43, 43, 43, 43], volume: new Array(16).fill(0.45), probability: new Array(16).fill(1.0), duration: new Array(16).fill(0.5), adsr: { attack: 0.06, decay: 0.3, sustain: 0.3, release: 0.4 } },
+      { name: "Melody", type: "triangle", steps: [false, false, true, false, false, true, false, false, true, false, false, true, false, false, true, false], pitch: [65, 65, 69, 69, 69, 72, 72, 72, 74, 74, 74, 72, 72, 72, 69, 69], volume: [0.35, 0.35, 0.4, 0.35, 0.35, 0.38, 0.35, 0.35, 0.4, 0.35, 0.35, 0.38, 0.35, 0.35, 0.38, 0.35], probability: new Array(16).fill(0.85), duration: new Array(16).fill(0.4), adsr: { attack: 0.04, decay: 0.25, sustain: 0.25, release: 0.5 } },
+      { name: "Harmony", type: "sine", steps: [true, false, false, false, false, false, true, false, false, false, false, false, true, false, false, false], pitch: [60, 60, 60, 60, 60, 60, 64, 64, 64, 64, 64, 64, 62, 62, 62, 62], volume: new Array(16).fill(0.2), probability: new Array(16).fill(0.9), duration: new Array(16).fill(1.2), adsr: { attack: 0.5, decay: 0.5, sustain: 0.4, release: 0.8 } },
+      { name: "Bell", type: "sine", steps: [false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, true], pitch: new Array(16).fill(84), volume: new Array(16).fill(0.15), probability: new Array(16).fill(0.4), duration: new Array(16).fill(0.3), adsr: { attack: 0.005, decay: 0.3, sustain: 0.05, release: 0.5 } }
+    ]
+  },
+  {
+    name: "Peaceful Meadow",
+    description: "Birdsong-inspired patterns over a warm harmonic bed.",
+    bpm: 76,
+    voices: [
+      { name: "Ground", type: "sine", steps: [true, false, false, false, false, false, false, false, true, false, false, false, false, false, false, false], pitch: new Array(16).fill(48), volume: new Array(16).fill(0.4), probability: new Array(16).fill(1.0), duration: new Array(16).fill(1.5), adsr: { attack: 0.3, decay: 0.6, sustain: 0.5, release: 1.0 } },
+      { name: "Harmony", type: "sine", steps: [false, false, false, false, true, false, false, false, false, false, false, false, true, false, false, false], pitch: [55, 55, 55, 55, 55, 55, 55, 55, 57, 57, 57, 57, 57, 57, 57, 57], volume: new Array(16).fill(0.3), probability: new Array(16).fill(0.9), duration: new Array(16).fill(1.0), adsr: { attack: 0.2, decay: 0.5, sustain: 0.4, release: 0.8 } },
+      { name: "Bird 1", type: "sine", steps: [false, true, false, false, false, false, true, false, false, false, true, false, false, false, false, true], pitch: [84, 88, 84, 84, 84, 84, 91, 84, 84, 84, 86, 84, 84, 84, 84, 89], volume: [0.15, 0.2, 0.15, 0.15, 0.15, 0.15, 0.18, 0.15, 0.15, 0.15, 0.17, 0.15, 0.15, 0.15, 0.15, 0.2], probability: new Array(16).fill(0.5), duration: new Array(16).fill(0.12), adsr: { attack: 0.005, decay: 0.08, sustain: 0.0, release: 0.15 } },
+      { name: "Bird 2", type: "triangle", steps: [false, false, false, true, false, false, false, false, false, true, false, false, false, false, true, false], pitch: [79, 79, 79, 81, 79, 79, 79, 79, 79, 83, 79, 79, 79, 79, 84, 79], volume: new Array(16).fill(0.12), probability: new Array(16).fill(0.4), duration: new Array(16).fill(0.1), adsr: { attack: 0.005, decay: 0.06, sustain: 0.0, release: 0.12 } }
+    ]
+  },
+  {
+    name: "Music Box",
+    description: "Delicate plucked notes reminiscent of a vintage music box.",
+    bpm: 108,
+    voices: [
+      { name: "Melody", type: "sine", steps: [true, false, true, false, true, false, false, true, false, true, false, true, false, false, true, false], pitch: [72, 72, 76, 76, 79, 79, 79, 84, 84, 81, 81, 79, 79, 79, 76, 76], volume: [0.4, 0.35, 0.38, 0.35, 0.4, 0.35, 0.35, 0.42, 0.38, 0.38, 0.35, 0.4, 0.35, 0.35, 0.38, 0.35], probability: new Array(16).fill(0.9), duration: new Array(16).fill(0.2), adsr: { attack: 0.005, decay: 0.2, sustain: 0.05, release: 0.4 } },
+      { name: "Counter", type: "sine", steps: [false, true, false, false, false, true, false, false, false, false, true, false, false, true, false, false], pitch: [67, 64, 67, 67, 67, 69, 67, 67, 67, 67, 72, 67, 67, 69, 67, 67], volume: new Array(16).fill(0.25), probability: new Array(16).fill(0.7), duration: new Array(16).fill(0.18), adsr: { attack: 0.005, decay: 0.15, sustain: 0.05, release: 0.3 } },
+      { name: "Bass", type: "triangle", steps: [true, false, false, false, false, false, false, false, true, false, false, false, false, false, false, false], pitch: [48, 48, 48, 48, 48, 48, 48, 48, 52, 52, 52, 52, 52, 52, 52, 52], volume: new Array(16).fill(0.3), probability: new Array(16).fill(1.0), duration: new Array(16).fill(0.4), adsr: { attack: 0.03, decay: 0.25, sustain: 0.2, release: 0.3 } },
+      { name: "Sparkle", type: "sine", steps: [false, false, false, false, false, false, true, false, false, false, false, false, false, false, true, false], pitch: new Array(16).fill(96), volume: new Array(16).fill(0.08), probability: new Array(16).fill(0.45), duration: new Array(16).fill(0.08), adsr: { attack: 0.002, decay: 0.06, sustain: 0.0, release: 0.15 } }
+    ]
+  },
+  {
+    name: "Starlight Drift",
+    description: "Slow, evolving tones that shimmer like distant stars.",
+    bpm: 65,
+    voices: [
+      { name: "Deep", type: "sine", steps: [true, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false], pitch: new Array(16).fill(36), volume: new Array(16).fill(0.45), probability: new Array(16).fill(1.0), duration: new Array(16).fill(3.0), adsr: { attack: 1.5, decay: 1.0, sustain: 0.6, release: 2.0 } },
+      { name: "Tone 1", type: "sine", steps: [false, false, false, false, true, false, false, false, false, false, false, false, true, false, false, false], pitch: [55, 55, 55, 55, 55, 55, 55, 55, 57, 57, 57, 57, 57, 57, 57, 57], volume: new Array(16).fill(0.3), probability: new Array(16).fill(0.8), duration: new Array(16).fill(2.0), adsr: { attack: 1.0, decay: 0.8, sustain: 0.5, release: 1.5 } },
+      { name: "Tone 2", type: "triangle", steps: [false, false, false, false, false, false, false, false, true, false, false, false, false, false, false, false], pitch: [67, 67, 67, 67, 67, 67, 67, 67, 69, 69, 69, 69, 69, 69, 69, 69], volume: new Array(16).fill(0.2), probability: new Array(16).fill(0.6), duration: new Array(16).fill(1.5), adsr: { attack: 0.8, decay: 0.6, sustain: 0.4, release: 1.2 } },
+      { name: "Star", type: "sine", steps: [false, false, true, false, false, false, false, true, false, false, false, true, false, false, true, false], pitch: [84, 84, 88, 84, 84, 84, 84, 91, 84, 84, 84, 86, 84, 84, 93, 84], volume: new Array(16).fill(0.1), probability: new Array(16).fill(0.35), duration: new Array(16).fill(0.2), adsr: { attack: 0.01, decay: 0.15, sustain: 0.0, release: 0.3 } }
     ]
   }
 ];
@@ -2223,10 +2637,10 @@ export default function App() {
     setMovementEffect(s.movementEffect);
     setDiffusionEffect(s.diffusionEffect);
     setTextureEffect(s.textureEffect);
-    setCharacterParams(amountToParams(s.characterEffect, s.characterAmount));
-    setMovementParams(amountToParams(s.movementEffect, s.movementAmount));
-    setDiffusionParams(amountToParams(s.diffusionEffect, s.diffusionAmount));
-    setTextureParams(amountToParams(s.textureEffect, s.textureAmount));
+    setCharacterParams(s.characterParams || amountToParams(s.characterEffect, (s as any).characterAmount ?? 0.5));
+    setMovementParams(s.movementParams || amountToParams(s.movementEffect, (s as any).movementAmount ?? 0.5));
+    setDiffusionParams(s.diffusionParams || amountToParams(s.diffusionEffect, (s as any).diffusionAmount ?? 0.5));
+    setTextureParams(s.textureParams || amountToParams(s.textureEffect, (s as any).textureAmount ?? 0.5));
     if (s.adsr) {
       setAdsr(new Array(SAMPLE_POINTS).fill(null).map(() => ({ ...s.adsr })));
     }
